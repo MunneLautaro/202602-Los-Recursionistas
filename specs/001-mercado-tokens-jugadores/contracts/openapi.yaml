@@ -1,0 +1,373 @@
+openapi: 3.0.3
+info:
+  title: Mercado de Tokens de Jugadores API
+  version: 1.0.0
+  description: Contrato REST en espanol para catalogo, valuacion, mercado y portfolio.
+servers:
+  - url: http://localhost:8080
+security:
+  - bearerAuth: []
+tags:
+  - name: Catalogo
+  - name: Cotizacion
+  - name: Mercado
+  - name: Portfolio
+paths:
+  /players:
+    get:
+      tags: [Catalogo]
+      security: []
+      parameters:
+        - { $ref: "#/components/parameters/Liga" }
+        - { $ref: "#/components/parameters/Equipo" }
+        - { $ref: "#/components/parameters/Posicion" }
+        - { $ref: "#/components/parameters/Activo" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { $ref: "#/components/responses/PlayerPage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+  /players/{id}:
+    get:
+      tags: [Catalogo]
+      security: []
+      parameters: [{ $ref: "#/components/parameters/PlayerId" }]
+      responses:
+        "200": { $ref: "#/components/responses/Player" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /players/{id}/quotes:
+    get:
+      tags: [Cotizacion]
+      security: []
+      parameters:
+        - { $ref: "#/components/parameters/PlayerId" }
+        - { $ref: "#/components/parameters/From" }
+        - { $ref: "#/components/parameters/To" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { $ref: "#/components/responses/QuotePage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /players/ranking:
+    get:
+      tags: [Cotizacion]
+      security: []
+      parameters:
+        - { $ref: "#/components/parameters/Liga" }
+        - { $ref: "#/components/parameters/Posicion" }
+        - { name: estrategia, in: query, schema: { type: string } }
+        - {
+            name: limite,
+            in: query,
+            schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+          }
+      responses:
+        "200": { $ref: "#/components/responses/Ranking" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+  /quotes/recalculate:
+    post:
+      tags: [Cotizacion]
+      summary: Solicita recalculo autorizado
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/RecalculateRequest" } },
+            },
+        }
+      responses:
+        "202": { $ref: "#/components/responses/Recalculation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /orders/buy:
+    post:
+      tags: [Mercado]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/OrderRequest" } },
+            },
+        }
+      responses:
+        "201": { $ref: "#/components/responses/Order" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /orders/sell:
+    post:
+      tags: [Mercado]
+      requestBody:
+        {
+          required: true,
+          content:
+            {
+              application/json:
+                { schema: { $ref: "#/components/schemas/OrderRequest" } },
+            },
+        }
+      responses:
+        "201": { $ref: "#/components/responses/Order" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /users/{id}/portfolio:
+    get:
+      tags: [Portfolio]
+      parameters: [{ $ref: "#/components/parameters/UserId" }]
+      responses:
+        "200": { $ref: "#/components/responses/Portfolio" }
+        "404": { $ref: "#/components/responses/NotFound" }
+  /users/{id}/transactions:
+    get:
+      tags: [Portfolio]
+      parameters:
+        - { $ref: "#/components/parameters/UserId" }
+        - {
+            name: jugadorId,
+            in: query,
+            schema: { type: integer, format: int64 },
+          }
+        - { name: tipo, in: query, schema: { type: string, enum: [BUY, SELL] } }
+        - { name: estado, in: query, schema: { type: string } }
+        - { $ref: "#/components/parameters/From" }
+        - { $ref: "#/components/parameters/To" }
+        - { $ref: "#/components/parameters/Page" }
+        - { $ref: "#/components/parameters/Size" }
+      responses:
+        "200": { $ref: "#/components/responses/TransactionPage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+components:
+  securitySchemes:
+    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+  parameters:
+    PlayerId:
+      {
+        name: id,
+        in: path,
+        required: true,
+        schema: { type: integer, format: int64, minimum: 1 },
+      }
+    UserId:
+      {
+        name: id,
+        in: path,
+        required: true,
+        schema: { type: integer, format: int64, minimum: 1 },
+      }
+    Liga: { name: liga, in: query, schema: { type: string } }
+    Equipo:
+      { name: equipo, in: query, schema: { type: string, maxLength: 100 } }
+    Posicion: { name: posicion, in: query, schema: { type: string } }
+    Activo: { name: activo, in: query, schema: { type: boolean } }
+    Page:
+      {
+        name: page,
+        in: query,
+        schema: { type: integer, minimum: 0, default: 0 },
+      }
+    Size:
+      {
+        name: size,
+        in: query,
+        schema: { type: integer, minimum: 1, maximum: 100, default: 20 },
+      }
+    From:
+      { name: desde, in: query, schema: { type: string, format: date-time } }
+    To: { name: hasta, in: query, schema: { type: string, format: date-time } }
+  schemas:
+    OrderRequest:
+      type: object
+      required: [jugadorId, cantidad]
+      properties:
+        jugadorId: { type: integer, format: int64, minimum: 1 }
+        cantidad: { type: integer, minimum: 1, maximum: 100 }
+    RecalculateRequest:
+      type: object
+      required: [alcance, estrategia, version, idempotencyKey]
+      properties:
+        alcance: { type: string, minLength: 1, maxLength: 100 }
+        estrategia: { type: string, minLength: 1, maxLength: 100 }
+        version: { type: string, minLength: 1, maxLength: 30 }
+        idempotencyKey: { type: string, minLength: 1, maxLength: 100 }
+    ErrorResponse:
+      type: object
+      required: [codigo, mensaje, correlationId]
+      properties:
+        codigo: { type: string }
+        mensaje: { type: string }
+        correlationId: { type: string }
+        detalles: { type: array, items: { type: string } }
+    Player:
+      {
+        type: object,
+        properties:
+          {
+            id: { type: integer, format: int64 },
+            nombre: { type: string },
+            liga: { type: string },
+            equipo: { type: string },
+            posicion: { type: string },
+            activo: { type: boolean },
+            cotizacion: { type: number, format: double },
+          },
+      }
+    Quote:
+      {
+        type: object,
+        properties:
+          {
+            id: { type: integer, format: int64 },
+            fechaCalculo: { type: string, format: date-time },
+            precio: { type: number, format: double },
+            score: { type: number },
+            estrategia: { type: string },
+            version: { type: string },
+            fuente: { type: string },
+            metricas: { type: object, additionalProperties: { type: number } },
+          },
+      }
+    Order:
+      {
+        type: object,
+        properties:
+          {
+            id: { type: integer, format: int64 },
+            estado: { type: string },
+            importeTotal: { type: number },
+            posicionResultante: { type: integer },
+            saldoResultante: { type: number },
+            auditoriaId: { type: integer, format: int64 },
+          },
+      }
+    Portfolio:
+      {
+        type: object,
+        properties:
+          {
+            saldo: { type: number },
+            posiciones: { type: array, items: { type: object } },
+            actualizadoEn: { type: string, format: date-time },
+          },
+      }
+    Recalculation:
+      {
+        type: object,
+        properties:
+          {
+            id: { type: integer, format: int64 },
+            estado: { type: string },
+            correlationId: { type: string },
+          },
+      }
+    PlayerPage: { type: object }
+    QuotePage: { type: object }
+    Ranking: { type: array, items: { type: object } }
+    TransactionPage: { type: object }
+  responses:
+    BadRequest:
+      {
+        description: Request o regla invalida,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+          },
+      }
+    NotFound:
+      {
+        description: Recurso inexistente,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+          },
+      }
+    Conflict:
+      {
+        description: Conflicto de negocio o concurrencia,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+          },
+      }
+    Player:
+      {
+        description: Jugador,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/Player" } },
+          },
+      }
+    PlayerPage:
+      {
+        description: Pagina de jugadores,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/PlayerPage" } },
+          },
+      }
+    QuotePage:
+      {
+        description: Historial de cotizaciones,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/QuotePage" } },
+          },
+      }
+    Ranking:
+      {
+        description: Ranking vigente,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/Ranking" } },
+          },
+      }
+    Recalculation:
+      {
+        description: Recalculo solicitado,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/Recalculation" } },
+          },
+      }
+    Order:
+      {
+        description: Orden liquidada,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/Order" } },
+          },
+      }
+    Portfolio:
+      {
+        description: Portfolio consolidado,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/Portfolio" } },
+          },
+      }
+    TransactionPage:
+      {
+        description: Historial de transacciones,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/TransactionPage" } },
+          },
+      }
