@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report
-- Version change: 1.2.0 -> 1.3.0
+- Version change: 1.4.0 -> 1.4.1
 - Modified principles: PRINCIPLE_1_NAME -> I. Arquitectura; PRINCIPLE_2_NAME -> II. Calidad del Codigo;
   PRINCIPLE_3_NAME -> III. Diseno de la API; PRINCIPLE_4_NAME -> IV. Persistencia de Datos;
   PRINCIPLE_5_NAME -> V. Seguridad; added VI. Frontend, VII. Pruebas and VIII. Documentacion.
@@ -8,7 +8,11 @@ Sync Impact Report
   Observability and Performance, Market Invariants, Code Validation by Layer,
   Definition of Done, and expanded Governance rules.
 - Removed sections: none.
+- Modified principles: I. Arquitectura (explicit package layout)
+- Added sections: Backend package organization
+- Removed sections: none.
 - Follow-up TODOs: Confirm the historical ratification date.
+- Modified conventions: repository implementation naming
 -->
 
 # Mercado de Tokens de Jugadores Constitution
@@ -28,6 +32,39 @@ Model y Persistence (Repositories/Adapters). Las capas MUST estar aisladas y el
 modelo de dominio MUST ser rico: la logica de negocio debe vivir en los objetos del
 modelo, evitando servicios anemicos. Esta separacion permite probar reglas de
 negocio sin depender de infraestructura.
+
+La organizacion de paquetes del backend MUST seguir esta estructura bajo
+`unq.losrecursionistas.backend`:
+
+```text
+model/
+controller/
+└── dto/
+services/
+├── interfaces/
+└── impl/
+persistence/
+└── repository/
+  ├── interfaces/
+  └── impl/
+exceptions/
+configuration/
+security/
+```
+
+Todas las clases de dominio MUST estar en `model`. Todos los controladores MUST
+estar en `controller` y sus DTOs MUST estar dentro de `controller/dto`. Los services
+MUST estar en `services`, separados entre contratos en `services/interfaces` e
+implementaciones en `services/impl`. Los repositories MUST estar en
+`persistence/repository`, separados entre interfaces en `interfaces` e
+implementaciones en `impl`. Las excepciones, configuracion y seguridad MUST estar
+respectivamente en `exceptions`, `configuration` y `security`. No se permiten
+paquetes alternativos por dominio que dupliquen estas responsabilidades.
+
+Las implementaciones concretas MUST usar el nombre de su interfaz seguido por
+`Impl`: por ejemplo, `UsuarioRepositoryImpl`, `JugadorRepositoryImpl`,
+`UsuarioServiceImpl` y `JugadorServiceImpl`. No se deben usar prefijos como
+`InMemory` para ocultar que una clase es la implementacion de un contrato.
 
 ### II. Calidad del Codigo
 
@@ -182,4 +219,4 @@ El versionado usa Semantic Versioning: MAJOR para eliminar o redefinir reglas de
 forma incompatible, MINOR para agregar o ampliar principios o secciones, y PATCH
 para aclaraciones no semanticas, correcciones y mejoras de redaccion.
 
-**Version**: 1.3.0 | **Ratified**: TODO(RATIFICATION_DATE): confirmar fecha de adopcion inicial | **Last Amended**: 2026-09-06
+**Version**: 1.4.1 | **Ratified**: TODO(RATIFICATION_DATE): confirmar fecha de adopcion inicial | **Last Amended**: 2026-09-06

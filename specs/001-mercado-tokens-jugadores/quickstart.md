@@ -22,7 +22,36 @@ Set-Location backend
 .\gradlew.bat test
 ```
 
-El resultado esperado incluye unitarias puras de Model, integracion con PostgreSQL de Testcontainers y MockMvc web en paquetes separados. El test existente `BackendApplicationTests.contextLoads` debe continuar pasando.
+El resultado esperado incluye unitarias puras de Model, pruebas de services y
+MockMvc web en paquetes separados. El test existente
+`BackendApplicationTests.contextLoads` debe continuar pasando.
+
+La ejecucion local usa PostgreSQL en la base `mercadofutbol`, configurada mediante
+`backend/.env`. En este alcance inicial, los repositories de usuarios y jugadores
+son implementaciones en memoria (`UsuarioRepositoryImpl` y
+`JugadorRepositoryImpl`); la persistencia JPA queda preparada para las siguientes
+fases.
+
+## Flujo inicial de usuario y JWT
+
+Crear un usuario y conservar la ApiKey solo en el cliente:
+
+```powershell
+$user = Invoke-RestMethod -Method Post -Uri http://localhost:8080/users `
+	-ContentType 'application/json' -Body '{"username":"ana"}'
+$token = Invoke-RestMethod -Method Post -Uri http://localhost:8080/auth/token `
+	-ContentType 'application/json' -Body (@{ username = 'ana'; apiKey = $user.apiKey } | ConvertTo-Json)
+```
+
+El catálogo es público y debe devolver el header `X-Correlation-Id`:
+
+```powershell
+Invoke-WebRequest -Uri http://localhost:8080/players
+Invoke-WebRequest -Uri http://localhost:8080/v3/api-docs
+```
+
+Los recursos protegidos requieren `Authorization: Bearer <token>`; una ApiKey
+incorrecta responde `401` y no expone la clave almacenada.
 
 ## Validaciones funcionales
 

@@ -193,30 +193,36 @@ specs/001-mercado-tokens-jugadores/
 
 ```text
 backend/src/main/java/unq/losrecursionistas/backend/
-├── config/                 # Security, cache, scheduler, OpenAPI
-├── shared/                 # errores, correlation, paginacion, tiempo
-├── usuario/                # controller, dto, service, model, persistence
-├── jugador/                # controller, dto, service, model, persistence
-├── cotizacion/             # controller, dto, service, model, strategy
-├── mercado/                # orders, portfolio, transaction, audit
-├── integracion/            # whoscored, footballdata, fallback
-└── scheduler/              # jobs y ejecuciones idempotentes
+├── model/                  # todas las clases de dominio
+├── controller/             # todos los controllers
+│   └── dto/                # DTOs de request/response
+├── services/               # todos los services
+│   ├── interfaces/         # contratos de services
+│   └── impl/               # implementaciones de services
+├── persistence/
+│   └── repository/
+│       ├── interfaces/     # contratos de repositories
+│       └── impl/           # implementaciones de repositories
+├── exceptions/             # excepciones y @ControllerAdvice
+├── configuration/          # configuracion Spring, cache, scheduler y OpenAPI
+└── security/               # autenticacion, JWT y autorizacion
 
 backend/src/test/java/unq/losrecursionistas/backend/
-├── model/                  # unitarias puras
-├── integration/            # Testcontainers y servicios/repositorios
+├── model/                  # unitarias puras del dominio
+├── service/                # pruebas de services
 └── web/                    # MockMvc exclusivamente
 
 frontend/
 ├── src/api/                # cliente HTTP y tipos OpenAPI
 ├── src/features/           # catalogo, cotizacion, mercado, portfolio
-└── src/shared/
+└── src/shared/             # utilidades compartidas del frontend
 ```
 
 **Structure Decision**: Se mantiene el backend existente como proyecto Gradle y
-se agrega un frontend independiente en `frontend/`. Los paquetes se organizan por
-modulo de dominio, pero cada modulo respeta las cuatro capas y usa puertos para
-persistencia/adapters.
+se agrega un frontend independiente en `frontend/`. Los paquetes del backend se
+organizan transversalmente por responsabilidad, con interfaces e implementaciones
+separadas para services y repositories. Cada implementacion concreta usa el sufijo
+`Impl`, conforme a la Constitucion v1.4.1.
 
 ## Post-Design Constitution Check
 

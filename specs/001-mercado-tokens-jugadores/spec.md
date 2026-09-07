@@ -6,7 +6,7 @@
 
 **Status**: Draft
 
-**Input**: User description: "Generar la especificacion funcional y tecnica del sistema Mercado de Tokens de Jugadores, alineada con la Constitucion v1.3.0 y con los flujos del mercado, valuacion y API REST requeridos."
+**Input**: User description: "Generar la especificacion funcional y tecnica del sistema Mercado de Tokens de Jugadores, alineada con la Constitucion v1.4.1 y con los flujos del mercado, valuacion y API REST requeridos."
 
 ## 1. Descripcion General y Objetivos de Negocio
 
@@ -161,6 +161,31 @@ La solucion mantiene capas aisladas con el flujo `Controller -> Service -> Model
 - **Persistence**: implementa repositorios, mapeos y adaptadores hacia PostgreSQL, cache y proveedores externos.
 
 Los controladores no contienen logica de negocio. Las dependencias deben apuntar hacia las abstracciones del dominio y cada capa debe poder validarse en el nivel que posee la regla.
+
+La estructura de paquetes del backend debe ser unica y transversal, sin paquetes
+separados por modulo de dominio:
+
+```text
+backend/src/main/java/unq/losrecursionistas/backend/
+├── model/
+├── controller/
+│   └── dto/
+├── services/
+│   ├── interfaces/
+│   └── impl/
+├── persistence/
+│   └── repository/
+│       ├── interfaces/
+│       └── impl/
+├── exceptions/
+├── configuration/
+└── security/
+```
+
+Todas las clases model deben vivir en `model`; los controllers en `controller`; y
+los DTO en `controller/dto`. Los services deben estar juntos en `services`, con sus
+interfaces e implementaciones separadas. Los repositories deben estar en
+`persistence/repository`, tambien separados en interfaces e implementaciones.
 
 ### 4.2 Stack backend y frontend
 
@@ -336,7 +361,7 @@ Como operador autorizado, quiero actualizar catalogo y recalcular cotizaciones p
 
 ## Assumptions
 
-- La especificacion del PDF de negocio no esta disponible en el workspace al momento de redactar este documento; los detalles no presentes se derivan de la Constitucion v1.3.0 y del pedido recibido.
+- La especificacion del PDF de negocio no esta disponible en el workspace al momento de redactar este documento; los detalles no presentes se derivan de la Constitucion v1.4.1 y del pedido recibido.
 - Las cinco ligas objetivo son las indicadas por la Constitucion y el catalogo inicial puede crecer sin cambiar el contrato base.
 - El credito es una unidad simulada, no dinero real, y no se requiere integracion de pagos en esta version.
 - Las cotizaciones tienen una vigencia configurable; si no se configura otra, se considera vigente la ultima cotizacion aprobada del ciclo activo.

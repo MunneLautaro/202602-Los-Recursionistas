@@ -12,7 +12,34 @@ tags:
   - name: Cotizacion
   - name: Mercado
   - name: Portfolio
+  - name: Seguridad
 paths:
+  /users:
+    post:
+      tags: [Seguridad]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AltaUsuarioRequest" }
+      responses:
+        "201": { $ref: "#/components/responses/UserCreated" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+  /auth/token:
+    post:
+      tags: [Seguridad]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TokenRequest" }
+      responses:
+        "200": { $ref: "#/components/responses/Token" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
   /players:
     get:
       tags: [Catalogo]
@@ -183,6 +210,30 @@ components:
       { name: desde, in: query, schema: { type: string, format: date-time } }
     To: { name: hasta, in: query, schema: { type: string, format: date-time } }
   schemas:
+    AltaUsuarioRequest:
+      type: object
+      required: [username]
+      properties:
+        username: { type: string, minLength: 1, maxLength: 80 }
+    AltaUsuarioResponse:
+      type: object
+      required: [id, username, apiKey]
+      properties:
+        id: { type: integer, format: int64 }
+        username: { type: string }
+        apiKey: { type: string }
+    TokenRequest:
+      type: object
+      required: [username, apiKey]
+      properties:
+        username: { type: string }
+        apiKey: { type: string }
+    TokenResponse:
+      type: object
+      required: [token, tipo]
+      properties:
+        token: { type: string }
+        tipo: { type: string, example: Bearer }
     OrderRequest:
       type: object
       required: [jugadorId, cantidad]
@@ -279,6 +330,33 @@ components:
           {
             application/json:
               { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+          },
+      }
+    Unauthorized:
+      {
+        description: Credenciales invalidas,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+          },
+      }
+    UserCreated:
+      {
+        description: Usuario creado,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/AltaUsuarioResponse" } },
+          },
+      }
+    Token:
+      {
+        description: Token JWT,
+        content:
+          {
+            application/json:
+              { schema: { $ref: "#/components/schemas/TokenResponse" } },
           },
       }
     NotFound:
