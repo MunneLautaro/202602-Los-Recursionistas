@@ -1,15 +1,12 @@
 package unq.losrecursionistas.backend.exceptions;
 
-public class DomainException extends RuntimeException {
+import unq.losrecursionistas.backend.exceptions.businessException.BusinessException;
 
-	private final String codigo;
+/** Compatibility base for existing domain exception names. */
+@Deprecated
+public class DomainException extends BusinessException {
 
 	public DomainException(String codigo, String mensaje) {
-		super(mensaje);
-		this.codigo = codigo;
-	}
-
-	public String getCodigo() {
-		return codigo;
+		super(codigo, mensaje);
 	}
 }

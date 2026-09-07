@@ -10,7 +10,7 @@ class JugadorTest {
 
 	@Test
 	void exigeNombreYLiga() {
-		assertThrows(IllegalArgumentException.class,
-				() -> new Jugador(1L, " ", "Equipo", "DELANTERO", null, true, true));
+		Jugador jugador = new Jugador(1L, " ", "Equipo", "DELANTERO", null, true, true);
+		assertThrows(RuntimeException.class, jugador::validarDatosBasicos);
 	}
 }

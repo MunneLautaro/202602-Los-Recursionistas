@@ -12,6 +12,9 @@ import unq.losrecursionistas.backend.controller.dto.AltaUsuarioRequest;
 import unq.losrecursionistas.backend.controller.dto.AltaUsuarioResponse;
 import unq.losrecursionistas.backend.controller.dto.TokenRequest;
 import unq.losrecursionistas.backend.controller.dto.TokenResponse;
+import unq.losrecursionistas.backend.model.ApiKey;
+import unq.losrecursionistas.backend.model.Usuario;
+import unq.losrecursionistas.backend.security.JwtService;
 import unq.losrecursionistas.backend.services.interfaces.UsuarioService;
 
 @RestController
@@ -19,16 +22,24 @@ import unq.losrecursionistas.backend.services.interfaces.UsuarioService;
 public class UsuarioController {
 
 	private final UsuarioService service;
+	private final JwtService jwtService;
 
-	public UsuarioController(UsuarioService service) { this.service = service; }
+	public UsuarioController(UsuarioService service, JwtService jwtService) {
+		this.service = service;
+		this.jwtService = jwtService;
+	}
 
 	@PostMapping("/users")
 	public ResponseEntity<AltaUsuarioResponse> crear(@Valid @RequestBody AltaUsuarioRequest request) {
-		return ResponseEntity.status(HttpStatus.CREATED).body(service.crear(request.username()));
+		ApiKey apiKey = service.crear(request.username());
+		return ResponseEntity.status(HttpStatus.CREATED)
+				.body(new AltaUsuarioResponse(apiKey.getUsuarioId(), request.username().trim(), apiKey.getValor()));
 	}
 
 	@PostMapping("/auth/token")
 	public ResponseEntity<TokenResponse> token(@Valid @RequestBody TokenRequest request) {
-		return ResponseEntity.ok(service.emitirToken(request.username(), request.apiKey()));
+		Usuario usuario = service.autenticar(request.username(), request.apiKey());
+		String rol = usuario.getRoles().stream().findFirst().orElse("USER");
+		return ResponseEntity.ok(new TokenResponse(jwtService.generate(usuario.getUsername(), rol), "Bearer"));
 	}
 }

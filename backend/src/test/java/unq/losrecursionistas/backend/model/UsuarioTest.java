@@ -13,7 +13,7 @@ class UsuarioTest {
 
 	@Test
 	void rechazaSaldoNegativo() {
-		assertThrows(IllegalArgumentException.class,
-				() -> new Usuario(1L, "ana", "hash", new BigDecimal("-1"), true, Set.of("USER")));
+		Usuario usuario = new Usuario(1L, "ana", "hash", new BigDecimal("-1"), true, Set.of("USER"));
+		assertThrows(RuntimeException.class, usuario::validarDatosBasicos);
 	}
 }

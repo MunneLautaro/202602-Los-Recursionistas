@@ -1,11 +1,11 @@
 package unq.losrecursionistas.backend.persistence.repository.interfaces;
 
-import java.util.List;
-import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import unq.losrecursionistas.backend.model.Jugador;
 
 public interface JugadorRepository {
-	List<Jugador> findAll();
-	Optional<Jugador> findById(Long id);
+	Page<Jugador> recuperarJugadores(String liga, String equipo, String posicion, Boolean activo, Pageable pageable);
+	Jugador recuperarPorId(Long id);
 }

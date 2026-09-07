@@ -1,10 +1,10 @@
 package unq.losrecursionistas.backend.services.interfaces;
 
-import unq.losrecursionistas.backend.controller.dto.AltaUsuarioResponse;
-import unq.losrecursionistas.backend.controller.dto.TokenResponse;
+import unq.losrecursionistas.backend.model.ApiKey;
+import unq.losrecursionistas.backend.model.Usuario;
 
 public interface UsuarioService {
-	AltaUsuarioResponse crear(String username);
+	ApiKey crear(String username);
 
-	TokenResponse emitirToken(String username, String apiKey);
+	Usuario autenticar(String username, String apiKey);
 }

@@ -11,7 +11,7 @@ class ApiKeyTest {
 	@Test
 	void conservaSoloLaIdentidadYElValorEntregado() {
 		ApiKey apiKey = new ApiKey(1L, "valor-unico");
-		assertEquals(1L, apiKey.usuarioId());
-		assertEquals("valor-unico", apiKey.valor());
+		assertEquals(1L, apiKey.getUsuarioId());
+		assertEquals("valor-unico", apiKey.getValor());
 	}
 }

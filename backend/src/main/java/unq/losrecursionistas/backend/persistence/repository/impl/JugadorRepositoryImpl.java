@@ -1,31 +1,37 @@
 package unq.losrecursionistas.backend.persistence.repository.impl;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
+import unq.losrecursionistas.backend.exceptions.JugadorNoEncontradoException;
 import unq.losrecursionistas.backend.model.Jugador;
-import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.JugadorRepository;
+import unq.losrecursionistas.backend.persistence.sql.JugadorDAOSQL;
 
 @Repository
 public class JugadorRepositoryImpl implements JugadorRepository {
 
-	private final Map<Long, Jugador> jugadores = new ConcurrentHashMap<>();
+	private final JugadorDAOSQL jugadorDAOSQL;
 
-	public JugadorRepositoryImpl() {
-		Liga premier = new Liga(1L, "Premier League", "PREMIER", true);
-		Liga liga = new Liga(2L, "La Liga", "LA_LIGA", true);
-		jugadores.put(1L, new Jugador(1L, "Jugador Demo", "Equipo Demo", "DELANTERO", premier, true, true));
-		jugadores.put(2L, new Jugador(2L, "Jugador Reserva", "Equipo Demo", "MEDIOCAMPISTA", liga, false, false));
+	public JugadorRepositoryImpl(JugadorDAOSQL jugadorDAOSQL) {
+		this.jugadorDAOSQL = jugadorDAOSQL;
 	}
 
 	@Override
-	public List<Jugador> findAll() { return jugadores.values().stream().toList(); }
+	public Page<Jugador> recuperarJugadores(String liga, String equipo, String posicion,
+			Boolean activo, Pageable pageable) {
+		return jugadorDAOSQL.buscarPorFiltros(normalizar(liga), normalizar(equipo),
+				normalizar(posicion), activo, pageable);
+	}
 
 	@Override
-	public Optional<Jugador> findById(Long id) { return Optional.ofNullable(jugadores.get(id)); }
+	public Jugador recuperarPorId(Long id) {
+		return jugadorDAOSQL.findById(id)
+				.orElseThrow(() -> new JugadorNoEncontradoException(id));
+	}
+
+	private String normalizar(String valor) {
+		return valor == null || valor.isBlank() ? null : valor.trim();
+	}
 }

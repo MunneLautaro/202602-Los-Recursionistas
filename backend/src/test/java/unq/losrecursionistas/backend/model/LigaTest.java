@@ -10,7 +10,7 @@ class LigaTest {
 
 	@Test
 	void normalizaElCodigo() {
-		Liga liga = new Liga(1L, "Premier League", " premier ", true);
-		assertEquals("PREMIER", liga.codigo());
+		Liga liga = new Liga("Premier League", " premier ", true);
+		assertEquals("PREMIER", liga.getCodigo());
 	}
 }

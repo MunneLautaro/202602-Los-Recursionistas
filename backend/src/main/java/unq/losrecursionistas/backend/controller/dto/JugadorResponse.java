@@ -6,7 +6,7 @@ public record JugadorResponse(Long id, String nombre, String liga, String equipo
 		String posicion, boolean activo, boolean disponible) {
 
 	public static JugadorResponse from(Jugador jugador) {
-		return new JugadorResponse(jugador.id(), jugador.nombre(), jugador.liga().nombre(),
-				jugador.equipo(), jugador.posicion(), jugador.activo(), jugador.disponible());
+		return new JugadorResponse(jugador.getId(), jugador.getNombre(), jugador.getLiga().getNombre(),
+				jugador.getEquipo(), jugador.getPosicion(), jugador.isActivo(), jugador.isDisponible());
 	}
 }

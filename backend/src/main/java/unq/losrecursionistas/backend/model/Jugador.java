@@ -2,23 +2,48 @@ package unq.losrecursionistas.backend.model;
 
 import java.util.Objects;
 
-public final class Jugador {
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
-	private final Long id;
-	private final String nombre;
-	private final String equipo;
-	private final String posicion;
-	private final Liga liga;
-	private final boolean activo;
-	private final boolean disponible;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import unq.losrecursionistas.backend.exceptions.DomainException;
 
-	public Jugador(Long id, String nombre, String equipo, String posicion, Liga liga,
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
+@Entity
+@Table(name = "jugadores")
+public class Jugador {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	private String nombre;
+	@Builder.Default
+	private String equipo = "";
+	@Builder.Default
+	private String posicion = "";
+	@ToString.Exclude
+	@ManyToOne(fetch = FetchType.LAZY, optional = false)
+	@JoinColumn(name = "liga_id", nullable = false)
+	private Liga liga;
+	private boolean activo;
+	private boolean disponible;
+
+	public Jugador(String nombre, String equipo, String posicion, Liga liga,
 			boolean activo, boolean disponible) {
-		if (nombre == null || nombre.isBlank() || liga == null) {
-			throw new IllegalArgumentException("El jugador requiere nombre y liga");
-		}
-		this.id = id;
-		this.nombre = nombre.trim();
+		this.nombre = nombre;
 		this.equipo = normalize(equipo);
 		this.posicion = normalize(posicion);
 		this.liga = liga;
@@ -26,14 +51,15 @@ public final class Jugador {
 		this.disponible = disponible;
 	}
 
-	private String normalize(String value) { return value == null ? "" : value.trim(); }
-	public Long id() { return id; }
-	public String nombre() { return nombre; }
-	public String equipo() { return equipo; }
-	public String posicion() { return posicion; }
-	public Liga liga() { return liga; }
-	public boolean activo() { return activo; }
-	public boolean disponible() { return disponible; }
+	private String normalize(String value) {
+		return value == null ? "" : value.trim();
+	}
+
+	public void validarDatosBasicos() {
+		if (nombre == null || nombre.isBlank() || liga == null) {
+			throw new DomainException("JUGADOR_INVALIDO", "El jugador requiere nombre y liga");
+		}
+	}
 
 	@Override
 	public boolean equals(Object object) {

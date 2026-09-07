@@ -2,33 +2,56 @@ package unq.losrecursionistas.backend.model;
 
 import java.util.Objects;
 
-public final class Liga {
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
-	private final Long id;
-	private final String nombre;
-	private final String codigo;
-	private final boolean activa;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-	public Liga(Long id, String nombre, String codigo, boolean activa) {
-		if (nombre == null || nombre.isBlank() || codigo == null || codigo.isBlank()) {
-			throw new IllegalArgumentException("La liga requiere nombre y codigo");
-		}
-		this.id = id;
-		this.nombre = nombre.trim();
-		this.codigo = codigo.trim().toUpperCase();
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+@Builder
+@Entity
+@Table(name = "ligas")
+public class Liga {
+
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	@Column(nullable = false)
+	private String nombre;
+	@Column(nullable = false, unique = true)
+	private String codigo;
+	@Column(nullable = false)
+	private boolean activa;
+
+	public Liga(String nombre, String codigo, boolean activa) {
+		this.nombre = nombre;
+		this.codigo = codigo == null ? null : codigo.trim().toUpperCase();
 		this.activa = activa;
 	}
 
-	public Long id() { return id; }
-	public String nombre() { return nombre; }
-	public String codigo() { return codigo; }
-	public boolean activa() { return activa; }
-
-	@Override
-	public boolean equals(Object object) {
-		return object instanceof Liga other && codigo.equals(other.codigo);
+	public void validarDatosBasicos() {
+		if (nombre == null || nombre.isBlank() || codigo == null || codigo.isBlank()) {
+			throw new unq.losrecursionistas.backend.exceptions.DomainException(
+					"LIGA_INVALIDA", "La liga requiere nombre y codigo");
+		}
 	}
 
 	@Override
-	public int hashCode() { return Objects.hash(codigo); }
+	public boolean equals(Object object) {
+		if (this == object) return true;
+		if (!(object instanceof Liga other)) return false;
+		return Objects.equals(id, other.id);
+	}
+
+	@Override
+	public int hashCode() { return Objects.hash(id); }
 }
