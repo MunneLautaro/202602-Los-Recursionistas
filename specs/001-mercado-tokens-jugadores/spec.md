@@ -147,7 +147,29 @@ Respuestas esperadas: `200`; `400` ante filtros invalidos; `404` si el usuario n
 
 ### 3.6 Manejo global de excepciones
 
-Un `@ControllerAdvice` centraliza la traduccion de errores. Las fallas de validacion de request o de reglas de dominio se responden con `400`; los recursos inexistentes con `404`; y los conflictos de negocio, disponibilidad, saldo, tenencia o concurrencia con `409`. Los errores no controlados se registran con Correlation ID y se exponen mediante una respuesta generica sin detalles sensibles.
+Todas las excepciones personalizadas deben vivir en `exceptions` y las reglas de
+negocio en `exceptions.businessException`, heredando de `BusinessException`.
+Todas deben ser no chequeadas y extender directa o indirectamente de
+`RuntimeException`. Pueden transportar contexto mediante atributos `private final`,
+deben invocar `super(message)` y exponer getters sin setters.
+
+Un record o DTO `ApiError` define la respuesta HTTP unificada. Unicamente
+`GlobalExceptionHandler`, anotado con `@ControllerAdvice` o
+`@RestControllerAdvice`, puede transformar excepciones en respuestas HTTP. Los
+Controllers y Services no deben capturar excepciones para retornar errores
+manualmente. Las fallas de validacion se responden con `400`, los recursos
+inexistentes con `404`, los conflictos de negocio con `409` y los errores no
+controlados con una respuesta segura que conserve el Correlation ID.
+
+### 3.7 Estandar de paginacion
+
+Cualquier consulta de multiples registros, incluyendo listados, busquedas y
+filtros, debe retornar `Page<T>`. Solo se permiten `List<T>` para catalogos fijos
+o enumeraciones acotadas por diseño. El Service debe construir el `Pageable` con
+`PageRequest.of(page, tamano)` y pasarlo al Repository; el Controller debe recibir
+`page` con valor por defecto `0` y mapear entidades a DTOs mediante `Page.map(...)`.
+El Repository debe propagar el `Page<T>` del DAO sin paginar en memoria. El tamaño
+por defecto del MVP es 12.
 
 ## 4. Diseno de Arquitectura Tecnica y Stack
 

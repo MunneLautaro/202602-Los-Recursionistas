@@ -248,7 +248,7 @@ components:
         estrategia: { type: string, minLength: 1, maxLength: 100 }
         version: { type: string, minLength: 1, maxLength: 30 }
         idempotencyKey: { type: string, minLength: 1, maxLength: 100 }
-    ErrorResponse:
+    ApiError:
       type: object
       required: [codigo, mensaje, correlationId]
       properties:
@@ -329,7 +329,7 @@ components:
         content:
           {
             application/json:
-              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              { schema: { $ref: "#/components/schemas/ApiError" } },
           },
       }
     Unauthorized:
@@ -338,7 +338,7 @@ components:
         content:
           {
             application/json:
-              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              { schema: { $ref: "#/components/schemas/ApiError" } },
           },
       }
     UserCreated:
@@ -365,7 +365,7 @@ components:
         content:
           {
             application/json:
-              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              { schema: { $ref: "#/components/schemas/ApiError" } },
           },
       }
     Conflict:
@@ -374,7 +374,7 @@ components:
         content:
           {
             application/json:
-              { schema: { $ref: "#/components/schemas/ErrorResponse" } },
+              { schema: { $ref: "#/components/schemas/ApiError" } },
           },
       }
     Player:

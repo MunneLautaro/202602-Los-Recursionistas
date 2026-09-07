@@ -40,7 +40,9 @@ p95 menor a 2 segundos para compra/venta en la carga de referencia documentada e
 
 **Constraints**: operaciones financieras atomicas; historial y cotizaciones
 inmutables; fallback externo identificable; no modificar tests existentes; no
-usar `any` en frontend; inputs sanitizados; mensajes funcionales en espanol.
+usar `any` en frontend; inputs sanitizados; mensajes funcionales en espanol;
+excepciones no chequeadas con contexto inmutable, `ApiError` y manejo HTTP
+centralizado; consultas multiples paginadas con `Page<T>`.
 
 **Scale/Scope**: cinco ligas objetivo, hasta 100 tokens por jugador, cuatro
 usuarios como escenario minimo de concurrencia y catalogo extensible.
@@ -50,14 +52,29 @@ usuarios como escenario minimo de concurrencia y catalogo extensible.
 _GATE: aprobado antes de Phase 0 y reevaluado despues de Phase 1._
 
 - **Arquitectura**: PASS. El plan conserva Controller -> Service -> Model rico ->
-  Persistence/Adapters y mantiene dependencias hacia puertos.
+  Persistence/Adapters y mantiene dependencias hacia puertos. Todas las clases
+  de `model` deben cumplir las reglas de Lombok, constructores de negocio,
+  igualdad por `id` y encapsulamiento definidas en la Constitucion v1.7.0.
+- **Servicios**: PASS condicionado a corregir las implementaciones existentes.
+  Cada `ServiceImpl` debe usar `@Service`, limites `@Transactional`, constructor
+  explicito, dependencias `private final`, retornos de dominio o `Page<Entidad>`
+  y excepciones semanticas. DTOs, JWT, hashes inline y secuencias en memoria
+  quedan fuera de los servicios de dominio.
 - **Calidad y nombres**: PASS. DTO, Service y Model validan solo lo que conocen;
   nombres de dominio en espanol sin acentos ni `n`; errores y documentacion en
   espanol.
 - **API**: PASS. OpenAPI precede implementacion, controllers sin logica de
-  negocio y `@ControllerAdvice` para `400/404/409`.
+  negocio y `GlobalExceptionHandler` para `400/404/409`. Las excepciones son no
+  chequeadas, semanticas y con contexto inmutable; `ApiError` unifica las
+  respuestas HTTP y no se capturan errores en controllers o services.
+- **Paginacion**: PASS. Toda consulta de multiples registros retorna `Page<T>`;
+  el Service crea `PageRequest.of(page, tamano)`, el Controller recibe `page` por
+  defecto 0 y usa `Page.map(...)`, y el Repository delega el `Page<T>` del DAO.
 - **Persistencia**: PASS. PostgreSQL, cache in-memory, fallback y registros
-  historicos inmutables estan contemplados.
+  historicos inmutables estan contemplados. `UsuarioRepositoryImpl` y
+  `JugadorRepositoryImpl` delegan en DAOs SQL/JPA inyectados por constructor, no
+  mantienen estado en memoria, desenvuelven `Optional` con `orElseThrow` y
+  exponen nombres semanticos en espanol.
 - **Seguridad/observabilidad**: PASS. Spring Security, sanitizacion, auditoria,
   logs estructurados, Correlation ID, health checks y metricas son entregables.
 - **Frontend**: PASS. Vite/React/TypeScript estricto y cliente HTTP unico.
@@ -95,14 +112,26 @@ escribiendo primero los tests de la capacidad o en paralelo con su implementacio
    `Portfolio`, `Posicion`, `Transaccion`, `AuditoriaFinanciera` y estrategias.
 2. Implementar entidades ricas con nombres en espanol sin acentos ni `n` donde
    corresponda; `TokenOrder` y `PlayerQuoteService` conservan los nombres
-   tecnicos exigidos por el contrato.
-3. Encapsular invariantes: cantidades positivas, saldo no negativo, maximo 100
+   tecnicos exigidos por el contrato. Cada modelo MUST usar `@NoArgsConstructor`,
+   `@AllArgsConstructor`, `@Data` y `@Builder`, sin clases/campos `final` ni
+   getters estilo record.
+3. Definir en cada entidad un constructor publico sin `id` ni campos
+   autogenerados, inicializar sus colecciones o relaciones por defecto y usar
+   `@Builder.Default` cuando el valor por defecto tambien deba aplicar al
+   builder. Excluir relaciones ciclicas de `toString` con `@ToString.Exclude`.
+4. Sobrescribir `equals` y `hashCode` usando solamente `id`, mediante
+   `Objects.equals(id, o.id)` y `Objects.hash(id)`.
+5. Encapsular invariantes: cantidades positivas, saldo no negativo, maximo 100
    tokens globales por jugador, precio/importe consistentes, estados validos,
    historial inmutable y transiciones atomicas.
-4. Implementar score reproducible con dos estrategias configurables, pesos,
+6. Implementar score reproducible con dos estrategias configurables, pesos,
    version, redondeo monetario y fuente. Las unitarias cubren casos borde y no
    cargan contexto de Spring ni base de datos.
-5. Verificar DoD de la fase: invariantes, errores propios del dominio y cobertura
+7. Mantener las validaciones de estado y mutaciones en metodos del modelo, sin
+   validaciones de primitivos ni `IllegalArgumentException` en constructores;
+   lanzar excepciones especificas de dominio desde las operaciones que
+   corresponda.
+8. Verificar DoD de la fase: invariantes, errores propios del dominio y cobertura
    de casos felices, limites e inmutabilidad.
 
 ### Fase 2: Persistencia, Caching e Integracion Externa (Persistence & Adapters)
@@ -112,6 +141,10 @@ escribiendo primero los tests de la capacidad o en paralelo con su implementacio
 2. Implementar entidades JPA, mapeos y repositorios por puertos, con indices
    justificados sobre jugador/estado, cotizacion/jugador/fecha, posiciones por
    usuario-jugador, transacciones por usuario-fecha y auditoria por correlation.
+   Cada `RepositoryImpl` debe implementar su interfaz, usar `@Repository` o
+   `@Component`, delegar exclusivamente en el DAO recibido por constructor, no
+   usar mocks ni almacenamiento en memoria, desenvolver `Optional` con
+   `orElseThrow` y ocultar `findById`/`save`/`findAll` detrás de nombres de dominio.
 3. Implementar adapters de WhoScored y Football-Data.org con timeout,
    normalizacion, respuesta parcial y errores tipados.
 4. Escribir pruebas de cache/fallback para hit, miss, timeout, proveedor caido,
@@ -136,7 +169,13 @@ escribiendo primero los tests de la capacidad o en paralelo con su implementacio
 5. Implementar auditoria inmutable con autor, Correlation ID, timestamp, detalle,
    estrategia/version y estados previo/posterior; probar reconstruccion de los
    escenarios con cuatro usuarios.
-6. Verificar DoD de services con Testcontainers: rollback, concurrencia,
+6. Aplicar las reglas de `services.impl`: `@Service` y `@Transactional`,
+   constructor explicito, dependencias `private final`, retornos exclusivos de
+   dominio o `Page<Entidad>`, builders en auxiliares privados, repositorios como
+   unica delegacion de persistencia, paginacion con `PageRequest.of(page, 12)` y
+   excepciones semanticas especificas. La transformacion a DTO y la emision de
+   JWT deben permanecer en controllers o fachadas de seguridad.
+7. Verificar DoD de services con Testcontainers: rollback, concurrencia,
    idempotencia, proveedor fallido, saldo/disponibilidad/tenencia insuficientes.
 
 ### Fase 4: Capa Web, API REST y Seguridad (Controller Layer)
@@ -147,8 +186,10 @@ escribiendo primero los tests de la capacidad o en paralelo con su implementacio
 2. Implementar DTOs Request/Response y controllers exactamente según
    [contracts/openapi.yaml](contracts/openapi.yaml), con la identidad del usuario
    tomada del principal autenticado en operaciones protegidas.
-3. Implementar `@ControllerAdvice` para validacion/dominio `400`, inexistencia
-   `404`, conflictos `409` y fallback generico seguro; documentar cada respuesta.
+3. Implementar `ApiError` y `GlobalExceptionHandler` con `@ControllerAdvice` para
+   validacion/dominio `400`, inexistencia `404`, conflictos `409` y fallback
+   generico seguro; documentar cada respuesta. Prohibir capturas manuales en
+   controllers y services.
 4. Configurar Spring Security, roles de usuario y operador, protegiendo compra,
    venta, recalculo y actualizacion de datos.
 5. Verificar todos los endpoints de catalogo, cotizaciones, ranking, ordenes,
@@ -174,6 +215,27 @@ escribiendo primero los tests de la capacidad o en paralelo con su implementacio
    operativa de compra/venta y portfolio con ganancias/perdidas e historial.
 4. Verificar responsividad, accesibilidad basica, ausencia de errores de consola,
    tipos sincronizados y que no existan llamadas HTTP fuera del cliente central.
+
+### Fase 7: Convergencia de excepciones y paginacion
+
+Esta fase corrige las diferencias entre la implementacion existente y las reglas
+constitucionales actualizadas. El codigo actual usa `ErrorResponse` y
+`DomainException`, mientras que el contrato exige `ApiError`, excepciones de
+negocio bajo `exceptions.businessException` y una jerarquia no chequeada con
+contexto inmutable. Tambien debe evitarse materializar el contenido de un
+`Page<T>` en una `List` dentro del Controller cuando se convierten entidades a
+DTOs.
+
+1. Crear `BusinessException` y migrar las excepciones de negocio al subpaquete
+   `exceptions.businessException`, conservando `super(message)`, atributos
+   `private final` y getters explícitos.
+2. Reemplazar `ErrorResponse` por `ApiError` y ajustar exclusivamente
+   `GlobalExceptionHandler` para transformar excepciones en respuestas HTTP.
+3. Revisar Controllers y Services para que propaguen excepciones semánticas sin
+   capturas manuales destinadas a construir respuestas HTTP.
+4. Garantizar que las consultas de múltiples registros retornen `Page<T>`, que el
+   Service construya el `Pageable`, que el Controller use `Page.map(...)` y que el
+   Repository preserve la paginación del DAO.
 
 ## Project Structure
 
@@ -203,7 +265,7 @@ backend/src/main/java/unq/losrecursionistas/backend/
 │   └── repository/
 │       ├── interfaces/     # contratos de repositories
 │       └── impl/           # implementaciones de repositories
-├── exceptions/             # excepciones y @ControllerAdvice
+├── exceptions/             # excepciones, ApiError y @ControllerAdvice
 ├── configuration/          # configuracion Spring, cache, scheduler y OpenAPI
 └── security/               # autenticacion, JWT y autorizacion
 
@@ -222,17 +284,24 @@ frontend/
 se agrega un frontend independiente en `frontend/`. Los paquetes del backend se
 organizan transversalmente por responsabilidad, con interfaces e implementaciones
 separadas para services y repositories. Cada implementacion concreta usa el sufijo
-`Impl`, conforme a la Constitucion v1.4.1.
+`Impl`, conforme a la Constitucion v1.7.0.
 
 ## Post-Design Constitution Check
 
 - **PASS**: el modelo rico no depende de Spring/JPA; services coordinan y
-  controllers solo transportan.
+  controllers solo transportan. Sus clases cumplen la estructura Lombok,
+  constructores, igualdad por identidad y encapsulamiento exigidos por la
+  Constitucion v1.7.0, incluida la estructura obligatoria de `ServiceImpl`.
 - **PASS**: los contratos OpenAPI y DTOs quedan definidos antes de endpoints.
 - **PASS**: pruebas puras, Testcontainers y MockMvc tienen paquetes y objetivos
   separados; `BackendApplicationTests` queda protegido.
-- **PASS**: PostgreSQL, cache, seguridad, auditoria, observabilidad y frontend
-  estan incluidos en entregables verificables.
+- **PASS condicionado**: PostgreSQL, cache, seguridad, auditoria, observabilidad y frontend
+  estan incluidos en entregables verificables; la persistencia usa DAOs SQL/JPA,
+  contratos semanticos y pruebas de integracion. La prueba Testcontainers se omite
+  unicamente cuando Docker no esta disponible.
+- **PENDIENTE**: la implementacion debe completar la Fase 7 para que el codigo
+  existente cumpla la jerarquia de excepciones, `ApiError`, el manejo global y la
+  paginacion `Page<T>` definidos en este plan.
 - **PASS**: las decisiones de vigencia UTC, precision, identidad autenticada,
   venta al inventario financiero, idempotencia y carga de referencia estan
   registradas en `research.md`.

@@ -1,6 +1,6 @@
 <!--
-Sync Impact Report
-- Version change: 1.4.0 -> 1.4.1
+ Sync Impact Report
+- Version change: 1.6.0 -> 1.7.0
 - Modified principles: PRINCIPLE_1_NAME -> I. Arquitectura; PRINCIPLE_2_NAME -> II. Calidad del Codigo;
   PRINCIPLE_3_NAME -> III. Diseno de la API; PRINCIPLE_4_NAME -> IV. Persistencia de Datos;
   PRINCIPLE_5_NAME -> V. Seguridad; added VI. Frontend, VII. Pruebas and VIII. Documentacion.
@@ -8,11 +8,20 @@ Sync Impact Report
   Observability and Performance, Market Invariants, Code Validation by Layer,
   Definition of Done, and expanded Governance rules.
 - Removed sections: none.
-- Modified principles: I. Arquitectura (explicit package layout)
+- Modified principles: I. Arquitectura (explicit package layout and domain model
+  structure rules)
 - Added sections: Backend package organization
 - Removed sections: none.
 - Follow-up TODOs: Confirm the historical ratification date.
 - Modified conventions: repository implementation naming
+- Added conventions: Lombok annotations, explicit business constructors,
+  identity-based equality and encapsulated domain behavior for model classes
+- Added conventions: ServiceImpl structure, transactional boundaries, domain-only
+  returns, repository delegation, pagination and semantic business exceptions
+- Added conventions: RepositoryImpl structure, DAO delegation, direct Optional
+  unwrapping, semantic Spanish repository methods and prohibition of in-memory state
+- Added conventions: exception hierarchy, immutable exception context, ApiError and
+  centralized GlobalExceptionHandler; generalized Page<T> pagination contract
 -->
 
 # Mercado de Tokens de Jugadores Constitution
@@ -65,6 +74,120 @@ Las implementaciones concretas MUST usar el nombre de su interfaz seguido por
 `Impl`: por ejemplo, `UsuarioRepositoryImpl`, `JugadorRepositoryImpl`,
 `UsuarioServiceImpl` y `JugadorServiceImpl`. No se deben usar prefijos como
 `InMemory` para ocultar que una clase es la implementacion de un contrato.
+
+#### Reglas de Estructura y Diseno para los Modelos de Dominio
+
+Al crear o modificar cualquier clase dentro de `model`, se MUST cumplir lo
+siguiente:
+
+- Cada clase de dominio MUST incluir `@NoArgsConstructor`, `@AllArgsConstructor`,
+  `@Data` y `@Builder`. No se permiten clases `final`, campos `final` ni getters
+  estilo record; se deben usar getters y setters tradicionales generados por
+  `@Data`.
+- Las relaciones que puedan generar ciclos en `toString` MUST marcarse con
+  `@ToString.Exclude`. Los campos con valores por defecto usados por `@Builder`
+  MUST marcarse con `@Builder.Default`.
+- Además del constructor generado por `@AllArgsConstructor`, cada entidad MUST
+  definir un constructor público explícito sin `id` ni campos autogenerados. Ese
+  constructor MUST inicializar las colecciones y relaciones que tengan un valor
+  inicial de dominio.
+- `equals` y `hashCode` MUST sobrescribirse usando únicamente la identidad de la
+  entidad: `Objects.equals(id, o.id)` y `Objects.hash(id)`, respectivamente.
+- El modelo MUST ser rico y encapsulado: las reglas de negocio, validaciones de
+  estado y mutaciones deben vivir en métodos del propio modelo, con excepciones
+  de dominio específicas cuando corresponda. Los constructores no deben validar
+  primitivos ni lanzar `IllegalArgumentException` por esas validaciones.
+
+Estas reglas hacen uniforme el ciclo de vida de las entidades, evitan ciclos de
+representacion y mantienen la identidad y las invariantes dentro del dominio.
+
+#### Reglas de Estructura y Diseno para la Capa de Servicio (`services.impl`)
+
+Al crear o modificar cualquier implementacion `ServiceImpl`, se MUST cumplir lo
+siguiente:
+
+- La clase MUST usar `@Service` y declarar `@Transactional` a nivel de clase o
+  de metodo cuando corresponda. Las dependencias MUST inyectarse explicitamente
+  por constructor y todos sus atributos MUST ser `private final`; no se permite
+  `@Autowired` sobre campos ni `@RequiredArgsConstructor`.
+- Los servicios de dominio MUST retornar solamente entidades de dominio o
+  `Page<Entidad>`. No pueden retornar DTOs de response, generar JWTs ni contener
+  logica de presentacion. El mapeo a DTO pertenece al Controller y la emision de
+  JWT a la fachada o componente de seguridad correspondiente.
+- La construccion compleja de entidades MUST extraerse a metodos privados
+  auxiliares y usar builders expresivos (`.builder()...build()`).
+- Los servicios MUST delegar la persistencia en repositorios mediante metodos
+  descriptivos. No deben contener hashes criptograficos inline, `AtomicLong` ni
+  logica ajena al caso de uso.
+- Para resultados paginados, el servicio MUST construir al inicio del metodo un
+  `Pageable` con `PageRequest.of(page, 12)` y pasarlo al repositorio.
+- Las reglas de negocio MUST informar fallas mediante excepciones semanticas y
+  especificas, como `EmailYaExisteException`; no se deben usar excepciones
+  genericas ni codigos estaticos encapsulados en `DomainException`.
+
+Estas reglas mantienen los limites transaccionales y de responsabilidad visibles,
+permiten probar los casos de uso sin mezclar presentacion o seguridad.
+
+#### Reglas de Estructura y Diseno para la Capa de Excepciones (`exceptions`)
+
+Al crear o modificar excepciones y respuestas de error, se MUST cumplir lo
+siguiente:
+
+- Todas las excepciones personalizadas MUST residir en el paquete base
+  `exceptions`. Las excepciones de reglas de negocio MUST agruparse en
+  `exceptions.businessException` y heredar de `BusinessException`.
+- Todas las excepciones personalizadas MUST ser no chequeadas y extender directa o
+  indirectamente de `RuntimeException`.
+- Las excepciones pueden transportar contexto en atributos `private final` (por
+  ejemplo, `product`, `entityName` o `id`). Sus constructores MUST invocar
+  `super(message)` y deben proveer getters explícitos, sin setters ni estado mutable.
+- MUST existir un record o DTO `ApiError` para encapsular la respuesta HTTP de
+  error unificada. Toda transformación de excepciones a respuestas HTTP MUST
+  centralizarse exclusivamente en `GlobalExceptionHandler`, anotado con
+  `@ControllerAdvice` o `@RestControllerAdvice`.
+- Los Controllers y Services tienen PROHIBIDO capturar excepciones para construir
+  manualmente respuestas de error. Deben propagar las excepciones semánticas al
+  handler global.
+
+#### Estándar de Paginación (`Page<T>`)
+
+- Toda consulta que devuelva múltiples registros (listados, búsquedas o filtros)
+  MUST retornar `Page<T>`. Se PROHIBE retornar `List<T>`, excepto para catálogos
+  fijos o enumeraciones acotadas por diseño.
+- El Service MUST crear el `Pageable` mediante `PageRequest.of(page, tamano)` y
+  pasarlo al Repository. La implementación MUST definir y aplicar un tamaño
+  acotado por configuración o contrato; el tamaño por defecto del MVP es 12.
+- El Controller MUST recibir `page` con valor por defecto 0, invocar al Service y
+  mapear el resultado con `Page.map(...)` cuando deba convertir entidades a DTOs.
+- El Repository MUST propagar el `Page<T>` desde el DAO, sin materializarlo en
+  listas ni paginar en memoria.
+
+#### Reglas de Estructura y Diseno para la Capa de Persistencia (`persistence.repository`)
+
+Al crear o modificar cualquier implementacion `RepositoryImpl`, se MUST cumplir lo
+siguiente:
+
+- La clase MUST implementar la interfaz `Repository` correspondiente, estar anotada
+  con `@Component` o `@Repository` e inyectar mediante constructor explicito el DAO
+  de Spring Data JPA/SQL correspondiente en un atributo `private final` (por ejemplo,
+  `EntidadDAOSQL entidadDAOSQL`). El repository MUST delegar en ese DAO el acceso a
+  datos.
+- Queda PROHIBIDO mantener estado persistente en colecciones en memoria, incluyendo
+  `ConcurrentHashMap`, `List` o `Map`, instanciar datos mock o hardcoded en el
+  constructor, usar secuencias locales como `AtomicLong` o simular estados. La
+  persistencia MUST resolverse mediante los DAOs o APIs correspondientes.
+- Los métodos MUST retornar directamente entidades de dominio o `Page<Entidad>`.
+  No deben exponer `Optional<T>`, salvo que el flujo de negocio lo requiera
+  explicitamente. Las consultas por ID o campo unico sin resultado MUST usar
+  `.orElseThrow(...)` con una excepcion descriptiva y especifica, como
+  `EntityNotFoundException`.
+- La interfaz y la implementacion MUST exponer nombres semanticos en espanol para
+  el dominio, como `recuperarPorId`, `guardar`, `estaRegistradoElEmail` y
+  `recuperarUsuarios`, ocultando la nomenclatura de Spring Data (`findById`, `save`,
+  `findAll`) en los limites internos del DAO.
+
+Esta separacion evita repositories falsamente persistentes, concentra el acceso a
+la base en el DAO y mantiene los contratos de dominio independientes de Spring Data.
 
 ### II. Calidad del Codigo
 
@@ -219,4 +342,4 @@ El versionado usa Semantic Versioning: MAJOR para eliminar o redefinir reglas de
 forma incompatible, MINOR para agregar o ampliar principios o secciones, y PATCH
 para aclaraciones no semanticas, correcciones y mejoras de redaccion.
 
-**Version**: 1.4.1 | **Ratified**: TODO(RATIFICATION_DATE): confirmar fecha de adopcion inicial | **Last Amended**: 2026-09-06
+**Version**: 1.7.0 | **Ratified**: TODO(RATIFICATION_DATE): confirmar fecha de adopcion inicial | **Last Amended**: 2026-09-07

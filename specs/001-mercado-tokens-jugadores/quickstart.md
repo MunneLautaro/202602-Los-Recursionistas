@@ -27,10 +27,9 @@ MockMvc web en paquetes separados. El test existente
 `BackendApplicationTests.contextLoads` debe continuar pasando.
 
 La ejecucion local usa PostgreSQL en la base `mercadofutbol`, configurada mediante
-`backend/.env`. En este alcance inicial, los repositories de usuarios y jugadores
-son implementaciones en memoria (`UsuarioRepositoryImpl` y
-`JugadorRepositoryImpl`); la persistencia JPA queda preparada para las siguientes
-fases.
+`backend/.env`. Los repositories de usuarios y jugadores delegan en DAOs Spring
+Data JPA y no mantienen estado en memoria. La prueba rapida usa H2; la prueba de
+integracion PostgreSQL se ejecuta con Testcontainers cuando Docker esta disponible.
 
 ## Flujo inicial de usuario y JWT
 
