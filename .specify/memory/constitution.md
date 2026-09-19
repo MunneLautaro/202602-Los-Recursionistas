@@ -1,8 +1,20 @@
+<!-- Sync Impact Report
+Version change: 1.2.0 -> 1.3.0
+Modified principles: Principle III - service contracts
+Added sections: none
+Removed sections: none
+Follow-up TODOs: none
+-->
+
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 1.2.0
+**Versión:** 1.3.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-09-16
+**Última modificación:** 2026-09-19
+
+**Resumen del cambio 1.3.0:** Se establece que cada servicio implementa su
+interfaz específica y que la reutilización entre servicios debe resolverse por
+composición, sin herencia de una clase base genérica.
 
 **Resumen del cambio 1.2.0:** Se fija la regla de usar una sola
 `application.properties` para este proyecto y evitar perfiles separados salvo
@@ -80,6 +92,10 @@ depende de detalles de implementación de otra capa (por ejemplo, el
   JWT es responsabilidad de la fachada/componente de `security`.
 - Los servicios se definen mediante interfaz (`service/interfaces`) y su
   implementación (`service/impl`).
+- Cada implementación de servicio MUST implementar su propia interfaz de caso
+  de uso. Las implementaciones MUST NOT extender una clase base genérica de
+  servicios únicamente para reutilizar operaciones comunes; esa reutilización
+  MUST resolverse por composición cuando sea necesaria.
 
 ---
 
