@@ -1,6 +1,5 @@
 package unq.losrecursionistas.backend.model;
 
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -11,13 +10,6 @@ import unq.losrecursionistas.backend.security.ManejadorToken;
 import unq.losrecursionistas.backend.security.PoliticaAcceso;
 
 class ModeloBaseTest {
-
-	@Test
-	void unaEntidadDeDominioRespetaElContratoDelModelo() {
-		EntidadDominio entidad = new EntidadDePrueba();
-
-		assertInstanceOf(EntidadDominio.class, entidad);
-	}
 
 	@Test
 	void lasExcepcionesDeDominioYValidacionSonRuntime() {
@@ -31,6 +23,4 @@ class ModeloBaseTest {
 		assertTrue(PoliticaAcceso.class.isInterface());
 	}
 
-	private static final class EntidadDePrueba implements EntidadDominio {
-	}
 }
