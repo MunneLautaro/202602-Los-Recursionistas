@@ -15,6 +15,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
 import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
@@ -32,6 +37,11 @@ public class AutenticacionController {
 		this.jwtService = jwtService;
 	}
 
+	@Operation(summary = "Iniciar sesion y obtener JWT", description = "Autentica a un usuario registrado y devuelve un token JWT valido por una hora.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "Credenciales validas", content = @Content(mediaType = "application/json", schema = @Schema(implementation = RespuestaTokenDto.class))),
+		@ApiResponse(responseCode = "401", description = "Credenciales invalidas o incompletas", content = @Content(mediaType = "application/json"))
+	})
 	@PostMapping("/login")
 	public ResponseEntity<RespuestaTokenDto> login(@Valid @RequestBody CredencialesLoginDto credenciales) {
 		var autenticacion = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(

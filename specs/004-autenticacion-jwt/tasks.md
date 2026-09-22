@@ -80,15 +80,15 @@ description: "Tareas de implementacion de autenticacion JWT"
 
 ### Tests de la Historia de Usuario 3
 
-- [ ] T023 [P] [US3] Crear pruebas unitarias de handlers en `backend/src/test/java/unq/losrecursionistas/backend/security/JwtHandlersTest.java` para JSON `{error,message}`, status 401/403, `Content-Type` y ausencia de token, secreto, contrasena y stack trace.
-- [ ] T024 [P] [US3] Crear pruebas MockMvc de rutas publicas y autorizacion en `backend/src/test/java/unq/losrecursionistas/backend/security/RutasSeguridadTest.java` para todas las rutas publicas, Bearer invalido opcional, 401 privado, 403 sin autoridad y ausencia de sesion entre solicitudes.
+- [x] T023 [P] [US3] Crear pruebas unitarias de handlers en `backend/src/test/java/unq/losrecursionistas/backend/security/JwtHandlersTest.java` para JSON `{error,message}`, status 401/403, `Content-Type` y ausencia de token, secreto, contrasena y stack trace.
+- [x] T024 [P] [US3] Crear pruebas MockMvc de rutas publicas y autorizacion en `backend/src/test/java/unq/losrecursionistas/backend/security/RutasSeguridadTest.java` para todas las rutas publicas, Bearer invalido opcional, 401 privado, 403 sin autoridad y ausencia de sesion entre solicitudes.
 
 ### Implementacion de la Historia de Usuario 3
 
 - [x] T025 [P] [US3] Implementar `JwtAuthenticationEntryPoint` en `backend/src/main/java/unq/losrecursionistas/backend/security/handlers/JwtAuthenticationEntryPoint.java` con HTTP 401 y JSON simple `{error,message}` sin datos sensibles.
-- [ ] T026 [P] [US3] Implementar `JwtAccessDeniedHandler` en `backend/src/main/java/unq/losrecursionistas/backend/security/handlers/JwtAccessDeniedHandler.java` con HTTP 403 y JSON diferenciado `{error: forbidden, message: ...}` sin datos sensibles.
-- [ ] T027 [US3] Configurar ambos handlers y los matchers `permitAll` para `/auth/**`, `/login`, `/public/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`, `/v3/api-docs` y `/actuator/health` en `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java`.
-- [ ] T028 [US3] Configurar una autoridad restringida solo para la fixture de pruebas en `backend/src/test/java/unq/losrecursionistas/backend/security/SeguridadTestConfig.java` y verificar 403 para identidades autenticadas sin permiso, sin agregar roles de negocio al modelo productivo.
+- [x] T026 [P] [US3] Implementar `JwtAccessDeniedHandler` en `backend/src/main/java/unq/losrecursionistas/backend/security/handlers/JwtAccessDeniedHandler.java` con HTTP 403 y JSON diferenciado `{error: forbidden, message: ...}` sin datos sensibles.
+- [x] T027 [US3] Configurar ambos handlers y los matchers `permitAll` para `/auth/**`, `/login`, `/public/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**`, `/v3/api-docs` y `/actuator/health` en `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java`.
+- [x] T028 [US3] Configurar una autoridad restringida solo para la fixture de pruebas en `backend/src/test/java/unq/losrecursionistas/backend/security/SeguridadTestConfig.java` y verificar 403 para identidades autenticadas sin permiso, sin agregar roles de negocio al modelo productivo.
 
 **Checkpoint**: la Historia de Usuario 3 queda demostrable con rutas publicas, 401/403 diferenciados y estado stateless.
 
@@ -96,10 +96,10 @@ description: "Tareas de implementacion de autenticacion JWT"
 
 **Objetivo**: completar validacion, documentacion y controles de seguridad sin ampliar el alcance.
 
-- [ ] T029 [P] Actualizar la documentacion OpenAPI del login y sus respuestas en `backend/src/main/java/unq/losrecursionistas/backend/controller/AutenticacionController.java`, sin documentar secretos ni tokens completos.
-- [ ] T030 Revisar `backend/src/main/java/unq/losrecursionistas/backend/security/`, `backend/src/main/java/unq/losrecursionistas/backend/service/` y `backend/src/main/java/unq/losrecursionistas/backend/persistence/` para confirmar que no exista generacion, validacion o asociacion de ApiKey, que los DAOs solo contengan acceso a datos y que todos los identificadores nuevos sean ASCII.
-- [ ] T031 Ejecutar `backend/gradlew.bat clean test` y corregir solo regresiones de esta feature, preservando los tests existentes.
-- [ ] T032 Ejecutar los escenarios de `specs/004-autenticacion-jwt/quickstart.md` con H2 y revisar que las respuestas 401/403 no incluyan secretos, credenciales, tokens completos ni trazas.
+- [x] T029 [P] Actualizar la documentacion OpenAPI del login y sus respuestas en `backend/src/main/java/unq/losrecursionistas/backend/controller/AutenticacionController.java`, sin documentar secretos ni tokens completos.
+- [x] T030 Revisar `backend/src/main/java/unq/losrecursionistas/backend/security/`, `backend/src/main/java/unq/losrecursionistas/backend/service/` y `backend/src/main/java/unq/losrecursionistas/backend/persistence/` para confirmar que no exista generacion, validacion o asociacion de ApiKey, que los DAOs solo contengan acceso a datos y que todos los identificadores nuevos sean ASCII.
+- [x] T031 Ejecutar `backend/gradlew.bat clean test` y corregir solo regresiones de esta feature, preservando los tests existentes.
+- [x] T032 Ejecutar los escenarios de `specs/004-autenticacion-jwt/quickstart.md` con H2 y revisar que las respuestas 401/403 no incluyan secretos, credenciales, tokens completos ni trazas.
 
 ## Dependencias y orden de ejecucion
 
