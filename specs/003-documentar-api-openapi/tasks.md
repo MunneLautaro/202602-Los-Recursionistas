@@ -20,9 +20,9 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 **Objetivo**: Preparar dependencias y verificar la superficie actual antes de implementar.
 
-- [ ] T001 Agregar `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1` y `org.springframework.boot:spring-boot-starter-actuator` en `backend/build.gradle`, sin introducir un starter de documentacion alternativo.
-- [ ] T002 [P] Inventariar `@RestController`, `@Controller` con `@ResponseBody`, mappings y DTOs en `backend/src/main/java/unq/losrecursionistas/backend/` y registrar el resultado en `specs/003-documentar-api-openapi/research.md` sin crear endpoints nuevos.
-- [ ] T003 [P] Verificar que no existan propiedades de perfiles ni archivos `application-*.properties` adicionales bajo `backend/src/main/resources/`, preservando unicamente `backend/src/main/resources/application.properties`.
+- [x] T001 Agregar `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1` y `org.springframework.boot:spring-boot-starter-actuator` en `backend/build.gradle`, sin introducir un starter de documentacion alternativo.
+- [x] T002 [P] Inventariar `@RestController`, `@Controller` con `@ResponseBody`, mappings y DTOs en `backend/src/main/java/unq/losrecursionistas/backend/` y registrar el resultado en `specs/003-documentar-api-openapi/research.md` sin crear endpoints nuevos.
+- [x] T003 [P] Verificar que no existan propiedades de perfiles ni archivos `application-*.properties` adicionales bajo `backend/src/main/resources/`, preservando unicamente `backend/src/main/resources/application.properties`.
 
 ---
 
@@ -30,10 +30,10 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 **Objetivo**: Configurar la base compartida de OpenAPI, Actuator y seguridad antes de completar las historias.
 
-- [ ] T004 Crear el bean de metadatos `OpenAPI` con titulo, version y descripcion en espanol tecnico dentro de `backend/src/main/java/unq/losrecursionistas/backend/configuration/ConfiguracionOpenApi.java`, sin agregar `SecurityScheme` bearer/JWT ni flujo `Authorize`.
-- [ ] T005 Agregar unicamente las propiedades necesarias para `springdoc.show-actuator=true` y `management.endpoints.web.exposure.include=health` en `backend/src/main/resources/application.properties`, manteniendo ocultos los detalles sensibles de health por defecto.
-- [ ] T006 Actualizar `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java` para declarar `permitAll` explicito en `/swagger-ui.html`, `/swagger-ui/**`, `/v3/api-docs`, `/v3/api-docs/**` y `/actuator/health`, sin relajar adicionalmente las demas rutas.
-- [ ] T007 [P] Crear la base de pruebas HTTP en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` con MockMvc y configuracion de contexto compatible con H2, sin modificar ni eliminar `BackendApplicationTests.java`.
+- [x] T004 Crear el bean de metadatos `OpenAPI` con titulo, version y descripcion en espanol tecnico dentro de `backend/src/main/java/unq/losrecursionistas/backend/configuration/ConfiguracionOpenApi.java`, sin agregar `SecurityScheme` bearer/JWT ni flujo `Authorize`.
+- [x] T005 Agregar unicamente las propiedades necesarias para `springdoc.show-actuator=true` y `management.endpoints.web.exposure.include=health` en `backend/src/main/resources/application.properties`, manteniendo ocultos los detalles sensibles de health por defecto.
+- [x] T006 Actualizar `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java` para declarar `permitAll` explicito en `/swagger-ui.html`, `/swagger-ui/**`, `/v3/api-docs`, `/v3/api-docs/**` y `/actuator/health`, sin relajar adicionalmente las demas rutas.
+- [x] T007 [P] Crear la base de pruebas HTTP en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` con MockMvc y configuracion de contexto compatible con H2, sin modificar ni eliminar `BackendApplicationTests.java`.
 
 **Checkpoint**: Dependencias, bean de OpenAPI, exposicion limitada de Actuator, seguridad de rutas publicas y base de pruebas estan listos para las historias.
 
@@ -47,15 +47,15 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 ### Tests for User Story 1
 
-- [ ] T008 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /swagger-ui.html` responde 200 sin header `Authorization`.
-- [ ] T009 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /v3/api-docs` responde 200 sin header `Authorization` y contiene `openapi`, `info.title`, `info.version` y `paths`.
-- [ ] T010 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una asercion sobre el JSON OpenAPI que verifique todos los endpoints del inventario y sus DTOs, codigos de estado y errores de dominio documentados, sin invocar endpoints de negocio ni probar autenticacion desde Swagger UI.
+- [x] T008 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /swagger-ui.html` responde 200 sin header `Authorization`.
+- [x] T009 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /v3/api-docs` responde 200 sin header `Authorization` y contiene `openapi`, `info.title`, `info.version` y `paths`.
+- [x] T010 [US1] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una asercion sobre el JSON OpenAPI que verifique todos los endpoints del inventario y sus DTOs, codigos de estado y errores de dominio documentados, sin invocar endpoints de negocio ni probar autenticacion desde Swagger UI.
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Aplicar `@Tag`, `@Operation`, `@ApiResponse` y `@Schema` unicamente a los controllers y DTOs REST encontrados por T002, documentando proposito, request, response, codigos de estado y errores sin modificar logica de `controller`, `service`, `persistence` o `model`.
-- [ ] T012 [US1] Asociar `RespuestaError` como esquema de las respuestas 400, 422 y 500 en las operaciones reales que correspondan, respetando `backend/src/main/java/unq/losrecursionistas/backend/exceptions/ControladorErrores.java` y sin crear handlers duplicados.
-- [ ] T013 [US1] Revisar el documento generado en `/v3/api-docs` contra `specs/003-documentar-api-openapi/contracts/api-publica.md` y confirmar que el 100% del inventario de endpoints queda navegable y sin secretos ni detalles de implementacion.
+- [x] T011 [US1] Aplicar `@Tag`, `@Operation`, `@ApiResponse` y `@Schema` unicamente a los controllers y DTOs REST encontrados por T002, documentando proposito, request, response, codigos de estado y errores sin modificar logica de `controller`, `service`, `persistence` o `model`.
+- [x] T012 [US1] Asociar `RespuestaError` como esquema de las respuestas 400, 422 y 500 en las operaciones reales que correspondan, respetando `backend/src/main/java/unq/losrecursionistas/backend/exceptions/ControladorErrores.java` y sin crear handlers duplicados.
+- [x] T013 [US1] Revisar el documento generado en `/v3/api-docs` contra `specs/003-documentar-api-openapi/contracts/api-publica.md` y confirmar que el 100% del inventario de endpoints queda navegable y sin secretos ni detalles de implementacion.
 
 **Checkpoint**: La documentacion OpenAPI se consulta desde Swagger UI y refleja el contrato observable de todos los endpoints existentes, sin capacidad requerida de ejecucion autenticada.
 
@@ -69,14 +69,14 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 ### Tests for User Story 2
 
-- [ ] T014 [US2] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /actuator/health` responde 200 sin header `Authorization` en el contexto saludable.
-- [ ] T015 [US2] Agregar una validacion en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` para que `/actuator/health` no exponga detalles de datasource, credenciales ni configuracion interna por defecto.
-- [ ] T016 [US2] Agregar una prueba de estado no saludable en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` que verifique el codigo 503 cuando Actuator informe `DOWN` u `OUT_OF_SERVICE`, usando una configuracion de prueba controlada.
+- [x] T014 [US2] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme `GET /actuator/health` responde 200 sin header `Authorization` en el contexto saludable.
+- [x] T015 [US2] Agregar una validacion en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` para que `/actuator/health` no exponga detalles de datasource, credenciales ni configuracion interna por defecto.
+- [x] T016 [US2] Agregar una prueba de estado no saludable en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` que verifique el codigo 503 cuando Actuator informe `DOWN` u `OUT_OF_SERVICE`, usando una configuracion de prueba controlada.
 
 ### Implementation for User Story 2
 
-- [ ] T017 [US2] Verificar en `backend/src/main/resources/application.properties` que solo `health` este expuesto por HTTP y que la ruta efectiva sea `/actuator/health`, sin habilitar `metrics`, `env`, `beans`, `mappings` ni otros endpoints Actuator.
-- [ ] T018 [US2] Confirmar que `springdoc.show-actuator=true` incorpora `/actuator/health` a la especificacion consultable en Swagger UI y que el contrato coincide con `specs/003-documentar-api-openapi/contracts/api-publica.md`.
+- [x] T017 [US2] Verificar en `backend/src/main/resources/application.properties` que solo `health` este expuesto por HTTP y que la ruta efectiva sea `/actuator/health`, sin habilitar `metrics`, `env`, `beans`, `mappings` ni otros endpoints Actuator.
+- [x] T018 [US2] Confirmar que `springdoc.show-actuator=true` incorpora `/actuator/health` a la especificacion consultable en Swagger UI y que el contrato coincide con `specs/003-documentar-api-openapi/contracts/api-publica.md`.
 
 **Checkpoint**: El health check responde y queda documentado con acceso publico, estados verificables y sin informacion sensible.
 
@@ -90,14 +90,14 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 ### Tests for User Story 3
 
-- [ ] T019 [US3] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una asercion que rechace secretos, tokens, contrasenas, credenciales, datos de conexion y URLs internas en el JSON de `/v3/api-docs`.
-- [ ] T020 [US3] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme acceso sin autenticacion a las tres rutas publicas y ausencia de redireccion a login o respuestas 401/403.
+- [x] T019 [US3] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una asercion que rechace secretos, tokens, contrasenas, credenciales, datos de conexion y URLs internas en el JSON de `/v3/api-docs`.
+- [x] T020 [US3] Agregar en `backend/src/test/java/unq/losrecursionistas/backend/ConfiguracionDocumentacionTest.java` una prueba que confirme acceso sin autenticacion a las tres rutas publicas y ausencia de redireccion a login o respuestas 401/403.
 
 ### Implementation for User Story 3
 
-- [ ] T021 [US3] Revisar `backend/src/main/java/unq/losrecursionistas/backend/configuration/ConfiguracionOpenApi.java` para asegurar que los metadatos no incluyan secretos, URLs internas, credenciales ni definiciones de autenticacion no requeridas por el spec.
-- [ ] T022 [US3] Revisar `backend/src/main/resources/application.properties` y `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java` para confirmar que solo las tres rutas aprobadas son publicas para esta feature y que no se agregan perfiles ni reglas de acceso nuevas para endpoints de negocio.
-- [ ] T023 [US3] Ejecutar una comparacion final entre `/v3/api-docs`, `specs/003-documentar-api-openapi/data-model.md` y `specs/003-documentar-api-openapi/contracts/api-publica.md`, documentando cualquier diferencia observable antes de cerrar la historia.
+- [x] T021 [US3] Revisar `backend/src/main/java/unq/losrecursionistas/backend/configuration/ConfiguracionOpenApi.java` para asegurar que los metadatos no incluyan secretos, URLs internas, credenciales ni definiciones de autenticacion no requeridas por el spec.
+- [x] T022 [US3] Revisar `backend/src/main/resources/application.properties` y `backend/src/main/java/unq/losrecursionistas/backend/security/ConfiguracionSeguridad.java` para confirmar que solo las tres rutas aprobadas son publicas para esta feature y que no se agregan perfiles ni reglas de acceso nuevas para endpoints de negocio.
+- [x] T023 [US3] Ejecutar una comparacion final entre `/v3/api-docs`, `specs/003-documentar-api-openapi/data-model.md` y `specs/003-documentar-api-openapi/contracts/api-publica.md`, documentando cualquier diferencia observable antes de cerrar la historia.
 
 **Checkpoint**: La documentacion es navegable, publica en las rutas aprobadas y no expone informacion sensible ni funcionalidad de autenticacion en Swagger UI.
 
@@ -107,11 +107,11 @@ description: "Tareas de implementacion para documentar la API REST con OpenAPI/S
 
 **Objetivo**: Validar el conjunto completo y dejar la feature lista para integracion.
 
-- [ ] T024 [P] Ejecutar `backend/gradlew.bat clean test` desde `backend/` y conservar todos los tests existentes sin modificarlos para ocultar fallos.
-- [ ] T025 [P] Ejecutar la validacion de infraestructura y arquitectura existente, incluyendo `ValidacionInfraestructuraTest`, `ArquitecturaBaseTest` y `ConfiguracionSeguridadTest`, desde `backend/`.
-- [ ] T026 [P] Ejecutar manualmente los escenarios de `specs/003-documentar-api-openapi/quickstart.md` contra una aplicacion levantada y registrar resultados de `/swagger-ui.html`, `/v3/api-docs` y `/actuator/health`.
-- [ ] T027 Revisar `backend/src/main/java/unq/losrecursionistas/backend/` y `backend/src/test/java/unq/losrecursionistas/backend/` para confirmar que todos los identificadores nuevos sean ASCII y que la documentacion de codigo nueva este en espanol tecnico, conforme al Principio X.
-- [ ] T028 Actualizar `specs/003-documentar-api-openapi/quickstart.md` y `specs/003-documentar-api-openapi/contracts/api-publica.md` si las rutas o respuestas verificadas difieren del diseno, sin ampliar el alcance funcional.
+- [x] T024 [P] Ejecutar `backend/gradlew.bat clean test` desde `backend/` y conservar todos los tests existentes sin modificarlos para ocultar fallos.
+- [x] T025 [P] Ejecutar la validacion de infraestructura y arquitectura existente, incluyendo `ValidacionInfraestructuraTest`, `ArquitecturaBaseTest` y `ConfiguracionSeguridadTest`, desde `backend/`.
+- [x] T026 [P] Ejecutar manualmente los escenarios de `specs/003-documentar-api-openapi/quickstart.md` contra una aplicacion levantada y registrar resultados de `/swagger-ui.html`, `/v3/api-docs` y `/actuator/health`.
+- [x] T027 Revisar `backend/src/main/java/unq/losrecursionistas/backend/` y `backend/src/test/java/unq/losrecursionistas/backend/` para confirmar que todos los identificadores nuevos sean ASCII y que la documentacion de codigo nueva este en espanol tecnico, conforme al Principio X.
+- [x] T028 Actualizar `specs/003-documentar-api-openapi/quickstart.md` y `specs/003-documentar-api-openapi/contracts/api-publica.md` si las rutas o respuestas verificadas difieren del diseno, sin ampliar el alcance funcional.
 
 ---
 

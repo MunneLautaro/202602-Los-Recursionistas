@@ -6,7 +6,7 @@
 
 ## Summary
 
-La feature corrige la base del backend para que el modelo de dominio, la persistencia, la configuracion y las pruebas cumplan la Constitution v1.2.0. Se mantendra Java 21 con Spring Boot y PostgreSQL, se conservara la gestion de esquema de JPA/Hibernate sin una herramienta externa de migraciones, se definiran las entidades `Usuario`, `Liga`, `Equipo`, `Jugador`, `CotizacionJugador`, `PosicionPortfolio` y `TransaccionAuditoria` en `model`, y se separaran los repositorios en `persistence/repository/interfaces` e `impl`.
+La feature corrige la base del backend para que el modelo de dominio, la persistencia, la configuracion y las pruebas cumplan la Constitution v1.4.0. Se mantendra Java 21 con Spring Boot y PostgreSQL, se conservara la gestion de esquema de JPA/Hibernate sin una herramienta externa de migraciones, se definiran las entidades `Usuario`, `Liga`, `Equipo`, `Jugador`, `CotizacionJugador`, `PosicionPortfolio` y `TransaccionAuditoria` en `model`, y se separaran los repositorios en contratos, adaptadores y DAOs SQL.
 
 Los servicios construiran `PageRequest.of(page, 12)` y los repositorios propagaran `Page<T>` sin paginacion en memoria. Las pruebas del backend usaran JUnit 5, AssertJ y Mockito, con suites separadas para `model` y `service`. Hibernate conservara `ddl-auto=update` para gestionar el esquema en esta etapa.
 
@@ -132,7 +132,7 @@ Los resultados completos estan en [research.md](research.md). Las decisiones que
 4. **Repositorios**
    - Crear los contratos `RepositorioUsuario`, `RepositorioLiga`, `RepositorioEquipo`, `RepositorioJugador`, `RepositorioCotizacionJugador`, `RepositorioPosicionPortfolio` y `RepositorioTransaccionAuditoria` en `persistence/repository/interfaces`.
    - Definir operaciones de consulta multiple con `Page<T>` y `Pageable`; ninguna interfaz debe retornar listas para listados ordinarios.
-   - Crear implementaciones o adaptadores en `persistence/repository/impl` solo para consultas personalizadas; aprovechar Spring Data cuando el contrato derivado cubra la consulta y evitar logica de negocio alli.
+   - Crear implementaciones o adaptadores en `persistence/repository/impl` que reciban sus DAOs por constructor; ubicar los DAOs Spring Data en `persistence/sql`, aprovechar consultas derivadas cuando sea posible y evitar logica de negocio alli.
    - Mantener el acceso a repositorios desde service, nunca desde controller.
 
 ### Plan 3.2 - Testing unitario de modelos

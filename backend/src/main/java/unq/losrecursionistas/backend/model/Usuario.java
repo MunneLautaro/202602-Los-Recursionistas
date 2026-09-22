@@ -2,12 +2,17 @@ package unq.losrecursionistas.backend.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.HashSet;
+import java.util.Set;
 
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
@@ -37,6 +42,14 @@ public class Usuario {
 	@Column(name = "fecha_creacion", nullable = false)
 	private Instant fechaCreacion;
 
+	@Column(nullable = false)
+	private boolean habilitado;
+
+	@ElementCollection
+	@CollectionTable(name = "usuarios_autoridades", joinColumns = @JoinColumn(name = "usuario_id"))
+	@Column(name = "autoridad", nullable = false)
+	private Set<String> autoridades = new HashSet<>();
+
 	public Usuario(String nombreUsuario, String contrasena, BigDecimal saldo) {
 		validarTexto(nombreUsuario, "El nombre de usuario es obligatorio");
 		validarTexto(contrasena, "La contrasena es obligatoria");
@@ -47,6 +60,8 @@ public class Usuario {
 		this.contrasena = contrasena;
 		this.saldo = saldo;
 		this.fechaCreacion = Instant.now();
+		this.habilitado = true;
+		this.autoridades.add("ROLE_USUARIO");
 	}
 
 	public void debitar(BigDecimal monto) {
@@ -64,6 +79,14 @@ public class Usuario {
 			throw new ExcepcionValidacion("El monto debe ser positivo");
 		}
 		saldo = saldo.add(monto);
+	}
+
+	public void deshabilitar() {
+		habilitado = false;
+	}
+
+	public void habilitar() {
+		habilitado = true;
 	}
 
 	private static void validarTexto(String valor, String mensaje) {

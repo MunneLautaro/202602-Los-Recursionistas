@@ -28,7 +28,7 @@
 
 ## Decision 4: Contratos de repositorio y paginacion
 
-- **Decision**: Cada contrato publico vive en `persistence/repository/interfaces`; los contratos de consulta multiple retornan `Page<T>` y reciben `Pageable`. Las implementaciones y consultas personalizadas viven en `persistence/repository/impl`.
+- **Decision**: Cada contrato publico vive en `persistence/repository/interfaces`; los contratos de consulta multiple retornan `Page<T>` y reciben `Pageable`. Las implementaciones viven en `persistence/repository/impl` y delegan en DAOs Spring Data bajo `persistence/sql`.
 - **Rationale**: Mantiene la separacion exigida por el Principio I y permite que el service cree `PageRequest.of(page, 12)` antes de invocar al repositorio, como exige el Principio IV.
 - **Alternatives considered**: Retornar `List<T>` y paginar en memoria, o exponer directamente repositorios desde controllers. Ambas alternativas violan la constitucion y degradan el comportamiento con volumen.
 

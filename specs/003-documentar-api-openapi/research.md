@@ -8,6 +8,18 @@
 - `exceptions/ControladorErrores.java` mapea validacion a 400, dominio a 422 y errores no controlados a 500. El cuerpo comun es `RespuestaError`.
 - Las pruebas de contexto usan H2 y ya existe una validacion que exige exactamente una `application.properties`.
 
+## Inventario REST verificado en Phase 1
+
+- No existen clases anotadas con `@RestController` ni `@Controller` con `@ResponseBody` bajo `backend/src/main/java/unq/losrecursionistas/backend/`.
+- No existen mappings HTTP (`@RequestMapping`, `@GetMapping`, `@PostMapping`, `@PutMapping`, `@DeleteMapping` o `@PatchMapping`) ni DTOs REST de request/response.
+- `controller/dto/RespuestaDto.java` es la unica referencia DTO encontrada y permanece como interfaz vacia, sin endpoint asociado.
+- Por lo tanto, T002 queda verificada sin crear endpoints ni anotaciones de negocio.
+
+## Configuracion de recursos verificada en Phase 1
+
+- `backend/src/main/resources/application.properties` es el unico archivo de propiedades bajo `backend/src/main/resources/`.
+- No existen archivos `application-*.properties` ni perfiles adicionales que deban preservarse o modificar.
+
 ## Decision: Dependencia OpenAPI
 
 **Decision**: usar `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1`.

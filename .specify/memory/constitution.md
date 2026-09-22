@@ -1,6 +1,6 @@
 <!-- Sync Impact Report
-Version change: 1.2.0 -> 1.3.0
-Modified principles: Principle III - service contracts
+Version change: 1.3.0 -> 1.4.0
+Modified principles: Principle I - layer boundaries; Principle III - service contracts
 Added sections: none
 Removed sections: none
 Follow-up TODOs: none
@@ -8,9 +8,15 @@ Follow-up TODOs: none
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 1.3.0
+**Versión:** 1.4.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-09-19
+**Última modificación:** 2026-09-22
+
+**Resumen del cambio 1.4.0:** Se aclara que todo caso de uso tiene contrato en
+`service/interfaces` e implementación en `service/impl`, incluyendo los
+adaptadores de identidad que implementan contratos de Spring. Los repositorios
+de dominio se desacoplan del mecanismo de persistencia mediante DAOs bajo
+`persistence/sql` y composición por constructor.
 
 **Resumen del cambio 1.3.0:** Se establece que cada servicio implementa su
 interfaz específica y que la reutilización entre servicios debe resolverse por
@@ -61,7 +67,7 @@ responsabilidades entre ellos:
   subpaquetes propios dentro de `persistence`.
 - `configuration`: configuración de la aplicación (beans, schedulers,
   OpenAPI, etc.).
-- `security`: autenticación, autorización y manejo de tokens.
+- `security`: configuración de autenticación, autorización y manejo de tokens.
 - `exceptions`: excepciones personalizadas y manejo centralizado de errores.
 
 **Regla:** una capa nunca invoca directamente a una capa no adyacente ni
@@ -96,6 +102,11 @@ depende de detalles de implementación de otra capa (por ejemplo, el
   de uso. Las implementaciones MUST NOT extender una clase base genérica de
   servicios únicamente para reutilizar operaciones comunes; esa reutilización
   MUST resolverse por composición cuando sea necesaria.
+- Los adaptadores de infraestructura que implementen contratos externos
+  usados por la aplicación (por ejemplo, `UserDetailsService`) MUST ubicarse
+  en `service/impl` cuando orquesten una identidad o caso de uso. La
+  configuración de Spring Security, los filtros, handlers y tokens permanecen
+  en `security`.
 
 ---
 
@@ -113,6 +124,12 @@ depende de detalles de implementación de otra capa (por ejemplo, el
   entidades a DTOs.
 - El **Repository** MUST propagar el `Page<T>` desde el DAO/JPA, sin
   materializar listas ni paginar en memoria.
+- Cada repositorio de dominio MUST declarar su contrato en
+  `persistence/repository/interfaces` y su adaptador en
+  `persistence/repository/impl`. El adaptador MUST recibir el DAO concreto por
+  constructor y delegar el acceso a datos; no debe contener consultas JPQL ni
+  administrar directamente un `EntityManager` cuando exista un DAO Spring
+  Data bajo `persistence/sql`.
 
 ---
 

@@ -40,10 +40,12 @@ Invoke-WebRequest http://localhost:8080/actuator/health -UseBasicParsing
 
 Resultados esperados:
 
-1. Swagger UI responde `200` sin credenciales y renderiza la interfaz.
+1. `GET /swagger-ui.html` responde `3xx` hacia `/swagger-ui/index.html`, que responde `200` sin credenciales y renderiza la interfaz.
 2. `/v3/api-docs` responde `200` con JSON OpenAPI v3, metadatos y paths.
 3. `/actuator/health` responde `200` con `UP` cuando la aplicacion y sus dependencias estan saludables.
 4. Si el indicador de base de datos esta caido, health responde `503` con `DOWN` u `OUT_OF_SERVICE`, sin detalles sensibles.
+
+Validacion manual realizada el 2026-09-22 con H2: `/swagger-ui.html` termino en `200` siguiendo su redireccion a `/swagger-ui/index.html`; `/v3/api-docs` respondio `200` con OpenAPI `3.1.0`; `/actuator/health` respondio `200` con `UP` y sin detalles de indicadores.
 
 ## Validar seguridad y alcance
 

@@ -3,7 +3,7 @@
 ## GET `/swagger-ui.html`
 
 - **Acceso**: publico, sin autenticacion, en todos los entornos.
-- **Respuesta esperada**: `200 OK` con la interfaz HTML de Swagger UI.
+- **Respuesta esperada**: `3xx` hacia `/swagger-ui/index.html`; la URL final responde `200 OK` con la interfaz HTML de Swagger UI.
 - **Contrato**: la interfaz debe cargar la especificacion desde `/v3/api-docs`.
 
 ## GET `/v3/api-docs`

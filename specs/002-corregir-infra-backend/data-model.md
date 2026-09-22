@@ -74,7 +74,7 @@ PosicionPortfolio 1 ---- N TransaccionAuditoria (opcional)
 
 ## Repositorios
 
-Cada repositorio tendra un contrato en `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/interfaces/` y una implementacion o adaptador en `.../impl/`.
+Cada repositorio tendra un contrato en `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/interfaces/` y una implementacion o adaptador en `.../impl/`. Cuando use Spring Data JPA, el adaptador recibira por constructor un DAO concreto ubicado en `backend/src/main/java/unq/losrecursionistas/backend/persistence/sql/`.
 
 - `RepositorioUsuario`: busqueda por nombre de usuario y consultas paginadas.
 - `RepositorioLiga`: busqueda por codigo y listado paginado.
