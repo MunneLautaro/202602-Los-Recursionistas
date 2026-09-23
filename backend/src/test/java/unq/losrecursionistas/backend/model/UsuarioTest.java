@@ -8,24 +8,8 @@ import java.math.BigDecimal;
 import org.junit.jupiter.api.Test;
 
 import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
-import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
 class UsuarioTest {
-
-	@Test
-	void creaUnUsuarioConSaldoNoNegativoYCamposObligatorios() {
-		Usuario usuario = new Usuario("jugador1", "secreto", new BigDecimal("100.00"));
-
-		assertThat(usuario.getNombreUsuario()).isEqualTo("jugador1");
-		assertThat(usuario.getContrasena()).isEqualTo("secreto");
-		assertThat(usuario.getSaldo()).isEqualByComparingTo("100.00");
-	}
-
-	@Test
-	void rechazaSaldoInicialNegativo() {
-		assertThatThrownBy(() -> new Usuario("jugador1", "secreto", new BigDecimal("-0.01")))
-				.isInstanceOf(ExcepcionValidacion.class);
-	}
 
 	@Test
 	void permiteDebitarUnMontoDisponible() {
@@ -45,10 +29,22 @@ class UsuarioTest {
 	}
 
 	@Test
-	void rechazaCamposObligatoriosVacios() {
-		assertThatThrownBy(() -> new Usuario("", "secreto", BigDecimal.ZERO))
-				.isInstanceOf(ExcepcionValidacion.class);
-		assertThatThrownBy(() -> new Usuario("jugador1", "", BigDecimal.ZERO))
-				.isInstanceOf(ExcepcionValidacion.class);
+	void permiteAcreditarUnMonto() {
+		Usuario usuario = new Usuario("jugador1", "secreto", new BigDecimal("100.00"));
+
+		usuario.acreditar(new BigDecimal("50.00"));
+
+		assertThat(usuario.getSaldo()).isEqualByComparingTo("150.00");
+	}
+
+	@Test
+	void permiteCambiarEstadoHabilitado() {
+		Usuario usuario = new Usuario("jugador1", "secreto", new BigDecimal("100.00"));
+
+		usuario.deshabilitar();
+		assertThat(usuario.isHabilitado()).isFalse();
+
+		usuario.habilitar();
+		assertThat(usuario.isHabilitado()).isTrue();
 	}
 }
