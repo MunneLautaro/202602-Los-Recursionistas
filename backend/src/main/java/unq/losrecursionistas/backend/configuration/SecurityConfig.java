@@ -1,9 +1,10 @@
-package unq.losrecursionistas.backend.security;
+package unq.losrecursionistas.backend.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -18,10 +19,11 @@ import unq.losrecursionistas.backend.security.jwt.impl.JwtAuthFilter;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 @Configuration
-public class ConfiguracionSeguridad {
+@EnableMethodSecurity
+public class SecurityConfig {
 
 	@Bean
-	SecurityFilterChain cadenaSeguridad(HttpSecurity http, JwtService jwtService,
+	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
 			UserDetailsService userDetailsService) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 			.sessionManagement(sesiones -> sesiones.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
@@ -48,3 +50,4 @@ public class ConfiguracionSeguridad {
 		return configuracion.getAuthenticationManager();
 	}
 }
+

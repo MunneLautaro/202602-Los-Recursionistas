@@ -2,53 +2,67 @@ package unq.losrecursionistas.backend.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.math.BigDecimal;
 import java.util.Optional;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.impl.UsuarioDetailsServiceImpl;
 
+@ExtendWith(MockitoExtension.class)
 class UsuarioDetailsServiceTest {
 
-	private final RepositorioUsuario repositorio = mock(RepositorioUsuario.class);
-	private final UsuarioDetailsServiceImpl servicio = new UsuarioDetailsServiceImpl(repositorio);
+	@Mock
+	private RepositorioUsuario repositorioUsuario;
+
+	@InjectMocks
+	private UsuarioDetailsServiceImpl usuarioDetailsService;
+
+	private Usuario usuarioValido;
+
+	@BeforeEach
+	void setUp() {
+		usuarioValido = new Usuario("jugador1", "hashPassword", BigDecimal.ZERO);
+	}
 
 	@Test
-	void cargaUsuarioConContrasenaYAutoridad() {
-		var usuario = new Usuario("jugador1", "hash", BigDecimal.ZERO);
-		when(repositorio.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuario));
+	void testCargarUsuarioPorNombreDeUsuarioExitoso() {
+		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuarioValido));
 
-		var detalles = servicio.loadUserByUsername("jugador1");
+		UserDetails detalles = usuarioDetailsService.loadUserByUsername("jugador1");
 
 		assertThat(detalles.getUsername()).isEqualTo("jugador1");
-		assertThat(detalles.getPassword()).isEqualTo("hash");
+		assertThat(detalles.getPassword()).isEqualTo("hashPassword");
 		assertThat(detalles.getAuthorities()).extracting("authority").containsExactly("ROLE_USUARIO");
 		assertThat(detalles.isEnabled()).isTrue();
 	}
 
 	@Test
-	void rechazaUsuarioInexistenteSinExponerDetalles() {
-		when(repositorio.buscarPorNombreUsuario("fantasma")).thenReturn(Optional.empty());
+	void testCargarUsuarioInexistenteLanzaExcepcion() {
+		when(repositorioUsuario.buscarPorNombreUsuario("fantasma")).thenReturn(Optional.empty());
 
-		assertThatThrownBy(() -> servicio.loadUserByUsername("fantasma"))
+		assertThatThrownBy(() -> usuarioDetailsService.loadUserByUsername("fantasma"))
 				.isInstanceOf(UsernameNotFoundException.class)
 				.hasMessage("Credenciales invalidas");
 	}
 
 	@Test
-	void representaUsuarioInhabilitadoComoNoHabilitado() {
-		var usuario = new Usuario("jugador1", "hash", BigDecimal.ZERO);
-		usuario.deshabilitar();
-		when(repositorio.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuario));
+	void testCargarUsuarioDeshabilitadoRetornaNoHabilitado() {
+		usuarioValido.deshabilitar();
+		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuarioValido));
 
-		var detalles = servicio.loadUserByUsername("jugador1");
+		UserDetails detalles = usuarioDetailsService.loadUserByUsername("jugador1");
 
 		assertThat(detalles.isEnabled()).isFalse();
 	}
