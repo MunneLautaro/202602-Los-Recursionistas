@@ -1,6 +1,6 @@
 <!-- Sync Impact Report
-Version change: 1.2.0 -> 1.3.0
-Modified principles: Principle III - service contracts
+Version change: 1.5.0 -> 1.6.0
+Modified principles: Principle VI - Validación por capas, Principle VII - Testing obligatorio
 Added sections: none
 Removed sections: none
 Follow-up TODOs: none
@@ -8,9 +8,21 @@ Follow-up TODOs: none
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 1.3.0
+**Versión:** 1.7.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-09-19
+**Última modificación:** 2026-09-23
+
+**Resumen del cambio 1.7.0:** Se incorpora el Principio XI — Desarrollo estrictamente acotado (No Over-Engineering / YAGNI) prohibiendo la creación anticipada de código, clases, métodos, DTOs, configuraciones o tests no solicitados explícitamente.
+
+**Resumen del cambio 1.6.0:** Se eliminan las validaciones de formato de texto del modelo asignándolas a los DTOs/controllers, y se restringe la capa de tests de modelo únicamente a entidades con lógica/métodos de negocio reales (sin tests para entidades no iniciadas ni DTOs/anotaciones de Lombok).
+
+**Resumen del cambio 1.5.0:** Se restringe la jerarquía de tests únicamente a los paquetes `model` y `service`, eliminando pruebas redundantes de infraestructura, seguridad y contexto básico.
+
+**Resumen del cambio 1.4.0:** Se aclara que todo caso de uso tiene contrato en
+`service/interfaces` e implementación en `service/impl`, incluyendo los
+adaptadores de identidad que implementan contratos de Spring. Los repositorios
+de dominio se desacoplan del mecanismo de persistencia mediante DAOs bajo
+`persistence/sql` y composición por constructor.
 
 **Resumen del cambio 1.3.0:** Se establece que cada servicio implementa su
 interfaz específica y que la reutilización entre servicios debe resolverse por
@@ -59,9 +71,8 @@ responsabilidades entre ellos:
   en `interfaces` e `impl`. Las distintas tecnologías o mecanismos de
   persistencia (JPA, scraping, APIs externas) MUST separarse en
   subpaquetes propios dentro de `persistence`.
-- `configuration`: configuración de la aplicación (beans, schedulers,
-  OpenAPI, etc.).
-- `security`: autenticación, autorización y manejo de tokens.
+- `configuration`: configuración global de la aplicación (`SecurityConfig`, beans, schedulers, OpenAPI, etc.).
+- `security`: componentes de seguridad HTTP/JWT (`jwt.impl`, `handlers` como `AuthenticationEntryPoint` y `AccessDeniedHandler`, filtros `OncePerRequestFilter`).
 - `exceptions`: excepciones personalizadas y manejo centralizado de errores.
 
 **Regla:** una capa nunca invoca directamente a una capa no adyacente ni
@@ -85,17 +96,12 @@ depende de detalles de implementación de otra capa (por ejemplo, el
 
 ## Principio III — Contrato de los servicios de dominio
 
-- Los servicios MUST retornar únicamente entidades de dominio o
-  `Page<Entidad>`. **Prohibido** retornar DTOs de response, generar JWTs o
-  contener lógica de presentación.
-- El mapeo a DTO es responsabilidad exclusiva del `controller`. La emisión de
-  JWT es responsabilidad de la fachada/componente de `security`.
-- Los servicios se definen mediante interfaz (`service/interfaces`) y su
-  implementación (`service/impl`).
-- Cada implementación de servicio MUST implementar su propia interfaz de caso
-  de uso. Las implementaciones MUST NOT extender una clase base genérica de
-  servicios únicamente para reutilizar operaciones comunes; esa reutilización
-  MUST resolverse por composición cuando sea necesaria.
+- Los servicios MUST retornar únicamente entidades de dominio, DTOs de autenticación/casos de uso o `Page<Entidad>`. **Prohibido** contener lógica de presentación o detalles del protocolo HTTP.
+- El mapeo a DTO de respuesta HTTP es responsabilidad del `controller` (excepto flujos de autenticación donde `AuthService` expone el resultado de autenticación).
+- Los servicios se definen mediante interfaz (`service/interfaces`) y su implementación (`service/impl`).
+- Cada implementación de servicio MUST implementar su propia interfaz de caso de uso (ej: `AuthService` / `AuthServiceImpl`, `JwtService` / `JwtServiceImpl`). Las implementaciones MUST NOT extender una clase base genérica de servicios únicamente para reutilizar operaciones comunes; esa reutilización MUST resolverse por composición cuando sea necesaria.
+- La configuración principal de Spring Security MUST llamarse `SecurityConfig` (o equivalente del contexto) y residir en `configuration`. Prohibido crear nombres redundantes u obsoletos (ej: `ManejadorToken`, `PoliticaAcceso`).
+- Los adaptadores de infraestructura e identidad que implementen contratos de Spring Security (por ejemplo, `UserDetailsService`) MUST ubicarse en `service/impl` y su interfaz en `service/interfaces`. Los filtros HTTP (`JwtAuthFilter`) e interfaces de firma JWT viven en `security` y `service/interfaces` respectivamente, y los manejadores de excepciones 401/403 (`JwtAuthenticationEntryPoint`, `JwtAccessDeniedHandler`) en `security/handlers`.
 
 ---
 
@@ -113,6 +119,12 @@ depende de detalles de implementación de otra capa (por ejemplo, el
   entidades a DTOs.
 - El **Repository** MUST propagar el `Page<T>` desde el DAO/JPA, sin
   materializar listas ni paginar en memoria.
+- Cada repositorio de dominio MUST declarar su contrato en
+  `persistence/repository/interfaces` y su adaptador en
+  `persistence/repository/impl`. El adaptador MUST recibir el DAO concreto por
+  constructor y delegar el acceso a datos; no debe contener consultas JPQL ni
+  administrar directamente un `EntityManager` cuando exista un DAO Spring
+  Data bajo `persistence/sql`.
 
 ---
 
@@ -132,25 +144,26 @@ Cada capa valida únicamente lo que puede conocer y controlar. **Prohibido**
 mezclar concerns de transporte, orquestación y reglas de negocio:
 
 - **DTO de request:** MUST validar forma y tipos del request, incluyendo
-  trimming y sanitización del input (ej. `@NotNull`, `@Positive`, `@Size`).
+  trimming, longitud mínima/máxima, regex de emails y cadenas no vacías (ej. `@NotBlank`, `@NotNull`, `@Positive`, `@Size`, `@Email`). Esa responsabilidad de saneamiento y formato corresponde exclusivamente a los DTOs de entrada (`dtoRequest`) y a la capa de controladores (`controller`).
 - **Service:** MUST validar la existencia de lo solicitado y la viabilidad de
   la acción; los IDs MUST resolver entidades existentes antes de continuar
   (fail-fast antes de tocar el dominio).
 - **Model:** MUST proteger los invariantes del dominio y lanzar excepciones
   propias cuando una regla de negocio se incumpla (ej. saldo insuficiente,
-  tokens insuficientes).
+  tokens insuficientes). **Prohibido** agregar o probar validaciones de formato de texto en el modelo.
 
 ---
 
 ## Principio VII — Testing obligatorio
 
-- Los tests se separan en `model` y `service`.
-- Cada método público del modelo o del servicio MUST estar testeado.
-- Cada funcionalidad MUST cubrir casos felices y de borde, incluyendo (como
-  mínimo): saldo insuficiente, falta de tokens disponibles y fallas de
-  proveedores externos (con degradación a datos locales).
-- **Prohibido** modificar o borrar tests existentes sin permiso explícito y
-  confirmación previa del equipo.
+- La suite de pruebas MUST estar acotada estrictamente a la jerarquía de paquetes `model` y `service`.
+- **Alcance en `model`:** Mantener únicamente tests unitarios simples para métodos de negocio específicos que pertenezcan intrínsecamente al dominio/entidad (ej. cálculo de totales, cambio de estados, lógica pura de negocio). Si una clase de modelo solo contiene atributos, getters, setters y constructores generados por Lombok (`@Data`, `@Getter`, `@Setter`, `@Builder`), **NO debe tener archivo de test individual**.
+- **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ArquitecturaBaseTest`, `ValidacionInfraestructuraTest`, o clases de prueba dentro de `configuration` o `security`).
+- Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación (ej. `AuthServiceTest` para autenticación/login).
+- Cada método expuesto en los servicios y modelos MUST contar con:
+  - **Camino feliz (Happy path):** verificación del funcionamiento correcto con datos válidos.
+  - **Casos de borde y excepciones (Edge cases):** búsqueda de recursos inexistentes, credenciales inválidas, duplicaciones, saldos/tokens insuficientes y excepciones del dominio.
+- **Estilo conciso y directo:** usar bloques `@BeforeEach` para instanciar fixture de pruebas, Mocks simples (`@ExtendWith(MockitoExtension.class)`) para tests unitarios y nombres de métodos de prueba descriptivos en español sin caracteres no ASCII (ej. `testLoginConCredencialesInvalidasLanzaExcepcion`).
 
 ---
 
@@ -197,6 +210,13 @@ de generar código o artefactos. No se asume una decisión por default.
 - Los comentarios, documentación y mensajes de código también MUST estar en
   español, salvo nombres oficiales o contenido técnico que deba conservarse
   literalmente.
+
+---
+
+## Principio XI — Desarrollo estrictamente acotado (No Over-Engineering / YAGNI)
+
+- **Desarrollo estrictamente acotado (No Over-Engineering / YAGNI):**
+  Queda estrictamente prohibido crear clases, modelos, DTOs, métodos, servicios, configuraciones o tests para funcionalidades que no se hayan solicitado explícitamente en el pedido actual. No agregues código "por si acaso" ni implementes cosas de forma anticipada. Enfócate única y exclusivamente en resolver lo que se pide en el prompt puntual, manteniendo el código lo más simple y directo posible.
 
 ---
 
