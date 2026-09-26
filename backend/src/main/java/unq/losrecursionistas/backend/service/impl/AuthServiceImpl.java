@@ -1,5 +1,6 @@
 package unq.losrecursionistas.backend.service.impl;
 
+import jakarta.transaction.Transactional;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -12,6 +13,7 @@ import unq.losrecursionistas.backend.service.interfaces.AuthService;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 @Service
+@Transactional
 public class AuthServiceImpl implements AuthService {
 
 	private final AuthenticationManager authenticationManager;

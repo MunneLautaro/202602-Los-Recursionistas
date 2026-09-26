@@ -1,47 +1,46 @@
 package unq.losrecursionistas.backend.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "equipos")
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Equipo {
 
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-	private String nombre;
-	private String codigo;
+    private Long idExterno;
+    private String nombre;
+    private String nombreCorto;
+    private String sigla;
+    private String escudoUrl;
+    private Integer fundacion;
+    private String colores;
+    private String estadio;
 
-	@ManyToOne(fetch = FetchType.LAZY, optional = false)
-	@JoinColumn(name = "liga_id", nullable = false)
-	private Liga liga;
+    @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Jugador> jugadores = new ArrayList<>();
 
-	public Equipo(String nombre, String codigo, Liga liga) {
-		if (nombre == null || nombre.isBlank()) {
-			throw new ExcepcionValidacion("El nombre del equipo es obligatorio");
-		}
-		if (codigo == null || codigo.isBlank()) {
-			throw new ExcepcionValidacion("El codigo del equipo es obligatorio");
-		}
-		if (liga == null) {
-			throw new ExcepcionValidacion("La liga del equipo es obligatoria");
-		}
+	public Equipo(String nombre, String nombreCorto, String sigla, String escudoUrl, Integer fundacion, String colores, String estadio) {
+
 		this.nombre = nombre;
-		this.codigo = codigo;
-		this.liga = liga;
+        this.nombreCorto = nombreCorto;
+        this.sigla = sigla;
+        this.escudoUrl = escudoUrl;
+        this.fundacion = fundacion;
+        this.colores = colores;
+        this.estadio = estadio;
+
 	}
 }

@@ -19,19 +19,11 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 		this.usuarioDAOSQL = usuarioDAOSQL;
 	}
 
-	@Override
-	public Optional<Usuario> buscarPorId(Long id) {
-		return usuarioDAOSQL.findById(id);
-	}
 
 	@Override
-	public Usuario guardar(Usuario usuario) {
-		return usuarioDAOSQL.save(usuario);
-	}
-
-	@Override
-	public Optional<Usuario> buscarPorNombreUsuario(String nombreUsuario) {
-		return usuarioDAOSQL.findByNombreUsuario(nombreUsuario);
+	public Usuario buscarPorNombreUsuario(String nombreUsuario) {
+        //TODO: Cambiar la excepción a una personalizada
+		return usuarioDAOSQL.findByNombreUsuario(nombreUsuario).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 	}
 
 	@Override

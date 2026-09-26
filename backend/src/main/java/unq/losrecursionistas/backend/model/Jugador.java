@@ -8,15 +8,20 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import lombok.*;
 import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import java.time.LocalDate;
+import java.util.Date;
+
 
 @Entity
 @Table(name = "jugadores")
 @Getter
+@Setter
+@Builder
+@AllArgsConstructor
 @NoArgsConstructor(access = lombok.AccessLevel.PROTECTED)
 public class Jugador {
 
@@ -26,6 +31,9 @@ public class Jugador {
 
 	private String nombre;
 	private String posicion;
+    private Long idExterno;
+    private String nacionalidad;
+    private LocalDate fechaNacimiento;
 
 	@ManyToOne(fetch = FetchType.LAZY, optional = false)
 	@JoinColumn(name = "equipo_id", nullable = false)
@@ -34,12 +42,6 @@ public class Jugador {
 	private boolean activo;
 
 	public Jugador(String nombre, String posicion, Equipo equipo, boolean activo) {
-		if (nombre == null || nombre.isBlank() || posicion == null || posicion.isBlank()) {
-			throw new ExcepcionValidacion("El nombre y la posicion son obligatorios");
-		}
-		if (equipo == null) {
-			throw new ExcepcionValidacion("El equipo del jugador es obligatorio");
-		}
 		this.nombre = nombre;
 		this.posicion = posicion;
 		this.equipo = equipo;
