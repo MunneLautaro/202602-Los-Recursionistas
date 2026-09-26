@@ -5,11 +5,9 @@ import org.springframework.data.domain.Pageable;
 
 import unq.losrecursionistas.backend.model.Jugador;
 
-public interface RepositorioJugador extends RepositorioBase<Jugador, Long> {
+import java.util.List;
 
-	Page<Jugador> buscarPorEquipoId(Long equipoId, Pageable pageable);
+public interface RepositorioJugador {
 
-	Page<Jugador> buscarPorLigaId(Long ligaId, Pageable pageable);
-
-	Page<Jugador> buscarPorActivo(Boolean activo, Pageable pageable);
+    void guardarTodos(List<Jugador> jugadores);
 }
