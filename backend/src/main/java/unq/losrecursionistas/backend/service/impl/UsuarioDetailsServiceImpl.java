@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.interfaces.UsuarioDetailsService;
 
@@ -24,9 +25,10 @@ public class UsuarioDetailsServiceImpl implements UsuarioDetailsService {
 	@Override
 	@Transactional(readOnly = true)
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		var usuario = repositorioUsuario.buscarPorNombreUsuario(username)
-				.orElseThrow(() -> new UsernameNotFoundException("Credenciales invalidas"));
-
+		Usuario usuario = repositorioUsuario.buscarPorNombreUsuario(username);
+		if (usuario == null) {
+			throw new UsernameNotFoundException("Credenciales invalidas");
+		}
 		var autoridades = usuario.getAutoridades().stream()
 				.map(SimpleGrantedAuthority::new)
 				.collect(Collectors.toSet());

@@ -38,7 +38,7 @@ class UsuarioDetailsServiceTest {
 
 	@Test
 	void testCargarUsuarioPorNombreDeUsuarioExitoso() {
-		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuarioValido));
+		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(usuarioValido);
 
 		UserDetails detalles = usuarioDetailsService.loadUserByUsername("jugador1");
 
@@ -50,7 +50,7 @@ class UsuarioDetailsServiceTest {
 
 	@Test
 	void testCargarUsuarioInexistenteLanzaExcepcion() {
-		when(repositorioUsuario.buscarPorNombreUsuario("fantasma")).thenReturn(Optional.empty());
+		when(repositorioUsuario.buscarPorNombreUsuario("fantasma")).thenReturn(null);
 
 		assertThatThrownBy(() -> usuarioDetailsService.loadUserByUsername("fantasma"))
 				.isInstanceOf(UsernameNotFoundException.class)
@@ -60,7 +60,7 @@ class UsuarioDetailsServiceTest {
 	@Test
 	void testCargarUsuarioDeshabilitadoRetornaNoHabilitado() {
 		usuarioValido.deshabilitar();
-		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(Optional.of(usuarioValido));
+		when(repositorioUsuario.buscarPorNombreUsuario("jugador1")).thenReturn(usuarioValido);
 
 		UserDetails detalles = usuarioDetailsService.loadUserByUsername("jugador1");
 
