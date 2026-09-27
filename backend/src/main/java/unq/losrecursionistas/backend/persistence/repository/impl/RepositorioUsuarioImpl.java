@@ -27,6 +27,16 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 	}
 
 	@Override
+	public Usuario crearUsuario(Usuario usuario) {
+		return usuarioDAOSQL.save(usuario);
+	}
+
+	@Override
+	public boolean existeElUsuario(String nombreUsuario) {
+		return usuarioDAOSQL.existsByNombreUsuario(nombreUsuario);
+	}
+
+	@Override
 	public Page<Usuario> buscarTodos(Pageable pageable) {
 		return usuarioDAOSQL.findAll(pageable);
 	}

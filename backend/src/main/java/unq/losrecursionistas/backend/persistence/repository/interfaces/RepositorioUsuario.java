@@ -9,4 +9,8 @@ public interface RepositorioUsuario{
 	Page<Usuario> buscarTodos(Pageable pageable);
 
 	Usuario buscarPorNombreUsuario(String nombreUsuario);
+
+	Usuario crearUsuario(Usuario usuario);
+
+	boolean existeElUsuario(String nombreUsuario);
 }
