@@ -26,4 +26,9 @@ public class RepositorioJugadorImpl implements RepositorioJugador {
         }
         jugadorDAOSQL.saveAll(jugadores);
     }
+
+    @Override
+    public Jugador obtenerJugadorPorId(Long id) {
+        return jugadorDAOSQL.findById(id).orElseThrow(() -> new RuntimeException("No existe el jugador con el id: " + id));
+    }
 }

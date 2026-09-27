@@ -2,6 +2,8 @@ package unq.losrecursionistas.backend.model;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.math.BigDecimal;
 
@@ -17,15 +19,16 @@ class UsuarioTest {
 
 		usuario.debitar(35.50);
 
-		assertThat(usuario.getSaldo()).isEqualByComparingTo(100.00 - 35.50);
+		assertEquals(100.00 - 35.50, usuario.getSaldo());
+
 	}
 
 	@Test
 	void rechazaDebitarUnMontoMayorAlSaldo() {
 		Usuario usuario = new Usuario("jugador1", "secreto", 10.00);
 
-		assertThatThrownBy(() -> usuario.debitar(10.01))
-				.isInstanceOf(ExcepcionDominio.class);
+			assertThrows(ExcepcionDominio.class, () -> usuario.debitar(10.01));
+
 	}
 
 	@Test
@@ -34,7 +37,7 @@ class UsuarioTest {
 
 		usuario.acreditar(50.00);
 
-		assertThat(usuario.getSaldo()).isEqualByComparingTo(100.00 + 50.00);
+		assertEquals(100.00 + 50.00, usuario.getSaldo());
 	}
 
 	@Test

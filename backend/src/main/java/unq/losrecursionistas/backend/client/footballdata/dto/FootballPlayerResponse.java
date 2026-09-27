@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 public record FootballPlayerResponse(
     Long id,
     String name,
+    String lastName,
     String position,
     String dateOfBirth,
     String nationality

@@ -23,4 +23,9 @@ public class JugadorServiceImpl implements JugadorService{
         repositorioJugador.guardarTodos(jugadores);
     }
 
+    @Override
+    public Jugador obtenerJugadorPorId(Long id) {
+        return repositorioJugador.obtenerJugadorPorId(id);
+    }
+
 }
