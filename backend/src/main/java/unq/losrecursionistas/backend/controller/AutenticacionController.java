@@ -21,6 +21,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
 import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
+import unq.losrecursionistas.backend.controller.dto.usuario.UsuarioRequestDTO;
+import unq.losrecursionistas.backend.controller.dto.usuario.UsuarioResponseDTO;
+import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.service.interfaces.AuthService;
 
 @RestController
@@ -32,6 +35,22 @@ public class AutenticacionController {
 	public AutenticacionController(AuthService authService) {
 		this.authService = authService;
 	}
+
+
+	@PostMapping("registrar")
+	@Operation(summary = "Registrar un nuevo usuario", description = "Crea una cuenta de usuario en el sistema")
+	@ApiResponses({
+			@ApiResponse(responseCode = "201", description = "Usuario creado exitosamente"),
+			@ApiResponse(responseCode = "400", description = "Datos inválidos o nombre de usuario ya existente")
+	})
+	public ResponseEntity<UsuarioResponseDTO> registrarUsuario(@Valid @RequestBody UsuarioRequestDTO usuarioRequestDTO) {
+		Usuario nuevoUsuario = authService.registrarUsuario(usuarioRequestDTO.aModeloRegister());
+
+		UsuarioResponseDTO responseDTO = UsuarioResponseDTO.desdeModelo(nuevoUsuario);
+
+		return ResponseEntity.status(HttpStatus.CREATED).body(responseDTO);
+	}
+
 
 	@Operation(summary = "Iniciar sesion y obtener JWT", description = "Autentica a un usuario registrado y devuelve un token JWT valido por una hora.")
 	@ApiResponses({

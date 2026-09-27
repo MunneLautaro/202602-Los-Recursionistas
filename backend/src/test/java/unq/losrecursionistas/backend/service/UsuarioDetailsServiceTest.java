@@ -33,7 +33,7 @@ class UsuarioDetailsServiceTest {
 
 	@BeforeEach
 	void setUp() {
-		usuarioValido = new Usuario("jugador1", "hashPassword", BigDecimal.ZERO);
+		usuarioValido = new Usuario("jugador1", "hashPassword", 1000.00);
 	}
 
 	@Test

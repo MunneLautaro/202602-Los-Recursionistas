@@ -6,4 +6,5 @@ import java.util.List;
 
 public interface JugadorService {
     void guardarTodos(List<Jugador> jugadores);
+
 }
