@@ -10,4 +10,6 @@ import java.util.List;
 public interface RepositorioJugador {
 
     void guardarTodos(List<Jugador> jugadores);
+
+    Jugador obtenerJugadorPorId(Long id);
 }
