@@ -73,7 +73,10 @@ public class Usuario {
 		if (saldo < 0) {
 			throw new ExcepcionDominio("Saldo insuficiente");
 		}
-		saldo =- monto;
+		if (saldo < monto) {
+			throw new ExcepcionDominio("Saldo insuficiente");
+		}
+		saldo = saldo - monto;
 	}
 
 	public void acreditar(Double monto) {
