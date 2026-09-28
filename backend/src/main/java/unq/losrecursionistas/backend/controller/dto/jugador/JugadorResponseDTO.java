@@ -1,9 +1,6 @@
 package unq.losrecursionistas.backend.controller.dto.jugador;
 
-import jakarta.persistence.FetchType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import unq.losrecursionistas.backend.model.Equipo;
+import unq.losrecursionistas.backend.controller.dto.equipo.EquipoResponseDTO;
 import unq.losrecursionistas.backend.model.Jugador;
 
 import java.time.LocalDate;
@@ -16,7 +13,7 @@ public record JugadorResponseDTO(
         String posicion,
         String nacionalidad,
         LocalDate fechaNacimiento,
-        Equipo equipo
+        EquipoResponseDTO equipo
 
 ) {
     public static JugadorResponseDTO desdeModelo(Jugador jugador) {
@@ -27,7 +24,7 @@ public record JugadorResponseDTO(
             jugador.getPosicion(),
             jugador.getNacionalidad(),
             jugador.getFechaNacimiento(),
-            jugador.getEquipo()
+            EquipoResponseDTO.desdeModelo(jugador.getEquipo())
         );
     }
 }

@@ -51,6 +51,7 @@ public class SincronizacionService {
         }
     }
 
+    //TODO: hacer que apenas cargue uno ya se persista asi no hay que esperar a que carguen todos para persistirlos
     public void sincronizarLiga(String codigoLiga) {
         LOGGER.info("Iniciando sincronización para la liga con código: {}", codigoLiga);
         FootballCompetitionTeamsResponse response = apiClient.getEquiposPorCompeticion(codigoLiga);

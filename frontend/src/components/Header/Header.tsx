@@ -1,16 +1,16 @@
-import React from "react"
-import { Link } from "react-router-dom"
-import { useAuth } from "../../features/auth"
-import { headerStyles } from "./Header.styles"
+import React from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../../features/auth";
+import { headerStyles } from "./Header.styles";
 
 interface HeaderProps {
-  title?: string
+  title?: string;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title = "Los Recursionistas",
 }) => {
-  const { isAuthenticated, nombreUsuario, logout } = useAuth()
+  const { isAuthenticated, nombreUsuario, logout } = useAuth();
 
   return (
     <header className={headerStyles.header}>
@@ -29,9 +29,6 @@ export const Header: React.FC<HeaderProps> = ({
           </Link>
           <Link to="/jugadores" className={headerStyles.navLink}>
             Jugadores
-          </Link>
-          <Link to="/sincronizacion" className={headerStyles.navLink}>
-            Sincronización
           </Link>
         </nav>
 
@@ -60,5 +57,5 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </div>
     </header>
-  )
-}
+  );
+};
