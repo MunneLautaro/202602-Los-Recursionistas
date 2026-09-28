@@ -33,7 +33,7 @@ public class SecurityConfig {
 			.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(autorizacion -> autorizacion
 				.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
-						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**")
+						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**", "/players/**")
 				.permitAll()
 				.requestMatchers("/ruta-admin").hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
