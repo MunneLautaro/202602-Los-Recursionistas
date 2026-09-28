@@ -29,18 +29,21 @@ public class Equipo {
     private String colores;
     private String estadio;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "liga_id")
+    private Liga liga;
+
+    @Builder.Default
     @OneToMany(mappedBy = "equipo", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Jugador> jugadores = new ArrayList<>();
 
-	public Equipo(String nombre, String nombreCorto, String sigla, String escudoUrl, Integer fundacion, String colores, String estadio) {
-
-		this.nombre = nombre;
+    public Equipo(String nombre, String nombreCorto, String sigla, String escudoUrl, Integer fundacion, String colores, String estadio) {
+        this.nombre = nombre;
         this.nombreCorto = nombreCorto;
         this.sigla = sigla;
         this.escudoUrl = escudoUrl;
         this.fundacion = fundacion;
         this.colores = colores;
         this.estadio = estadio;
-
-	}
+    }
 }

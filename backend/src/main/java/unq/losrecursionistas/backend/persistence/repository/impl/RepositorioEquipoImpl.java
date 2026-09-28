@@ -25,4 +25,26 @@ public class RepositorioEquipoImpl implements RepositorioEquipo {
     public Equipo buscarPorIdExterno(Long idExterno, Equipo equipo) {
         return equipoDAOSQL.findByIdExterno(idExterno).orElseGet(() -> equipoDAOSQL.save(equipo));
     }
+
+    @Override
+    public Equipo guardarOActualizar(Equipo equipo) {
+        if (equipo.getIdExterno() != null) {
+            Optional<Equipo> existente = equipoDAOSQL.findByIdExterno(equipo.getIdExterno());
+            if (existente.isPresent()) {
+                Equipo e = existente.get();
+                e.setNombre(equipo.getNombre());
+                e.setNombreCorto(equipo.getNombreCorto());
+                e.setSigla(equipo.getSigla());
+                e.setEscudoUrl(equipo.getEscudoUrl());
+                e.setColores(equipo.getColores());
+                e.setEstadio(equipo.getEstadio());
+                e.setFundacion(equipo.getFundacion());
+                if (equipo.getLiga() != null) {
+                    e.setLiga(equipo.getLiga());
+                }
+                return equipoDAOSQL.save(e);
+            }
+        }
+        return equipoDAOSQL.save(equipo);
+    }
 }
