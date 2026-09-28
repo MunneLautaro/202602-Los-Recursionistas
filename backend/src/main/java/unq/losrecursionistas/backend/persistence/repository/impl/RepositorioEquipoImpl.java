@@ -5,6 +5,7 @@ import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEquipo;
 import unq.losrecursionistas.backend.persistence.sql.EquipoDAOSQL;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -46,5 +47,10 @@ public class RepositorioEquipoImpl implements RepositorioEquipo {
             }
         }
         return equipoDAOSQL.save(equipo);
+    }
+
+    @Override
+    public List<Equipo> obtenerEquiposDeLiga(Long ligaId) {
+        return equipoDAOSQL.findByLigaId(ligaId);
     }
 }

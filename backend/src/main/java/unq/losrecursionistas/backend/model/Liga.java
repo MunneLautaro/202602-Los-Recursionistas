@@ -1,6 +1,6 @@
 package unq.losrecursionistas.backend.model;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,14 +39,14 @@ public class Liga {
 	private String codigo;
 
 	@Column(name = "fecha_creacion", nullable = false)
-	private Instant fechaCreacion;
+	private LocalDate fechaCreacion;
 
 	public Liga(String nombre, String codigo) {
 		validarTexto(nombre, "El nombre de la liga es obligatorio");
 		validarTexto(codigo, "El codigo de la liga es obligatorio");
 		this.nombre = nombre;
 		this.codigo = codigo;
-		this.fechaCreacion = Instant.now();
+		this.fechaCreacion = LocalDate.now();
 	}
 
 	public Liga(Long idExterno, String nombre, String codigo) {
@@ -55,7 +55,7 @@ public class Liga {
 		this.idExterno = idExterno;
 		this.nombre = nombre;
 		this.codigo = codigo;
-		this.fechaCreacion = Instant.now();
+		this.fechaCreacion = LocalDate.now();
 	}
 
 	private static void validarTexto(String valor, String mensaje) {
