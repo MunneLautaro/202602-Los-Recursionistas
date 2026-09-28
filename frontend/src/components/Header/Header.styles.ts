@@ -10,8 +10,11 @@ export const headerStyles = {
   navLink:
     "text-sm font-medium text-[var(--text)] transition-colors hover:text-[var(--pantone-blue-violet)]",
   actionsContainer: "flex items-center gap-3",
+  userName: "text-sm font-semibold text-[var(--text-h)] truncate max-w-[150px]",
   btnLogin:
     "rounded-lg bg-[var(--pantone-sun-glare)] px-4 py-2 text-sm font-semibold text-[var(--pantone-darkest-hour)] shadow-sm transition-transform hover:scale-105 active:scale-95",
   btnRegister:
     "rounded-lg bg-[var(--pantone-exuberant-orange)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-transform hover:scale-105 active:scale-95",
+  btnLogout:
+    "rounded-lg border border-[var(--border)] bg-transparent px-4 py-2 text-sm font-semibold text-[var(--text)] shadow-sm transition-all hover:bg-[var(--pantone-exuberant-orange)] hover:text-white hover:border-transparent active:scale-95",
 } as const

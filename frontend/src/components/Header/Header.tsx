@@ -1,5 +1,6 @@
 import React from "react"
 import { Link } from "react-router-dom"
+import { useAuth } from "../../features/auth"
 import { headerStyles } from "./Header.styles"
 
 interface HeaderProps {
@@ -9,6 +10,8 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   title = "Los Recursionistas",
 }) => {
+  const { isAuthenticated, nombreUsuario, logout } = useAuth()
+
   return (
     <header className={headerStyles.header}>
       <div className={headerStyles.container}>
@@ -33,12 +36,27 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         <div className={headerStyles.actionsContainer}>
-          <Link to="/login" className={headerStyles.btnLogin}>
-            Ingresar
-          </Link>
-          <Link to="/register" className={headerStyles.btnRegister}>
-            Registrarse
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <span className={headerStyles.userName}>{nombreUsuario}</span>
+              <button
+                type="button"
+                onClick={logout}
+                className={headerStyles.btnLogout}
+              >
+                Cerrar sesión
+              </button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className={headerStyles.btnLogin}>
+                Ingresar
+              </Link>
+              <Link to="/register" className={headerStyles.btnRegister}>
+                Registrarse
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

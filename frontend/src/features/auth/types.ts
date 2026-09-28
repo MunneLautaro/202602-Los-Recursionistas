@@ -25,3 +25,23 @@ export interface RegisterFormErrors {
   confirmarContrasena?: string
   general?: string
 }
+
+export interface LoginPayload {
+  nombreUsuario: string
+  contrasena: string
+}
+
+export interface LoginResponse {
+  token: string
+}
+
+export interface LoginFormData {
+  nombreUsuario: string
+  contrasena: string
+}
+
+export interface LoginFormErrors {
+  nombreUsuario?: string
+  contrasena?: string
+  general?: string
+}
