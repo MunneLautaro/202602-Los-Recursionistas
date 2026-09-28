@@ -5,6 +5,7 @@ import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.persistence.sql.LigaDAOSQL;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -54,5 +55,10 @@ public class RepositorioLigaImpl implements RepositorioLiga {
     @Override
     public Liga buscarPorCodigo(String codigo) {
         return ligaDAOSQL.findByCodigo(codigo).orElseThrow(() -> new RuntimeException("Liga no encontrada con código: " + codigo));
+    }
+
+    @Override
+    public List<Liga> obtenerLigas() {
+        return ligaDAOSQL.findAll();
     }
 }

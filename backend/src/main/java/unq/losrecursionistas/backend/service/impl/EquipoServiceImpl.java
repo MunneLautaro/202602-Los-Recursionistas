@@ -6,6 +6,8 @@ import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEquipo;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class EquipoServiceImpl implements EquipoService {
@@ -29,5 +31,10 @@ public class EquipoServiceImpl implements EquipoService {
     @Override
     public Equipo guardarOActualizar(Equipo equipo) {
         return repositorioEquipo.guardarOActualizar(equipo);
+    }
+
+    @Override
+    public List<Equipo> obtenerTodosLosEquiposDeLiga(Long ligaId) {
+        return repositorioEquipo.obtenerEquiposDeLiga(ligaId);
     }
 }
