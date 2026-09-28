@@ -1,17 +1,27 @@
 @import "tailwindcss";
 
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
+  /* Pantone Color Palette */
+  --pantone-sun-glare: #dfff00; /* PANTONE 13-0663 TSX - Sun Glare */
+  --pantone-exuberant-orange: #ff5528; /* PANTONE 17-1363 TSX - Exuberant Orange */
+  --pantone-blue-violet: #6952d1; /* PANTONE 2725 C - Blue Violet */
+  --pantone-cloud-dancer: #f2efe9; /* PANTONE 11-4201 TPG - Cloud Dancer */
+  --pantone-darkest-hour: #262425; /* PANTONE 20-0199 TPM - Darkest Hour */
+
+  --text: #262425;
+  --text-h: #262425;
+  --bg: #f2efe9;
+  --border: #d1cdc4;
+  --code-bg: #e4e0d7;
+  --accent: #6952d1;
+  --accent-bg: rgba(105, 82, 209, 0.12);
+  --accent-border: rgba(105, 82, 209, 0.5);
+  --primary: #dfff00;
+  --secondary: #ff5528;
+  --social-bg: rgba(228, 224, 215, 0.5);
   --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+    rgba(38, 36, 37, 0.1) 0 10px 15px -3px,
+    rgba(38, 36, 37, 0.05) 0 4px 6px -2px;
 
   --sans: system-ui, "Segoe UI", Roboto, sans-serif;
   --heading: system-ui, "Segoe UI", Roboto, sans-serif;
@@ -34,15 +44,17 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
+    --text: #f2efe9;
+    --text-h: #ffffff;
+    --bg: #262425;
+    --border: #3d393b;
+    --code-bg: #1b1a1b;
+    --accent: #dfff00;
+    --accent-bg: rgba(223, 255, 0, 0.15);
+    --accent-border: rgba(223, 255, 0, 0.5);
+    --primary: #dfff00;
+    --secondary: #ff5528;
+    --social-bg: rgba(61, 57, 59, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
   }
