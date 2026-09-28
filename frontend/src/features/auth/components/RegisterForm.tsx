@@ -1,16 +1,15 @@
-import React from "react"
-import { useRegister } from "../hooks/useRegister"
-import { registerFormStyles } from "./RegisterForm.styles"
+import React from "react";
+import { useRegister } from "../hooks/useRegister";
+import { registerFormStyles } from "./RegisterForm.styles";
 
 interface RegisterFormProps {
-  onSuccess?: () => void
+  onSuccess?: () => void;
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = () => {
   const { formData, errors, isLoading, isSuccess, handleChange, handleSubmit } =
-    useRegister()
+    useRegister();
 
-  console.log(errors)
   return (
     <div className={registerFormStyles.container}>
       <div className={registerFormStyles.header}>
@@ -123,5 +122,5 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         </a>
       </div>
     </div>
-  )
-}
+  );
+};
