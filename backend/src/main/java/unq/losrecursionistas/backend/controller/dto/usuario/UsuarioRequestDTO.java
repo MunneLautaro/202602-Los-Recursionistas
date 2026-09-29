@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import unq.losrecursionistas.backend.model.Usuario;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 public record UsuarioRequestDTO(
         @NotNull(message = "El nombre de usuario es requerido")
@@ -39,7 +40,7 @@ public record UsuarioRequestDTO(
                 .contrasena(contrasena)
                 .saldo(saldo)
                 .habilitado(true)
-                .fechaCreacion(LocalDateTime.now())
+                .fechaCreacion(LocalDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")))
                 .build();
     }
 

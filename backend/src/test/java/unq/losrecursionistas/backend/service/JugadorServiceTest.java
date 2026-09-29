@@ -7,12 +7,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-
+import org.springframework.data.domain.*;
 import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.JugadorFiltro;
@@ -94,13 +89,12 @@ class JugadorServiceTest {
     }
 
     @Test
-    @DisplayName("Caso Feliz: buscarJugadoresConFiltro aplica la paginación correcta de 12 elementos por página")
     void buscarJugadoresConFiltroExitoso() {
         JugadorFiltro filtro = JugadorFiltro.builder().nombre("Franco").build();
         Pageable expectedPageable = PageRequest.of(0, 12, Sort.by("nombre").ascending());
         Page<Jugador> pageMock = new PageImpl<>(List.of(jugador1), expectedPageable, 1);
 
-        when(repositorioJugador.buscarJugadoresConFiltro(eq(filtro), eq(expectedPageable))).thenReturn(pageMock);
+        when(repositorioJugador.buscarJugadoresConFiltro(filtro, expectedPageable)).thenReturn(pageMock);
 
         Page<Jugador> resultado = jugadorService.buscarJugadoresConFiltro(filtro, 0);
 
@@ -110,13 +104,12 @@ class JugadorServiceTest {
     }
 
     @Test
-    @DisplayName("Caso Borde: buscarJugadoresConFiltro para una página posterior")
     void buscarJugadoresConFiltroPaginaPosterior() {
         JugadorFiltro filtro = JugadorFiltro.builder().build();
         Pageable expectedPageable = PageRequest.of(2, 12, Sort.by("nombre").ascending());
         Page<Jugador> pageMock = new PageImpl<>(Collections.emptyList(), expectedPageable, 0);
 
-        when(repositorioJugador.buscarJugadoresConFiltro(eq(filtro), eq(expectedPageable))).thenReturn(pageMock);
+        when(repositorioJugador.buscarJugadoresConFiltro(filtro, expectedPageable)).thenReturn(pageMock);
 
         Page<Jugador> resultado = jugadorService.buscarJugadoresConFiltro(filtro, 2);
 

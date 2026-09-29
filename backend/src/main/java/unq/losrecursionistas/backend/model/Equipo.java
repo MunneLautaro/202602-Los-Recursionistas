@@ -2,7 +2,6 @@ package unq.losrecursionistas.backend.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
 import java.util.ArrayList;
 import java.util.List;

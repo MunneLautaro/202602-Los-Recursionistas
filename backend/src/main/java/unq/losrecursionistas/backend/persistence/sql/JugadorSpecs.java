@@ -10,6 +10,9 @@ import java.util.List;
 
 public class JugadorSpecs {
 
+    private JugadorSpecs() {
+    }
+
     public static Specification<Jugador> conFiltro(JugadorFiltro filtro) {
         return (root, query, cb) -> {
             if (filtro == null) {

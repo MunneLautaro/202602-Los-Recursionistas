@@ -1,20 +1,11 @@
 package unq.losrecursionistas.backend.model;
 
-import java.time.LocalDate;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import lombok.*;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 @Entity
 @Table(name = "ligas")
@@ -46,7 +37,7 @@ public class Liga {
 		validarTexto(codigo, "El codigo de la liga es obligatorio");
 		this.nombre = nombre;
 		this.codigo = codigo;
-		this.fechaCreacion = LocalDate.now();
+		this.fechaCreacion = LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires"));
 	}
 
 	public Liga(Long idExterno, String nombre, String codigo) {
@@ -55,7 +46,7 @@ public class Liga {
 		this.idExterno = idExterno;
 		this.nombre = nombre;
 		this.codigo = codigo;
-		this.fechaCreacion = LocalDate.now();
+		this.fechaCreacion = LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires"));
 	}
 
 	private static void validarTexto(String valor, String mensaje) {

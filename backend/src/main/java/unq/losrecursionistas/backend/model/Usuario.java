@@ -1,23 +1,14 @@
 package unq.losrecursionistas.backend.model;
 
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
-
-import jakarta.persistence.CollectionTable;
-import jakarta.persistence.Column;
-import jakarta.persistence.ElementCollection;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "usuarios")
@@ -61,7 +52,7 @@ public class Usuario {
 		this.nombreUsuario = nombreUsuario;
 		this.contrasena = contrasena;
 		this.saldo = saldo;
-		this.fechaCreacion = LocalDateTime.now();
+		this.fechaCreacion = LocalDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires"));
 		this.habilitado = true;
 		this.autoridades.add("ROLE_USUARIO");
 	}

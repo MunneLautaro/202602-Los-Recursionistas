@@ -6,8 +6,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 
-
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -88,7 +88,7 @@ class LigaTest {
     @Test
     @DisplayName("Caso Feliz: Builder y Getters/Setters de Liga")
     void testBuilderYSettersGetters() {
-        LocalDate ahora = LocalDate.now();
+        LocalDate ahora = LocalDate.now(ZoneId.of("America/Argentina/Buenos_Aires"));
         Liga liga = Liga.builder()
                 .id(1L)
                 .idExterno(2021L)
