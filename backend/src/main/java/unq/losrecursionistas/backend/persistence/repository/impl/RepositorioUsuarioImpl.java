@@ -1,11 +1,8 @@
 package unq.losrecursionistas.backend.persistence.repository.impl;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.persistence.sql.UsuarioDAOSQL;

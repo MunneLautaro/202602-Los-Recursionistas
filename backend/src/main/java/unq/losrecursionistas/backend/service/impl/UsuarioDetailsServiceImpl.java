@@ -1,17 +1,16 @@
 package unq.losrecursionistas.backend.service.impl;
 
-import java.util.stream.Collectors;
-
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.interfaces.UsuarioDetailsService;
+
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioDetailsServiceImpl implements UsuarioDetailsService {
