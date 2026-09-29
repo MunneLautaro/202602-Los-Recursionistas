@@ -1,9 +1,12 @@
-import React from "react"
-import { Link } from "react-router-dom"
-import { Layout } from "../components/Layout"
-import { appStyles } from "../app/App.styles"
+import React from "react";
+import { Link } from "react-router-dom";
+import { Layout } from "../components/Layout";
+import { appStyles } from "../app/App.styles";
+import { useAuth } from "../features/auth";
 
 export const HomePage: React.FC = () => {
+  const { isAuthenticated } = useAuth();
+
   return (
     <Layout>
       <div className={appStyles.heroContainer}>
@@ -16,14 +19,16 @@ export const HomePage: React.FC = () => {
           real.
         </p>
         <div className={appStyles.buttonContainer}>
-          <Link to="/register" className={appStyles.btnPrimary}>
-            Registrarse
-          </Link>
+          {!isAuthenticated && (
+            <Link to="/register" className={appStyles.btnPrimary}>
+              Registrarse
+            </Link>
+          )}
           <button className={appStyles.btnSecondary}>Ver Equipos</button>
         </div>
       </div>
     </Layout>
-  )
-}
+  );
+};
 
-export default HomePage
+export default HomePage;
