@@ -1,5 +1,10 @@
-import React, { useState } from "react";
-import type { JugadorFiltroRequestDTO } from "../types";
+import React, { useEffect, useState } from "react";
+import { fetchEquiposPorLiga, fetchLigas } from "../api/catalogosApi";
+import type {
+  EquipoResponseDTO,
+  JugadorFiltroRequestDTO,
+  LigaResponseDTO,
+} from "../types";
 import { jugadoresFiltersStyles } from "./JugadoresFilters.styles";
 
 interface JugadoresFiltersProps {
@@ -12,18 +17,97 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
   setFilters,
 }) => {
   const [local, setLocal] = useState(filters);
+  const [ligas, setLigas] = useState<LigaResponseDTO[]>([]);
+  const [equipos, setEquipos] = useState<EquipoResponseDTO[]>([]);
+  const [loadingLigas, setLoadingLigas] = useState(true);
+  const [loadingEquipos, setLoadingEquipos] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadLigas = async () => {
+      try {
+        const data = await fetchLigas();
+        if (active) {
+          setLigas(data);
+        }
+      } catch (e: unknown) {
+        if (active) {
+          setCatalogError(
+            e instanceof Error ? e.message : "Error al cargar las ligas",
+          );
+        }
+      } finally {
+        if (active) {
+          setLoadingLigas(false);
+        }
+      }
+    };
+
+    loadLigas();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!local.ligaId) {
+      return;
+    }
+
+    let active = true;
+
+    const loadEquipos = async () => {
+      try {
+        const data = await fetchEquiposPorLiga(local.ligaId!);
+        if (active) {
+          setEquipos(data);
+        }
+      } catch (e: unknown) {
+        if (active) {
+          setEquipos([]);
+          setCatalogError(
+            e instanceof Error
+              ? e.message
+              : "Error al cargar los equipos de la liga",
+          );
+        }
+      } finally {
+        if (active) {
+          setLoadingEquipos(false);
+        }
+      }
+    };
+
+    loadEquipos();
+
+    return () => {
+      active = false;
+    };
+  }, [local.ligaId]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
+    const parsedValue = value
+      ? isNaN(Number(value))
+        ? value
+        : Number(value)
+      : undefined;
+
+    if (name === "ligaId") {
+      setEquipos([]);
+      setLoadingEquipos(Boolean(parsedValue));
+      setCatalogError(null);
+    }
+
     setLocal((prev) => ({
       ...prev,
-      [name]: value
-        ? isNaN(Number(value))
-          ? value
-          : Number(value)
-        : undefined,
+      [name]: parsedValue,
+      ...(name === "ligaId" ? { equipoId: undefined } : {}),
     }));
   };
 
@@ -53,25 +137,42 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
         <option value="Midfield">Midfield</option>
         <option value="Offence">Offence</option>
       </select>
-      <input
+      <select
         name="ligaId"
-        placeholder="Liga ID"
-        type="number"
         value={local.ligaId ?? ""}
         onChange={handleChange}
         className={jugadoresFiltersStyles.input}
-      />
-      <input
+        disabled={loadingLigas}
+      >
+        <option value="">Todas las ligas</option>
+        {ligas.map((liga) => (
+          <option key={liga.id} value={liga.id}>
+            {liga.nombre}
+          </option>
+        ))}
+      </select>
+      <select
         name="equipoId"
-        placeholder="Equipo ID"
-        type="number"
         value={local.equipoId ?? ""}
         onChange={handleChange}
         className={jugadoresFiltersStyles.input}
-      />
+        disabled={!local.ligaId || loadingEquipos}
+      >
+        <option value="">
+          {loadingEquipos ? "Cargando equipos..." : "Todos los equipos"}
+        </option>
+        {equipos.map((equipo) => (
+          <option key={equipo.id} value={equipo.id}>
+            {equipo.nombre}
+          </option>
+        ))}
+      </select>
       <button type="submit" className={jugadoresFiltersStyles.button}>
         Aplicar
       </button>
+      {catalogError && (
+        <p className={jugadoresFiltersStyles.error}>{catalogError}</p>
+      )}
     </form>
   );
 };

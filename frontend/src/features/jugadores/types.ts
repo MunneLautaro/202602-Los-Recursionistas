@@ -5,6 +5,26 @@ export interface JugadorFiltroRequestDTO {
   equipoId?: number;
 }
 
+export interface LigaResponseDTO {
+  id: number;
+  idExterno: number;
+  nombre: string;
+  codigo: string;
+  fechaCreacion: string;
+}
+
+export interface EquipoResponseDTO {
+  id: number;
+  idExterno: number;
+  nombre: string;
+  nombreCorto: string;
+  sigla: string;
+  escudoUrl: string;
+  fundacion: number;
+  colores: string;
+  estadio: string;
+}
+
 export interface JugadorResponseDTO {
   id: number;
   nombre: string;
