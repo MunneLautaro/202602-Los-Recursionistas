@@ -58,6 +58,7 @@ export function useLogin() {
       localStorage.setItem("nombreUsuario", formData.nombreUsuario.trim())
 
       navigate("/")
+      window.location.reload()
     } catch (err: any) {
       setErrors({
         general:
