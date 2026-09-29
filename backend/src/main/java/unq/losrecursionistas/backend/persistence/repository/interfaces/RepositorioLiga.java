@@ -3,7 +3,6 @@ package unq.losrecursionistas.backend.persistence.repository.interfaces;
 import unq.losrecursionistas.backend.model.Liga;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface RepositorioLiga {
     Liga guardar(Liga liga);

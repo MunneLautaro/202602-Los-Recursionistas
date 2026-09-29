@@ -1,11 +1,5 @@
 package unq.losrecursionistas.backend.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -20,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
 import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
 import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
 import unq.losrecursionistas.backend.model.Usuario;
@@ -28,6 +21,12 @@ import unq.losrecursionistas.backend.service.impl.AuthServiceImpl;
 import unq.losrecursionistas.backend.service.impl.exceptions.ExcepcionNombreDeUsuarioExistente;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {

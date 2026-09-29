@@ -20,10 +20,9 @@ import unq.losrecursionistas.backend.service.interfaces.JugadorService;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SincronizacionServiceTest {
@@ -64,7 +63,7 @@ class SincronizacionServiceTest {
         Jugador jugadorMock = Jugador.builder().id(100L).nombre("Salah").build();
 
         when(apiClient.getEquiposPorCompeticion(codigoLiga)).thenReturn(response);
-        when(repositorioLiga.buscarOModificarPorCodigoOIdExterno(eq("PL"), eq(2021L), eq("Premier League"))).thenReturn(ligaMock);
+        when(repositorioLiga.buscarOModificarPorCodigoOIdExterno("PL", 2021L, "Premier League")).thenReturn(ligaMock);
         when(mapper.equipoAModelo(teamDto)).thenReturn(equipoMock);
         when(equipoService.guardarOActualizar(any(Equipo.class))).thenReturn(equipoMock);
         when(apiClient.getEquipo(64L)).thenReturn(teamFullDto);

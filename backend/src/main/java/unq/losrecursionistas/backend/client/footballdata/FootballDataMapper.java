@@ -1,7 +1,6 @@
 package unq.losrecursionistas.backend.client.footballdata;
 
 import org.springframework.stereotype.Component;
-import unq.losrecursionistas.backend.client.footballdata.dto.FootballMatchResponse;
 import unq.losrecursionistas.backend.client.footballdata.dto.FootballPlayerResponse;
 import unq.losrecursionistas.backend.client.footballdata.dto.FootballTeamResponse;
 import unq.losrecursionistas.backend.model.Equipo;
