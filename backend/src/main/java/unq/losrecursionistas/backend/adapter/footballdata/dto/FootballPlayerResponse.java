@@ -1,4 +1,4 @@
-package unq.losrecursionistas.backend.client.footballdata.dto;
+package unq.losrecursionistas.backend.adapter.footballdata.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 

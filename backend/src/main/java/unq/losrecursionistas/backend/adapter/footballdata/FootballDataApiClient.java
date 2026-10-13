@@ -1,4 +1,4 @@
-package unq.losrecursionistas.backend.client.footballdata;
+package unq.losrecursionistas.backend.adapter.footballdata;
 
 import io.github.resilience4j.ratelimiter.RateLimiter;
 import io.github.resilience4j.ratelimiter.RateLimiterConfig;
@@ -7,8 +7,8 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestClientResponseException;
-import unq.losrecursionistas.backend.client.footballdata.dto.FootballCompetitionTeamsResponse;
-import unq.losrecursionistas.backend.client.footballdata.dto.FootballTeamResponse;
+import unq.losrecursionistas.backend.adapter.footballdata.dto.FootballCompetitionTeamsResponse;
+import unq.losrecursionistas.backend.adapter.footballdata.dto.FootballTeamResponse;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.model.Jugador;
 
