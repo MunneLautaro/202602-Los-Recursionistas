@@ -31,3 +31,8 @@ Thumbs.db
 # Coverage / reports
 coverage/
 htmlReport/
+
+# Node.js / frontend
+node_modules/
+dist/
+*.log
