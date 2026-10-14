@@ -58,6 +58,11 @@ public class RepositorioLigaImpl implements RepositorioLiga {
     }
 
     @Override
+    public Liga buscarPorIdWhoscored(Long idWhoscored) {
+        return ligaDAOSQL.findByIdWhoscored(idWhoscored).orElse(null);
+    }
+
+    @Override
     public List<Liga> obtenerLigas() {
         return ligaDAOSQL.findAll();
     }

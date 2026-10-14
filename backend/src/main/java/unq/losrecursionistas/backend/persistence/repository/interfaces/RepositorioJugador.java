@@ -12,6 +12,7 @@ public interface RepositorioJugador {
     void guardarTodos(List<Jugador> jugadores);
 
     Jugador obtenerJugadorPorId(Long id);
+    Jugador buscarPorIdWhoscored(Long idWhoscored);
 
     Page<Jugador> buscarJugadoresConFiltro(JugadorFiltro filtro, Pageable pageable);
 }
