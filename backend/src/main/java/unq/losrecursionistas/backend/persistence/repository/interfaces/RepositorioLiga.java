@@ -8,6 +8,7 @@ public interface RepositorioLiga {
     Liga guardar(Liga liga);
     Liga buscarOModificarPorCodigoOIdExterno(String codigo, Long idExterno, String nombre);
     Liga buscarPorCodigo(String codigo);
+    Liga buscarPorIdWhoscored(Long idWhoscored);
 
     List<Liga> obtenerLigas();
 }

@@ -1,4 +1,4 @@
-package unq.losrecursionistas.backend.configuration;
+package unq.losrecursionistas.backend.adapter.footballdata;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

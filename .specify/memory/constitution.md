@@ -1,6 +1,7 @@
 <!-- Sync Impact Report
-Version change: 1.5.0 -> 1.6.0
-Modified principles: Principle VI - Validación por capas, Principle VII - Testing obligatorio
+Version change: 1.9.0 -> 2.0.0
+Modified principles: Stack tecnológico, Principio I, Principio VII, Principio VIII,
+Principio XIII, Requisitos no funcionales, Governance
 Added sections: none
 Removed sections: none
 Follow-up TODOs: none
@@ -8,9 +9,15 @@ Follow-up TODOs: none
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 1.7.0
+**Versión:** 2.0.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-09-23
+**Última modificación:** 2026-10-13
+
+**Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
+para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
+alternativas estructurales, se exige un subpaquete por fuente externa y se refuerzan
+los contratos por puertos, el aislamiento de DTOs y excepciones, la configuración
+global, las verificaciones de refactors y las reglas de scraping con Playwright.
 
 **Resumen del cambio 1.7.0:** Se incorpora el Principio XI — Desarrollo estrictamente acotado (No Over-Engineering / YAGNI) prohibiendo la creación anticipada de código, clases, métodos, DTOs, configuraciones o tests no solicitados explícitamente.
 
@@ -46,9 +53,12 @@ constitution, prevalece la constitution.
 
 ## Stack tecnológico
 
-- **Backend:** Java, Spring Boot, Spring Security, PostgreSQL.
-- **Frontend:** React, Vite, TypeScript, Tailwind CSS.
-- Comunicación Frontend–Backend vía HTTP/REST.
+- **Backend:** Java 21, Spring Boot, Spring Security, PostgreSQL y Playwright for Java
+  dentro del módulo de scraping gobernado por el Principio XIII.
+- **Frontend:** React 19, Vite, TypeScript, Tailwind CSS 4, react-router-dom 7.
+  - Manejador de paquetes: Yarn (`.yarnrc.yml` en `/frontend`).
+  - Estilos: Tailwind CSS 4 integrado vía plugin de Vite (`@tailwindcss/vite`). Los estilos específicos de componente se extraen en archivos `.styles.ts` con clases Tailwind.
+- Comunicación Frontend–Backend vía HTTP/REST. El cliente HTTP del frontend es `src/lib/fetchClient.ts`, que lee la URL base de `VITE_API_URL` (fallback `http://localhost:8080`).
 
 Cualquier desviación de este stack (agregar una librería estructural, un motor
 de persistencia alternativo, un framework de frontend distinto, etc.) MUST
@@ -66,14 +76,25 @@ responsabilidades entre ellos:
 - `controller`: controladores REST. Contiene el subpaquete `dto` con los DTOs
   de request/response.
 - `service`: lógica de orquestación de negocio, dividida en `interfaces` (los
-  contratos) e `impl` (las implementaciones).
-- `persistence`: acceso a datos. El subpaquete `repository` también se divide
-  en `interfaces` e `impl`. Las distintas tecnologías o mecanismos de
-  persistencia (JPA, scraping, APIs externas) MUST separarse en
-  subpaquetes propios dentro de `persistence`.
-- `configuration`: configuración global de la aplicación (`SecurityConfig`, beans, schedulers, OpenAPI, etc.).
-- `security`: componentes de seguridad HTTP/JWT (`jwt.impl`, `handlers` como `AuthenticationEntryPoint` y `AccessDeniedHandler`, filtros `OncePerRequestFilter`).
-- `exceptions`: excepciones personalizadas y manejo centralizado de errores.
+  contratos) e `impl` (las implementaciones). El subpaquete `impl/exceptions`
+  aloja excepciones específicas de servicios (ej. `ExcepcionNombreDeUsuarioExistente`).
+- `persistence`: acceso a datos. El subpaquete `repository` se divide en
+  `interfaces` e `impl`. El subpaquete `sql` contiene los DAOs Spring Data JPA.
+- `adapter`: única ubicación de integraciones backend con sistemas externos,
+  incluidas APIs HTTP y scraping. Cada fuente MUST tener su subpaquete
+  `adapter/<fuente>/` con una estructura consistente de `dto/`, configuración,
+  excepción, puerto e implementación. Es obligatorio reutilizar esta ubicación;
+  queda prohibido crear `client/`, `gateway/` u otra carpeta paralela para la
+  misma responsabilidad.
+- `scheduler`: jobs programados (ej. `FootballDataScheduler`). Contiene únicamente
+  beans `@Component` con métodos `@Scheduled`; la lógica de negocio de sincronización
+  reside en `service`.
+- `configuration`: configuración global de la aplicación (`SecurityConfig`,
+  `RestClientConfig`, `ConfiguracionOpenApi`, `SchedulingConfig`, etc.).
+- `security`: componentes de seguridad HTTP/JWT (`jwt/impl`, `handlers` como
+  `JwtAuthenticationEntryPoint` y `JwtAccessDeniedHandler`, filtro `JwtAuthFilter`).
+- `exceptions`: excepciones personalizadas de dominio y manejo centralizado de
+  errores (`ControladorErrores`).
 
 **Regla:** una capa nunca invoca directamente a una capa no adyacente ni
 depende de detalles de implementación de otra capa (por ejemplo, el
@@ -102,6 +123,8 @@ depende de detalles de implementación de otra capa (por ejemplo, el
 - Cada implementación de servicio MUST implementar su propia interfaz de caso de uso (ej: `AuthService` / `AuthServiceImpl`, `JwtService` / `JwtServiceImpl`). Las implementaciones MUST NOT extender una clase base genérica de servicios únicamente para reutilizar operaciones comunes; esa reutilización MUST resolverse por composición cuando sea necesaria.
 - La configuración principal de Spring Security MUST llamarse `SecurityConfig` (o equivalente del contexto) y residir en `configuration`. Prohibido crear nombres redundantes u obsoletos (ej: `ManejadorToken`, `PoliticaAcceso`).
 - Los adaptadores de infraestructura e identidad que implementen contratos de Spring Security (por ejemplo, `UserDetailsService`) MUST ubicarse en `service/impl` y su interfaz en `service/interfaces`. Los filtros HTTP (`JwtAuthFilter`) e interfaces de firma JWT viven en `security` y `service/interfaces` respectivamente, y los manejadores de excepciones 401/403 (`JwtAuthenticationEntryPoint`, `JwtAccessDeniedHandler`) en `security/handlers`.
+- El dominio y la aplicación MUST depender solo de puertos (interfaces) y
+  nunca de adaptadores concretos, clientes HTTP ni Playwright.
 
 ---
 
@@ -159,7 +182,11 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
 - La suite de pruebas MUST estar acotada estrictamente a la jerarquía de paquetes `model` y `service`.
 - **Alcance en `model`:** Mantener únicamente tests unitarios simples para métodos de negocio específicos que pertenezcan intrínsecamente al dominio/entidad (ej. cálculo de totales, cambio de estados, lógica pura de negocio). Si una clase de modelo solo contiene atributos, getters, setters y constructores generados por Lombok (`@Data`, `@Getter`, `@Setter`, `@Builder`), **NO debe tener archivo de test individual**.
 - **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ArquitecturaBaseTest`, `ValidacionInfraestructuraTest`, o clases de prueba dentro de `configuration` o `security`).
-- Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación (ej. `AuthServiceTest` para autenticación/login).
+- Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación. El alcance actual incluye: `AuthServiceTest`, `EquipoServiceTest`, `JugadorServiceTest`, `LigaServiceTest`, `SincronizacionServiceTest`, `UsuarioDetailsServiceTest` y `UsuarioServiceTest`. Los adaptadores de identidad (`UsuarioDetailsServiceImpl`) también son testeables dentro de `service`.
+- El adapter de scraping MUST probarse con tests unitarios basados en fixtures
+  HTML/JSON locales, sin acceder a WhoScored durante CI. Los tests de integración
+  que levanten Playwright o accedan a la web real MUST quedar marcados aparte y
+  ser opcionales, nunca un requisito de la suite por defecto.
 - Cada método expuesto en los servicios y modelos MUST contar con:
   - **Camino feliz (Happy path):** verificación del funcionamiento correcto con datos válidos.
   - **Casos de borde y excepciones (Edge cases):** búsqueda de recursos inexistentes, credenciales inválidas, duplicaciones, saldos/tokens insuficientes y excepciones del dominio.
@@ -169,14 +196,76 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
 
 ## Principio VIII — Integración con APIs externas
 
-- El sistema integra WhoScored (scraping) y Football-Data.org (API oficial),
-  siempre a través de `persistence` bajo un subpaquete de `adapters`/fuente
-  externa, nunca invocadas directamente desde `service` o `controller`.
-- **Antes de implementar** cualquier integración concreta con una API o
-  scraper externo (endpoints a usar, estrategia de reintentos, rate
-  limiting, formato de credenciales), speckit MUST
-  preguntar y proponer alternativas antes de codificar. Este paso es
-  bloqueante: no se avanza sin confirmación.
+- El sistema integra actualmente Football-Data.org (API oficial v4) como fuente
+  externa de datos de jugadores, equipos y ligas. Su integración MUST residir
+  bajo `adapter/footballdata/`. WhoScored queda reservado exclusivamente para
+  estadísticas de jugadores mediante `adapter/whoscored/`.
+- Cada fuente externa MUST tener su propio subpaquete `adapter/<fuente>/` con
+  `dto/`, configuración propia, excepción propia, puerto e implementación.
+  Los DTOs MUST permanecer dentro de `adapter/<fuente>/dto/` y no filtrarse al
+  dominio; el mapeo MUST ocurrir en la frontera del adaptador.
+- El dominio y la aplicación MUST invocar únicamente puertos. Está prohibido
+  invocar directamente implementaciones concretas, clientes HTTP o Playwright
+  desde `model`, `service`, `controller` o `scheduler`.
+- Cada integración MUST encapsular los errores de su librería externa en una
+  excepción propia, conservando la causa original; ninguna excepción de la
+  librería externa puede propagarse fuera del adaptador.
+- **Antes de agregar** una nueva fuente externa o modificar los endpoints/credenciales/estrategia de sincronización de las existentes, speckit MUST preguntar y proponer alternativas antes de codificar. Este paso es bloqueante: no se avanza sin confirmación.
+
+---
+
+## Principio XIII — Scraping hexagonal con Playwright
+
+El scraping de estadísticas de jugadores desde WhoScored MUST ser un módulo
+reemplazable y aislado. La aplicación MUST depender únicamente de `ScrapingPort`;
+`ScrapingRestAdapter` MUST ser sustituible por otra implementación (por ejemplo,
+una API oficial) sin modificar el dominio ni los casos de uso. Playwright MUST
+ser conocido únicamente por `ScrapingRestAdapter` y `ScrapingConfiguration`.
+Ninguna entidad, servicio de dominio, repositorio, controller o scheduler MUST
+importar Playwright.
+
+La estructura de paquetes y nombres es obligatoria y exacta dentro de
+`adapter/whoscored/`: `dto/` para DTOs de estadísticas sin lógica;
+`ScrapingConfiguration.java` para beans de Playwright/Browser, propiedades,
+timeouts y ciclo de vida; `ScrapingException.java` para los errores propios;
+`ScrapingPort.java` para el contrato; y `ScrapingRestAdapter.java` para la
+implementación con Playwright. No se MUST agregar otra capa o paquete al módulo
+sin una enmienda a esta constitution que justifique la necesidad. La
+configuración global existente en `configuration/` permanece separada.
+
+Todas las excepciones de Playwright, navegación, parsing, timeout, red o
+anti-bot MUST envolverse en `ScrapingException`, conservando la causa original y
+un mensaje operativo claro; ninguna excepción de Playwright MUST escapar del
+adapter. Playwright, Browser y BrowserContext MUST crearse y cerrarse de forma
+controlada mediante beans con destrucción explícita o `try-with-resources` por
+página/contexto, sin fugas de procesos Chromium.
+
+Los timeouts, modo headless, user-agent, demoras, límites de rate limiting y
+reintentos MUST externalizarse en `application.yml`; no se permiten valores
+hardcodeados para esos controles. El adapter MUST aplicar rate limiting entre
+requests, reintentos acotados con backoff y concurrencia conservadora. La
+documentación de la feature MUST advertir que la protección anti-bot y los
+términos de WhoScored pueden restringir el scraping, y el adapter MUST fallar
+de forma controlada ante ese riesgo.
+
+La extracción MUST priorizar datos estructurados (JSON embebido o respuestas de
+red interceptadas) sobre selectores CSS frágiles. Los selectores y claves MUST
+centralizarse en un único punto del adapter. Los DTOs MUST ser inmutables
+(`record` cuando Java 21 lo permita), contener solo datos validados y permanecer
+separados de las entidades de persistencia. El mapeo DTO-dominio MUST vivir
+fuera del adapter.
+
+Las URLs MUST aceptar slugs codificados, incluidos caracteres especiales como
+`%C3%A9`, y el `playerId` numérico de WhoScored MUST ser el identificador
+primario para el matching con `Jugador.idExterno`. Solo cuando no exista ese
+identificador se permite fallback por nombre normalizado sin acentos junto con
+fecha de nacimiento o equipo. Si no hay match o existe ambigüedad, el sistema
+MUST registrar el motivo y MUST abstenerse de persistir estadísticas dudosas.
+
+Cada scraping MUST registrar de forma estructurada la URL, duración y resultado,
+sin incluir credenciales ni datos sensibles. Los tests MUST verificar happy path,
+timeouts, HTML/JSON inválido, retry y errores envueltos usando fixtures locales;
+el CI MUST permanecer independiente de la web real.
 
 ---
 
@@ -220,13 +309,33 @@ de generar código o artefactos. No se asume una decisión por default.
 
 ---
 
+## Principio XII — Arquitectura del frontend
+
+El frontend MUST organizarse con la siguiente estructura bajo `src/`:
+
+- `app/`: punto de entrada de la aplicación. Contiene `main.tsx`, `App.tsx`, `router.tsx` (definición de rutas con react-router-dom) y `providers.tsx` (wrapping de proveedores globales como `BrowserRouter`).
+- `features/`: módulos de dominio de UI. Cada feature (ej. `auth`, `jugadores`) es un directorio autocontenido con `api/`, `components/`, `hooks/` y `types.ts`. Los módulos MUST exportar su API pública a través de `index.ts`.
+- `components/`: componentes compartidos entre features (ej. `Header`, `Footer`, `Layout`). Cada componente MUST tener su propio directorio con `ComponentName.tsx`, `ComponentName.styles.ts` e `index.ts`.
+- `pages/`: componentes de página, montados directamente en el router. Las páginas orquestan componentes de `features/` y `components/` pero no contienen lógica de negocio propia.
+- `lib/`: utilitarios transversales (ej. `fetchClient.ts`).
+
+**Reglas:**
+- Los estilos MUST definirse en archivos `.styles.ts` como objetos con clases Tailwind, no en línea ni en archivos CSS separados por componente.
+- El token JWT y el nombre de usuario autenticado MUST almacenarse en `localStorage` con las claves `token` y `nombreUsuario` respectivamente.
+- Las páginas MUST usar el `Layout` compartido como wrapper de rutas en el router, no incluirlo individualmente.
+- Las llamadas HTTP MUST realizarse a través de `fetchClient` (nunca `fetch` directo en componentes); los módulos de `api/` dentro de cada feature son los únicos que invocan a `fetchClient`.
+
+---
+
 ## Requisitos no funcionales transversales
 
 - **Configuración:** este proyecto MUST mantener una sola configuración base en
-  `application.properties`, sin archivos `application-local.properties` ni
+  `application.yml`, sin archivos `application-local.yml` ni
   perfiles separados a menos que el equipo apruebe explícitamente otra
   estrategia. La configuración local se documenta y mantiene en ese único
-  archivo.
+  archivo. El paquete `configuration/` MUST contener únicamente configuración
+  global de la aplicación; la configuración propia de cada integración MUST
+  vivir en `adapter/<fuente>/`.
 - **Observabilidad:** logs estructurados, Correlation ID por request, health
   checks y métricas de latencia/tasa de error.
 - **Auditoría:** registro inmutable de toda transacción financiera (autor,
@@ -235,8 +344,12 @@ de generar código o artefactos. No se asume una decisión por default.
   autenticación/autorización.
 - **Documentación:** todos los endpoints MUST documentarse con OpenAPI
   (Swagger).
-- **Scheduler:** recálculo periódico de cotizaciones y actualización de datos
-  vía job scheduler, configurado en `configuration`.
+- **Scheduler:** sincronización periódica de datos desde Football-Data.org vía
+  `FootballDataScheduler` (cron configurado en `application.yml` bajo
+  `scheduler.football-data.cron`; actualmente domingos a medianoche zona Argentina).
+  La habilitación del scheduler MUST configurarse en `SchedulingConfig`.
+- **Scraping:** toda operación de WhoScored MUST respetar el Principio XIII y
+  sus propiedades externalizadas; no se permite activar scraping real en CI.
 
 ---
 
@@ -249,3 +362,15 @@ de generar código o artefactos. No se asume una decisión por default.
 - Las specs y planes generados por speckit se revisan contra esta
   constitution antes de aprobarse; cualquier desviación MUST quedar
   explícitamente documentada y aprobada.
+- Todo refactor estructural MUST verificarse compilando y ejecutando los tests
+  antes y después del refactor. El commit del refactor estructural MUST estar
+  separado del commit de cambios funcionales; si no existe un commit previo
+  verificable, el cambio no cumple esta regla.
+- Cada revisión de una feature de scraping MUST comprobar la estructura exacta
+  de `adapter/<fuente>/`, la ausencia de dependencias concretas en dominio y
+  aplicación, el cierre de recursos, la configuración externalizada, el
+  matching por `playerId`, la política de errores y la cobertura con fixtures.
+- Un cambio que agregue una fuente externa, altere la estrategia de matching,
+  aumente la concurrencia o modifique los límites de scraping MUST documentar
+  el impacto legal, operativo y de disponibilidad, y requerir aprobación antes
+  de implementarse.
