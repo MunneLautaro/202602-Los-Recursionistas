@@ -23,6 +23,9 @@ public class Liga {
 	@Column(name = "id_externo")
 	private Long idExterno;
 
+	@Column(name = "id_whoscored", unique = true)
+	private Long idWhoscored;
+
 	@Column(nullable = false, unique = true)
 	private String nombre;
 

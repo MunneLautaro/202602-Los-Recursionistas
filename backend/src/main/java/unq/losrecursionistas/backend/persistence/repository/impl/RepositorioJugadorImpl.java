@@ -37,6 +37,11 @@ public class RepositorioJugadorImpl implements RepositorioJugador {
     }
 
     @Override
+    public Jugador buscarPorIdWhoscored(Long idWhoscored) {
+        return jugadorDAOSQL.findByIdWhoscored(idWhoscored).orElse(null);
+    }
+
+    @Override
     public Page<Jugador> buscarJugadoresConFiltro(JugadorFiltro filtro, Pageable pageable) {
         return jugadorDAOSQL.findAll(JugadorSpecs.conFiltro(filtro), pageable);
     }

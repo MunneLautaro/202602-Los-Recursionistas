@@ -28,6 +28,11 @@ public class RepositorioEquipoImpl implements RepositorioEquipo {
     }
 
     @Override
+    public Equipo buscarPorIdWhoscored(Long idWhoscored) {
+        return equipoDAOSQL.findByIdWhoscored(idWhoscored).orElse(null);
+    }
+
+    @Override
     public Equipo guardarOActualizar(Equipo equipo) {
         if (equipo.getIdExterno() != null) {
             Optional<Equipo> existente = equipoDAOSQL.findByIdExterno(equipo.getIdExterno());

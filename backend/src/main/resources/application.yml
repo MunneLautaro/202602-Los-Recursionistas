@@ -1,0 +1,51 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/football_market}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+jwt:
+  secret: ${JWT_SECRET:clave-local-de-desarrollo-de-32-bytes-minimo}
+
+springdoc:
+  show-actuator: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+football:
+  api:
+    key: ${FOOTBALL_DATA_API_KEY:}
+    url: https://api.football-data.org/v4
+
+scheduler:
+  football-data:
+    cron: "0 0 0 * * SUN"
+
+whoscored:
+  scraping:
+    headless: true
+    navigation-timeout-ms: 30000
+    request-timeout-ms: 15000
+    user-agent: "Los-Recursionistas/1.0"
+    pause-ms: 1000
+    rate-limit-per-minute: 30
+    max-retries: 2
+    backoff-ms: 2000
+    temporada-inicio: ${WHOSCORED_SEASON_START:2025-08-01}
+    temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
+    ligas-permitidas: []
