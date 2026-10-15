@@ -6,10 +6,11 @@ import org.springframework.stereotype.Repository;
 import unq.losrecursionistas.backend.model.Jugador;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface JugadorDAOSQL extends JpaRepository<Jugador, Long>, JpaSpecificationExecutor<Jugador> {
     Optional<Jugador> findByIdExterno(Long idExterno);
     Optional<Jugador> findByIdWhoscored(Long idWhoscored);
+    List<Jugador> findByActivoTrue();
 }
-

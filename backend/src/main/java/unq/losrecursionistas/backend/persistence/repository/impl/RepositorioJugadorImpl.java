@@ -32,6 +32,11 @@ public class RepositorioJugadorImpl implements RepositorioJugador {
     }
 
     @Override
+    public Jugador guardar(Jugador jugador) {
+        return jugadorDAOSQL.save(jugador);
+    }
+
+    @Override
     public Jugador obtenerJugadorPorId(Long id) {
         return jugadorDAOSQL.findById(id).orElseThrow(() -> new RuntimeException("No existe el jugador con el id: " + id));
     }
@@ -39,6 +44,11 @@ public class RepositorioJugadorImpl implements RepositorioJugador {
     @Override
     public Jugador buscarPorIdWhoscored(Long idWhoscored) {
         return jugadorDAOSQL.findByIdWhoscored(idWhoscored).orElse(null);
+    }
+
+    @Override
+    public List<Jugador> obtenerJugadoresActivos() {
+        return jugadorDAOSQL.findByActivoTrue();
     }
 
     @Override

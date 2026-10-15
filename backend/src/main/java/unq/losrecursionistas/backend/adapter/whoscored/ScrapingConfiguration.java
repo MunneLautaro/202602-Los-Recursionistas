@@ -18,6 +18,7 @@ public class ScrapingConfiguration {
     private int navigationTimeoutMs = 30_000;
     private int requestTimeoutMs = 15_000;
     private String userAgent = "Los-Recursionistas/1.0";
+    private String baseUrl = "https://www.whoscored.com";
     private int pauseMs = 1_000;
     private int rateLimitPerMinute = 30;
     private int maxRetries = 2;
