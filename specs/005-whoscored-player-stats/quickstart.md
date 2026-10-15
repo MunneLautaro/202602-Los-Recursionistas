@@ -39,6 +39,10 @@ usando fixtures. Verificar que solo se procesan jugadores activos, que las
 fechas fuera de la temporada se descartan, que se conservan todos los torneos
 informados y que una segunda ejecucion activa se rechaza y registra.
 
+La operacion requiere `ROLE_ADMIN` cuando se expone mediante un controller.
+El servicio no crea jugadores ni modifica `idExterno`; una aparicion con cero
+minutos o sin fecha/partido valido se registra como anomalia y no se persiste.
+
 ## Prueba web real opcional
 
 ```powershell
@@ -48,6 +52,10 @@ informados y que una segunda ejecucion activa se rechaza y registra.
 Debe quedar marcada con `@Tag("real-web")` y excluida de `test` normal. Requiere
 aceptar los terminos aplicables y puede fallar por anti-bot o cambios de
 estructura; nunca debe ser requisito de CI ni ejecutarse en paralelo agresivo.
+
+La prueba real debe ejecutarse manualmente, respetando los terminos de uso de
+WhoScored. No se deben agregar reintentos agresivos ni mecanismos para evadir
+protecciones anti-bot.
 
 Los campos y constraints esperados estan en [data-model.md](data-model.md) y
 el contrato del adapter en [contracts/scraping-port.md](contracts/scraping-port.md).

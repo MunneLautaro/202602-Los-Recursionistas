@@ -10,9 +10,11 @@ import java.util.List;
 public interface RepositorioJugador {
 
     void guardarTodos(List<Jugador> jugadores);
+    Jugador guardar(Jugador jugador);
 
     Jugador obtenerJugadorPorId(Long id);
     Jugador buscarPorIdWhoscored(Long idWhoscored);
+    List<Jugador> obtenerJugadoresActivos();
 
     Page<Jugador> buscarJugadoresConFiltro(JugadorFiltro filtro, Pageable pageable);
 }

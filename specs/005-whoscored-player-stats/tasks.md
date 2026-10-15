@@ -10,9 +10,9 @@
 
 **Purpose**: Inicializar la base de la feature y dejar la estructura del backend lista para la ingesta.
 
-- [X] T001 Create backend source structure for `adapter/whoscored`, `model`, `persistence`, `service`, and test fixtures in `backend/src/main/java/unq/losrecursionistas/backend/` and `backend/src/test/resources/whoscored/`
-- [X] T002 Configure Java 21 / Spring Boot dependencies and Testcontainers / Playwright additions in `backend/build.gradle`
-- [X] T003 [P] Create the single application configuration file `backend/src/main/resources/application.yml` with `whoscored.scraping`, season range, and operational defaults from `research.md`, and bind them through `ScrapingConfiguration` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/ScrapingConfiguration.java`
+- [x] T001 Create backend source structure for `adapter/whoscored`, `model`, `persistence`, `service`, and test fixtures in `backend/src/main/java/unq/losrecursionistas/backend/` and `backend/src/test/resources/whoscored/`
+- [x] T002 Configure Java 21 / Spring Boot dependencies and Testcontainers / Playwright additions in `backend/build.gradle`
+- [x] T003 [P] Create the single application configuration file `backend/src/main/resources/application.yml` with `whoscored.scraping`, season range, and operational defaults from `research.md`, and bind them through `ScrapingConfiguration` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/ScrapingConfiguration.java`
 
 ---
 
@@ -22,13 +22,13 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [X] T004 Define the `ScrapingPort` contract and `ScrapingException` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
-- [X] T005 [P] Create immutable DTOs for discovery and match results under `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/dto/`
-- [X] T006 [P] Add repository and service interfaces for `Jugador`, `Equipo`, `Liga`, `EstadisticaPartido`, `CasoVinculacion`, and `EjecucionIngesta` under `backend/src/main/java/unq/losrecursionistas/backend/persistence/` and `backend/src/main/java/unq/losrecursionistas/backend/service/interfaces/`
-- [X] T007 Create the domain entities `EstadisticaPartido`, `CasoVinculacion`, and `EjecucionIngesta` in `backend/src/main/java/unq/losrecursionistas/backend/model/` with unique constraints and JSONB storage rules from `data-model.md`
-- [X] T008 [P] Implement shared repository DAO and persistence infrastructure skeletons under `backend/src/main/java/unq/losrecursionistas/backend/persistence/sql/` and `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/impl/`; leave `EstadisticaPartido` behavior to T017
-- [X] T009 Update `Jugador`, `Equipo`, and `Liga` entities to add nullable unique `idWhoscored` fields in `backend/src/main/java/unq/losrecursionistas/backend/model/` without changing `idExterno`
-- [X] T010 Add the ingestion execution guard and admin-oriented service contract for active execution rejection in `backend/src/main/java/unq/losrecursionistas/backend/service/interfaces/` and `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
+- [x] T004 Define the `ScrapingPort` contract and `ScrapingException` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
+- [x] T005 [P] Create immutable DTOs for discovery and match results under `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/dto/`
+- [x] T006 [P] Add repository and service interfaces for `Jugador`, `Equipo`, `Liga`, `EstadisticaPartido`, `CasoVinculacion`, and `EjecucionIngesta` under `backend/src/main/java/unq/losrecursionistas/backend/persistence/` and `backend/src/main/java/unq/losrecursionistas/backend/service/interfaces/`
+- [x] T007 Create the domain entities `EstadisticaPartido`, `CasoVinculacion`, and `EjecucionIngesta` in `backend/src/main/java/unq/losrecursionistas/backend/model/` with unique constraints and JSONB storage rules from `data-model.md`
+- [x] T008 [P] Implement shared repository DAO and persistence infrastructure skeletons under `backend/src/main/java/unq/losrecursionistas/backend/persistence/sql/` and `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/impl/`; leave `EstadisticaPartido` behavior to T017
+- [x] T009 Update `Jugador`, `Equipo`, and `Liga` entities to add nullable unique `idWhoscored` fields in `backend/src/main/java/unq/losrecursionistas/backend/model/` without changing `idExterno`
+- [x] T010 Add the ingestion execution guard and admin-oriented service contract for active execution rejection in `backend/src/main/java/unq/losrecursionistas/backend/service/interfaces/` and `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel.
 
@@ -42,12 +42,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T011 [P] [US1] Implement the `MatchingWhoscoredService` normalization and match sequence in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/MatchingWhoscoredService.java`
-- [ ] T012 [P] [US1] Add the player/club discovery flow and `ScrapingRestAdapter` implementation in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/ScrapingRestAdapter.java`
-- [ ] T013 [US1] Persist unresolved link cases with candidate metadata in `backend/src/main/java/unq/losrecursionistas/backend/model/CasoVinculacion.java` and the matching repository layer
-- [ ] T014 [US1] Wire discovered player/team mappings into `Jugador`, `Equipo`, and `Liga` updates without changing `idExterno` in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
-- [ ] T015 [US1] Implement the no-new-player guard and ambiguous/no-match handling for `Jugador` discovery in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
-- [ ] T016 [P] [US1] Add unit fixtures and matching tests for normalized names, slugs, team disambiguation, and ambiguity thresholds in `backend/src/test/java/unq/losrecursionistas/backend/service/MatchingWhoscoredServiceTest.java` and `backend/src/test/resources/whoscored/`
+- [x] T011 [P] [US1] Implement the `MatchingWhoscoredService` normalization and match sequence in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/MatchingWhoscoredService.java`
+- [x] T012 [P] [US1] Add the player/club discovery flow and `ScrapingRestAdapter` implementation in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/ScrapingRestAdapter.java`
+- [x] T013 [US1] Persist unresolved link cases with candidate metadata in `backend/src/main/java/unq/losrecursionistas/backend/model/CasoVinculacion.java` and the matching repository layer
+- [x] T014 [US1] Wire discovered player/team mappings into `Jugador`, `Equipo`, and `Liga` updates without changing `idExterno` in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
+- [x] T015 [US1] Implement the no-new-player guard and ambiguous/no-match handling for `Jugador` discovery in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
+- [x] T016 [P] [US1] Add unit fixtures and matching tests for normalized names, slugs, team disambiguation, and ambiguity thresholds in `backend/src/test/java/unq/losrecursionistas/backend/service/MatchingWhoscoredServiceTest.java` and `backend/src/test/resources/whoscored/`
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently.
 
@@ -61,12 +61,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T017 [P] [US2] Implement the transactional `EstadisticaPartido` repository with unique key `(jugador_id, partido_whoscored_id)`, seasonal indexes, and idempotent upsert semantics that insert new matches and update existing ones in `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/impl/`
-- [ ] T018 [P] [US2] Add parsing and aggregation logic for `Summary`, `Defensive`, `Offensive`, and `Passing` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
-- [ ] T019 [US2] Implement season filtering and no-zero/minutes validation in the ingestion service and adapter boundary in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
-- [ ] T020 [US2] Persist one record per player and match, preserving raw stats in `statsCrudas` and maintaining nullable fields for missing metrics in `backend/src/main/java/unq/losrecursionistas/backend/model/EstadisticaPartido.java`
-- [ ] T021 [US2] Add execution counters, anomaly handling, and rollback semantics per failing player in `backend/src/main/java/unq/losrecursionistas/backend/model/EjecucionIngesta.java` and service implementation
-- [ ] T022 [P] [US2] Add parser/service and PostgreSQL integration tests for combined metrics, zero-minute exclusions, season filtering, unique-key enforcement, and idempotent upsert updates in `backend/src/test/java/unq/losrecursionistas/backend/service/` and `backend/src/test/java/unq/losrecursionistas/backend/adapter/whoscored/`
+- [x] T017 [P] [US2] Implement the transactional `EstadisticaPartido` repository with unique key `(jugador_id, partido_whoscored_id)`, seasonal indexes, and idempotent upsert semantics that insert new matches and update existing ones in `backend/src/main/java/unq/losrecursionistas/backend/persistence/repository/impl/`
+- [x] T018 [P] [US2] Add parsing and aggregation logic for `Summary`, `Defensive`, `Offensive`, and `Passing` in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
+- [x] T019 [US2] Implement season filtering and no-zero/minutes validation in the ingestion service and adapter boundary in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
+- [x] T020 [US2] Persist one record per player and match, preserving raw stats in `statsCrudas` and maintaining nullable fields for missing metrics in `backend/src/main/java/unq/losrecursionistas/backend/model/EstadisticaPartido.java`
+- [x] T021 [US2] Add execution counters, anomaly handling, and rollback semantics per failing player in `backend/src/main/java/unq/losrecursionistas/backend/model/EjecucionIngesta.java` and service implementation
+- [x] T022 [P] [US2] Add parser/service and PostgreSQL integration tests for combined metrics, zero-minute exclusions, season filtering, unique-key enforcement, and idempotent upsert updates in `backend/src/test/java/unq/losrecursionistas/backend/service/` and `backend/src/test/java/unq/losrecursionistas/backend/adapter/whoscored/`
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently.
 
@@ -80,11 +80,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T023 [P] [US3] Implement scope selection and filtering by league, team, or player in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
-- [ ] T024 [US3] Add active-season configuration enforcement and a repeatable execution window using `ScrapingConfiguration` in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/` and `backend/src/main/resources/application.yml`
-- [ ] T025 [US3] Add the concurrency guard for active ingestion and rejection logging in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/` and `backend/src/main/java/unq/losrecursionistas/backend/model/EjecucionIngesta.java`
-- [ ] T026 [P] [US3] Add PostgreSQL integration tests for rollback of a failing player and execution rejection in `backend/src/test/java/unq/losrecursionistas/backend/service/IngestaWhoscoredServiceTest.java`
-- [ ] T027 [US3] Add real-web test tagging and operational documentation for `real-web` execution and anti-bot limitations in `backend/src/test/java/` and `specs/005-whoscored-player-stats/quickstart.md`
+- [x] T023 [P] [US3] Implement scope selection and filtering by league, team, or player in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/IngestaWhoscoredService.java`
+- [x] T024 [US3] Add active-season configuration enforcement and a repeatable execution window using `ScrapingConfiguration` in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/` and `backend/src/main/resources/application.yml`
+- [x] T025 [US3] Add the concurrency guard for active ingestion and rejection logging in `backend/src/main/java/unq/losrecursionistas/backend/service/impl/` and `backend/src/main/java/unq/losrecursionistas/backend/model/EjecucionIngesta.java`
+- [x] T026 [P] [US3] Add PostgreSQL integration tests for rollback of a failing player and execution rejection in `backend/src/test/java/unq/losrecursionistas/backend/service/IngestaWhoscoredServiceTest.java`
+- [x] T027 [US3] Add real-web test tagging and operational documentation for `real-web` execution and anti-bot limitations in `backend/src/test/java/` and `specs/005-whoscored-player-stats/quickstart.md`
 
 **Checkpoint**: All user stories should now be independently functional.
 
@@ -94,10 +94,10 @@
 
 **Purpose**: Hardening, documentation, and final validation across all user stories.
 
-- [ ] T028 [P] Review and update `specs/005-whoscored-player-stats/quickstart.md` and `backend/README.md` to document the ingestion flow, admin-only access, and anti-bot caveats
-- [ ] T029 [P] Refactor the adapter/service boundary to keep Playwright and parsing details isolated in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
-- [ ] T030 Harden error sanitization and admin authorization checks around ingestion execution in `backend/src/main/java/unq/losrecursionistas/backend/security/` and `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
-- [ ] T031 Run the validation commands from `specs/005-whoscored-player-stats/quickstart.md` in `backend/` to confirm matching, parser, persistence, and scope/retry scenarios pass
+- [x] T028 [P] Review and update `specs/005-whoscored-player-stats/quickstart.md` and `backend/README.md` to document the ingestion flow, admin-only access, and anti-bot caveats
+- [x] T029 [P] Refactor the adapter/service boundary to keep Playwright and parsing details isolated in `backend/src/main/java/unq/losrecursionistas/backend/adapter/whoscored/`
+- [x] T030 Harden error sanitization and admin authorization checks around ingestion execution in `backend/src/main/java/unq/losrecursionistas/backend/security/` and `backend/src/main/java/unq/losrecursionistas/backend/service/impl/`
+- [x] T031 Run the validation commands from `specs/005-whoscored-player-stats/quickstart.md` in `backend/` to confirm matching, parser, persistence, and scope/retry scenarios pass
 
 ---
 
