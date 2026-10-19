@@ -1,5 +1,28 @@
 # Backend
 
+## Configuracion local
+
+La configuracion se mantiene en `src/main/resources/application.yml` porque
+representa mejor las secciones anidadas de Spring y de scraping que un archivo
+`.properties`. El YAML importa opcionalmente `backend/.env` cuando la
+aplicacion se ejecuta desde `backend/`; las variables del entorno del sistema
+siguen teniendo prioridad.
+
+Para configurar una instalacion nueva:
+
+1. Copiar `.env.example` como `.env`.
+2. Completar `FOOTBALL_DATA_API_KEY` con el token personal de
+   [football-data.org](https://www.football-data.org/client/register).
+3. Ajustar las credenciales de PostgreSQL y el resto de valores si hace falta.
+4. Ejecutar Gradle desde `backend/` (`./gradlew bootRun` o `gradlew.bat bootRun`).
+
+`.env` esta excluido de Git para no publicar credenciales. `WHOSCORED_ALLOWED_LEAGUES`
+acepta IDs separados por comas; vacío significa que no se restringen ligas.
+Al arrancar, la carga inicial sincroniza Football Data y luego descubre y
+vincula las ligas, equipos y jugadores de WhoScored antes de cargar sus
+estadisticas. `FOOTBALL_DATA_STARTUP_ENABLED=false` y
+`WHOSCORED_STARTUP_ENABLED=false` desactivan cada etapa por separado.
+
 ## Ingesta WhoScored
 
 `IngestaWhoscoredService` procesa jugadores activos con `idWhoscored` y

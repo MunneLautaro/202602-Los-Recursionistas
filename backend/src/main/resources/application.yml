@@ -1,51 +1,56 @@
 spring:
+  config:
+    import: optional:file:.env[.properties],optional:file:backend/.env[.properties]
   application:
-    name: backend
+    name: ${SPRING_APPLICATION_NAME:backend}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/football_market}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
-    password: ${SPRING_DATASOURCE_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: false
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
 
 jwt:
   secret: ${JWT_SECRET:clave-local-de-desarrollo-de-32-bytes-minimo}
 
 springdoc:
-  show-actuator: true
+  show-actuator: ${SPRINGDOC_SHOW_ACTUATOR:true}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health}
 
 football:
   api:
     key: ${FOOTBALL_DATA_API_KEY:}
-    url: https://api.football-data.org/v4
+    url: ${FOOTBALL_DATA_API_URL:https://api.football-data.org/v4}
 
 scheduler:
   football-data:
-    cron: "0 0 0 * * SUN"
+    cron: ${FOOTBALL_DATA_SCHEDULER_CRON:0 0 0 * * SUN}
+    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:true}
 
 whoscored:
   scraping:
-    headless: true
-    navigation-timeout-ms: 30000
-    request-timeout-ms: 15000
-    user-agent: "Los-Recursionistas/1.0"
-    pause-ms: 1000
-    rate-limit-per-minute: 30
-    max-retries: 2
-    backoff-ms: 2000
+    headless: ${WHOSCORED_SCRAPING_HEADLESS:true}
+    navigation-timeout-ms: ${WHOSCORED_SCRAPING_NAVIGATION_TIMEOUT_MS:30000}
+    request-timeout-ms: ${WHOSCORED_SCRAPING_REQUEST_TIMEOUT_MS:15000}
+    user-agent: ${WHOSCORED_SCRAPING_USER_AGENT:Los-Recursionistas/1.0}
+    base-url: ${WHOSCORED_SCRAPING_BASE_URL:https://www.whoscored.com}
+    pause-ms: ${WHOSCORED_SCRAPING_PAUSE_MS:1000}
+    rate-limit-per-minute: ${WHOSCORED_SCRAPING_RATE_LIMIT_PER_MINUTE:30}
+    max-retries: ${WHOSCORED_SCRAPING_MAX_RETRIES:2}
+    backoff-ms: ${WHOSCORED_SCRAPING_BACKOFF_MS:2000}
     temporada-inicio: ${WHOSCORED_SEASON_START:2025-08-01}
     temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
-    ligas-permitidas: []
+    ligas-permitidas: ${WHOSCORED_ALLOWED_LEAGUES:}
+    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:true}

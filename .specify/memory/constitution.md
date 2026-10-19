@@ -1,7 +1,6 @@
 <!-- Sync Impact Report
-Version change: 1.9.0 -> 2.0.0
-Modified principles: Stack tecnológico, Principio I, Principio VII, Principio VIII,
-Principio XIII, Requisitos no funcionales, Governance
+Version change: 2.0.0 -> 2.1.0
+Modified principles: Requisitos no funcionales transversales
 Added sections: none
 Removed sections: none
 Follow-up TODOs: none
@@ -9,9 +8,9 @@ Follow-up TODOs: none
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.0.0
+**Versión:** 2.1.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-10-13
+**Última modificación:** 2026-10-19
 
 **Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
 para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
@@ -347,7 +346,13 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
 - **Scheduler:** sincronización periódica de datos desde Football-Data.org vía
   `FootballDataScheduler` (cron configurado en `application.yml` bajo
   `scheduler.football-data.cron`; actualmente domingos a medianoche zona Argentina).
-  La habilitación del scheduler MUST configurarse en `SchedulingConfig`.
+  La habilitación del scheduler MUST configurarse en `SchedulingConfig`. La ingesta
+  periódica de WhoScored MUST vivir bajo el paquete `scheduler`, mediante
+  `WhoScoredScheduler`, y configurarse en `application.yml` bajo
+  `scheduler.whoscored.cron`. `WhoScoredScheduler` MUST ejecutarse de forma
+  desacoplada de la sesión HTTP y del `SecurityContext`, sin depender de un usuario
+  autenticado. Su ventana de ejecución MUST garantizar que los datos base de
+  Football-Data existan previamente antes de iniciar la ingesta de WhoScored.
 - **Scraping:** toda operación de WhoScored MUST respetar el Principio XIII y
   sus propiedades externalizadas; no se permite activar scraping real en CI.
 
