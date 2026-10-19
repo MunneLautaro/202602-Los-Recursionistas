@@ -65,7 +65,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
 
     @Override
     @Transactional
-    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    // @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     public synchronized EjecucionIngesta iniciar(EjecucionIngesta.Alcance alcance, Long alcanceId) {
         if (ejecuciones.existeActiva()) {
             return guardarRechazo(alcance, alcanceId);
