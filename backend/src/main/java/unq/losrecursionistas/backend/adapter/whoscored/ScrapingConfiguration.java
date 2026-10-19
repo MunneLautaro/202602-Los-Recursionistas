@@ -26,4 +26,5 @@ public class ScrapingConfiguration {
     private LocalDate temporadaInicio;
     private LocalDate temporadaFin;
     private List<Long> ligasPermitidas = new ArrayList<>();
+    private boolean startupEnabled = true;
 }
