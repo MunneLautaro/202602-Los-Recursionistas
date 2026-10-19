@@ -11,4 +11,5 @@ public interface RepositorioEquipo {
     Equipo guardarOActualizar(Equipo equipo);
 
     List<Equipo> obtenerEquiposDeLiga(Long ligaId);
+    List<Equipo> obtenerTodos();
 }

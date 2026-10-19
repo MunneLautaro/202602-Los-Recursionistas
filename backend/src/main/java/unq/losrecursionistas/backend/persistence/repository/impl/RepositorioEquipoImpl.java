@@ -58,4 +58,9 @@ public class RepositorioEquipoImpl implements RepositorioEquipo {
     public List<Equipo> obtenerEquiposDeLiga(Long ligaId) {
         return equipoDAOSQL.findByLigaId(ligaId);
     }
+
+    @Override
+    public List<Equipo> obtenerTodos() {
+        return equipoDAOSQL.findAll();
+    }
 }
