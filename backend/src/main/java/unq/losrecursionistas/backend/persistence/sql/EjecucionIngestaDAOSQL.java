@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface EjecucionIngestaDAOSQL extends JpaRepository<EjecucionIngesta, Long> {
     Optional<EjecucionIngesta> findFirstByEstadoOrderByInicioDesc(EjecucionIngesta.Estado estado);
+    Optional<EjecucionIngesta> findFirstByOrderByInicioDesc();
 }

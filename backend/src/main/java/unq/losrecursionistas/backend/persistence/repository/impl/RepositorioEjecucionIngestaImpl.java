@@ -22,4 +22,19 @@ public class RepositorioEjecucionIngestaImpl implements RepositorioEjecucionInge
     public boolean existeActiva() {
         return dao.findFirstByEstadoOrderByInicioDesc(EjecucionIngesta.Estado.ACTIVA).isPresent();
     }
+
+    @Override
+    public synchronized EjecucionIngesta reservar(EjecucionIngesta ejecucion) {
+        if (existeActiva()) {
+            ejecucion.setEstado(EjecucionIngesta.Estado.RECHAZADA);
+            ejecucion.setMotivoRechazo("Ya existe una ejecucion activa");
+            ejecucion.setFin(java.time.OffsetDateTime.now());
+        }
+        return dao.save(ejecucion);
+    }
+
+    @Override
+    public EjecucionIngesta ultima() {
+        return dao.findFirstByOrderByInicioDesc().orElse(null);
+    }
 }

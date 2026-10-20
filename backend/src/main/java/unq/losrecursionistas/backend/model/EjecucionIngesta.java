@@ -48,4 +48,29 @@ public class EjecucionIngesta {
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "detalle", columnDefinition = "jsonb")
     private Map<String, Object> detalle;
+
+    @Transient
+    public Long getIdAlcance() {
+        return switch (alcance) {
+            case LIGA -> ligaId;
+            case EQUIPO -> equipoId;
+            case JUGADOR -> jugadorId;
+            case COMPLETA -> null;
+        };
+    }
+
+    public void setIdAlcance(Long idAlcance) {
+        ligaId = null;
+        equipoId = null;
+        jugadorId = null;
+        if (alcance == null || alcance == Alcance.COMPLETA) {
+            return;
+        }
+        switch (alcance) {
+            case LIGA -> ligaId = idAlcance;
+            case EQUIPO -> equipoId = idAlcance;
+            case JUGADOR -> jugadorId = idAlcance;
+            case COMPLETA -> { }
+        }
+    }
 }
