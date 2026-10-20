@@ -23,24 +23,19 @@ public class EjecucionIngestaServiceImpl implements EjecucionIngestaService {
     @Override
     @Transactional
     public EjecucionIngesta crearEjecucion(EjecucionIngesta.Alcance alcance, Long alcanceId) {
-        if (repositorio.existeActiva()) {
-            return repositorio.guardar(EjecucionIngesta.builder()
-                    .estado(EjecucionIngesta.Estado.RECHAZADA)
-                    .alcance(alcance)
-                    .temporadaInicio(configuracion.getTemporadaInicio())
-                    .temporadaFin(configuracion.getTemporadaFin())
-                    .inicio(OffsetDateTime.now())
-                    .fin(OffsetDateTime.now())
-                    .motivoRechazo("Ya existe una ejecucion activa")
-                    .build());
-        }
-
-        return repositorio.guardar(EjecucionIngesta.builder()
+        EjecucionIngesta ejecucion = EjecucionIngesta.builder()
                 .estado(EjecucionIngesta.Estado.ACTIVA)
                 .alcance(alcance)
+                .inicio(OffsetDateTime.now())
                 .temporadaInicio(configuracion.getTemporadaInicio())
                 .temporadaFin(configuracion.getTemporadaFin())
-                .inicio(OffsetDateTime.now())
-                .build());
+                .build();
+        ejecucion.setIdAlcance(alcanceId);
+        return repositorio.reservar(ejecucion);
+    }
+
+    @Override
+    public EjecucionIngesta ultima() {
+        return repositorio.ultima();
     }
 }

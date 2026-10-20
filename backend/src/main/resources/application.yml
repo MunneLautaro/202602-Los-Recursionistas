@@ -37,14 +37,22 @@ football:
 scheduler:
   football-data:
     cron: ${FOOTBALL_DATA_SCHEDULER_CRON:0 0 0 * * SUN}
-    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:true}
+    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:false}
+  whoscored:
+    enabled: ${WHOSCORED_SCHEDULER_ENABLED:true}
+    cron: ${WHOSCORED_SCHEDULER_CRON:0 0 3 * * SUN}
+    zone: ${WHOSCORED_SCHEDULER_ZONE:America/Argentina/Buenos_Aires}
+    delay-after-football-data-minutes: ${WHOSCORED_DELAY_AFTER_FOOTBALL_DATA_MINUTES:180}
+    executor-core-pool-size: ${WHOSCORED_EXECUTOR_CORE_POOL_SIZE:1}
+    executor-max-pool-size: ${WHOSCORED_EXECUTOR_MAX_POOL_SIZE:1}
+    executor-queue-capacity: ${WHOSCORED_EXECUTOR_QUEUE_CAPACITY:1}
 
 whoscored:
   scraping:
     headless: ${WHOSCORED_SCRAPING_HEADLESS:true}
     navigation-timeout-ms: ${WHOSCORED_SCRAPING_NAVIGATION_TIMEOUT_MS:30000}
     request-timeout-ms: ${WHOSCORED_SCRAPING_REQUEST_TIMEOUT_MS:15000}
-    user-agent: ${WHOSCORED_SCRAPING_USER_AGENT:Los-Recursionistas/1.0}
+    user-agent: ${WHOSCORED_SCRAPING_USER_AGENT:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36}
     base-url: ${WHOSCORED_SCRAPING_BASE_URL:https://www.whoscored.com}
     pause-ms: ${WHOSCORED_SCRAPING_PAUSE_MS:1000}
     rate-limit-per-minute: ${WHOSCORED_SCRAPING_RATE_LIMIT_PER_MINUTE:30}

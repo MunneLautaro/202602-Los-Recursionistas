@@ -17,7 +17,7 @@ public class ScrapingConfiguration {
     private boolean headless = true;
     private int navigationTimeoutMs = 30_000;
     private int requestTimeoutMs = 15_000;
-    private String userAgent = "Los-Recursionistas/1.0";
+    private String userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
     private String baseUrl = "https://www.whoscored.com";
     private int pauseMs = 1_000;
     private int rateLimitPerMinute = 30;

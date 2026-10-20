@@ -163,6 +163,9 @@ el resultado real.
 - **FR-017**: La integración con WhoScored MUST permanecer aislada del resto
   del sistema mediante el contrato de scraping existente, sin exponer detalles
   de extracción en los endpoints públicos.
+- **FR-018**: El sistema MUST registrar en el detalle de la ejecución los
+  candidatos, resultados, motivos y ambigüedades del matching, sin crear una
+  entidad o tabla independiente para cada caso de vinculación.
 
 ### Key Entities
 
@@ -174,7 +177,9 @@ el resultado real.
   corresponda.
 - **Vinculación WhoScored**: Relación entre una entidad local existente y su
   identificador en WhoScored, conservando separados los identificadores de
-  Football Data y WhoScored.
+  Football Data y WhoScored. Los candidatos, resultados, motivos y
+  ambigüedades se auditan en el detalle de la ejecución, sin una entidad
+  persistente adicional.
 - **Estadística de partido**: Datos de rendimiento de un jugador en un partido
   de la temporada configurada, actualizables sin duplicación.
 

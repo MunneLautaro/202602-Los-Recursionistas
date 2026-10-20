@@ -53,27 +53,13 @@ public class WhoscoredBootstrapService {
         this.ingesta = ingesta;
     }
 
-    @Transactional
     public void cargarDatosIniciales() {
-        List<LigaWhoscoredDto> descubiertas = scraping.descubrirLigas().stream()
-                .filter(this::esLigaInicial)
-                .toList();
-
-        for (LigaWhoscoredDto descubierta : descubiertas) {
-            Liga liga = encontrarLiga(descubierta);
-            if (liga == null) {
-                LOGGER.debug("No existe una liga local para WhoScored: {}", descubierta.nombre());
-                continue;
-            }
-            liga.setIdWhoscored(descubierta.idWhoscored());
-            ligas.guardar(liga);
-            vincularEquipos(liga, descubierta.idWhoscored());
-        }
-
+        LOGGER.info("Iniciando carga inicial de WhoScored a través del servicio unificado de ingesta...");
         ingesta.iniciar(EjecucionIngesta.Alcance.COMPLETA, null);
     }
 
-    private void vincularEquipos(Liga liga, Long ligaWhoscoredId) {
+    @Transactional
+    public void vincularEquipos(Liga liga, Long ligaWhoscoredId) {
         List<Equipo> equiposLocales = equipos.obtenerEquiposDeLiga(liga.getId());
         for (EquipoWhoscoredDto descubierto : scraping.descubrirEquipos(ligaWhoscoredId)) {
             Equipo equipo = equiposLocales.stream()
@@ -89,7 +75,8 @@ public class WhoscoredBootstrapService {
         }
     }
 
-    private void vincularJugadores(EquipoWhoscoredDto equipo) {
+    @Transactional
+    public void vincularJugadores(EquipoWhoscoredDto equipo) {
         for (JugadorWhoscoredDto descubierto : scraping.descubrirJugadores(equipo.idWhoscored())) {
             MatchingWhoscoredService.ResultadoMatching resultado = matching.vincular(descubierto);
             if (resultado.estado() == MatchingWhoscoredService.Estado.VINCULADO) {
@@ -98,14 +85,14 @@ public class WhoscoredBootstrapService {
         }
     }
 
-    private Liga encontrarLiga(LigaWhoscoredDto descubierta) {
+    public Liga encontrarLiga(LigaWhoscoredDto descubierta) {
         return ligas.obtenerLigas().stream()
                 .filter(liga -> normalizar(liga.getNombre()).equals(normalizar(descubierta.nombre())))
                 .findFirst()
                 .orElse(null);
     }
 
-    private boolean esLigaInicial(LigaWhoscoredDto liga) {
+    public boolean esLigaInicial(LigaWhoscoredDto liga) {
         return (configuracion.getLigasPermitidas().isEmpty()
                 ? LIGAS_INICIALES.contains(normalizar(liga.nombre()))
                 : configuracion.getLigasPermitidas().contains(liga.idWhoscored()));

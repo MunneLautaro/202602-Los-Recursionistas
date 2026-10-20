@@ -38,10 +38,10 @@ public class SecurityConfig {
 			.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(autorizacion -> autorizacion
 				.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
-						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**", "/players/**", "/leagues/**", "/teams/**")
+						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**", "/players/**", "/leagues/**", "/teams/**","/api/admin/whoscored/**", "/whoscored/**")
 				.permitAll()
-				.requestMatchers("/whoscored/**").hasAuthority("ROLE_ADMIN")
-				.requestMatchers("/ruta-admin").hasAuthority("ROLE_ADMIN")
+//				.requestMatchers("/api/admin/whoscored/**", "/whoscored/**").hasAuthority("ROLE_ADMIN")
+//				.requestMatchers("/ruta-admin").hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
 		return http.build();
 	}
@@ -68,4 +68,3 @@ public class SecurityConfig {
 		return configuracion.getAuthenticationManager();
 	}
 }
-

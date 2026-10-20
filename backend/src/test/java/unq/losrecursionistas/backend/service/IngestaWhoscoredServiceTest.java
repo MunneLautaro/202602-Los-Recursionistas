@@ -8,13 +8,20 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
 import unq.losrecursionistas.backend.adapter.whoscored.ScrapingPort;
 import unq.losrecursionistas.backend.adapter.whoscored.dto.AparicionWhoscoredDto;
+import unq.losrecursionistas.backend.adapter.whoscored.dto.EquipoWhoscoredDto;
+import unq.losrecursionistas.backend.adapter.whoscored.dto.JugadorWhoscoredDto;
+import unq.losrecursionistas.backend.adapter.whoscored.dto.LigaWhoscoredDto;
 import unq.losrecursionistas.backend.model.EjecucionIngesta;
+import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import unq.losrecursionistas.backend.model.Jugador;
+import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCasoVinculacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEjecucionIngesta;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEquipo;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaPartido;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.impl.IngestaWhoscoredServiceImpl;
 import unq.losrecursionistas.backend.service.impl.MatchingWhoscoredService;
 
@@ -35,6 +42,8 @@ class IngestaWhoscoredServiceTest {
     @Mock RepositorioEstadisticaPartido estadisticas;
     @Mock MatchingWhoscoredService matching;
     @Mock ScrapingPort scraping;
+    @Mock RepositorioLiga ligas;
+    @Mock RepositorioEquipo equipos;
 
     private ScrapingConfiguration configuracion;
     private IngestaWhoscoredServiceImpl servicio;
@@ -45,9 +54,9 @@ class IngestaWhoscoredServiceTest {
         configuracion.setTemporadaInicio(LocalDate.of(2025, 8, 1));
         configuracion.setTemporadaFin(LocalDate.of(2026, 6, 30));
         servicio = new IngestaWhoscoredServiceImpl(ejecuciones, jugadores, casos, estadisticas,
-                matching, scraping, configuracion);
-        when(ejecuciones.existeActiva()).thenReturn(false);
-        when(ejecuciones.guardar(any())).thenAnswer(invocation -> invocation.getArgument(0));
+                matching, scraping, configuracion, ligas, equipos);
+        lenient().when(ejecuciones.existeActiva()).thenReturn(false);
+        lenient().when(ejecuciones.guardar(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -80,5 +89,34 @@ class IngestaWhoscoredServiceTest {
         assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.RECHAZADA);
         assertThat(resultado.getMotivoRechazo()).contains("activa");
         verifyNoInteractions(jugadores, scraping, estadisticas);
+    }
+
+    @Test
+    void ejecutaFaseDeVinculacionAntesDeEstadisticasEnIngestaCompleta() {
+        Liga ligaLocal = new Liga("Premier League", "PL");
+        ligaLocal.setId(1L);
+        when(ligas.obtenerLigas()).thenReturn(List.of(ligaLocal));
+        when(scraping.descubrirLigas()).thenReturn(List.of(new LigaWhoscoredDto(100L, "Premier League", "/pl", "2025/2026")));
+
+        Equipo equipoLocal = Equipo.builder().nombre("Arsenal FC").liga(ligaLocal).build();
+        equipoLocal.setId(10L);
+        when(equipos.obtenerEquiposDeLiga(1L)).thenReturn(List.of(equipoLocal));
+        when(scraping.descubrirEquipos(100L)).thenReturn(List.of(new EquipoWhoscoredDto(200L, "Arsenal", "/arsenal", 100L)));
+
+        JugadorWhoscoredDto jugadorDescubierto = new JugadorWhoscoredDto(300L, "Bukayo Saka", "/saka", null, "England", 200L, "Arsenal", List.of("Delantero"));
+        when(scraping.descubrirJugadores(200L)).thenReturn(List.of(jugadorDescubierto));
+
+        Jugador jugadorLocal = Jugador.builder().id(50L).nombre("Bukayo Saka").activo(true).build();
+        when(matching.vincular(jugadorDescubierto)).thenReturn(MatchingWhoscoredService.ResultadoMatching.vinculado(jugadorLocal));
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of(jugadorLocal));
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.COMPLETA, null);
+
+        assertThat(resultado.getJugadoresVinculados()).isEqualTo(1);
+        assertThat(ligaLocal.getIdWhoscored()).isEqualTo(100L);
+        assertThat(equipoLocal.getIdWhoscored()).isEqualTo(200L);
+        verify(ligas).guardar(ligaLocal);
+        verify(equipos).guardar(equipoLocal);
+        verify(jugadores).guardar(jugadorLocal);
     }
 }
