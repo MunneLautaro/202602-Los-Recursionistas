@@ -17,7 +17,11 @@ import unq.losrecursionistas.backend.adapter.whoscored.dto.JugadorWhoscoredDto;
 import unq.losrecursionistas.backend.adapter.whoscored.dto.LigaWhoscoredDto;
 
 import java.math.BigDecimal;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -173,7 +177,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             throw new ScrapingException("El slug del jugador es obligatorio", null, "obtener estadísticas de temporada", null);
         }
         return obtenerAparicionesDesdeRuta(
-                "/players/" + jugadorWhoscoredId + "/matchstatistics/" + slug,
+                "/players/" + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
                 "obtener estadísticas de temporada");
     }
 
@@ -206,13 +210,31 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
         // 2. Desde HTML si hay enlaces /matches/{id}/
         if (data.html() != null) {
-            Pattern matchPattern = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)?([^\"'/?#]*)[\"']");
-            Matcher matchMatcher = matchPattern.matcher(data.html());
-            while (matchMatcher.find()) {
-                try {
-                    Long partidoId = Long.valueOf(matchMatcher.group(1));
-                    apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-                } catch (NumberFormatException ignored) {}
+            Pattern rowPattern = Pattern.compile("(?is)<tr[^>]*>(.*?)</tr>");
+            Matcher rowMatcher = rowPattern.matcher(data.html());
+            while (rowMatcher.find()) {
+                String row = rowMatcher.group(1);
+                Matcher matchMatcher = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)/[^\"'/?#]+[\"']")
+                        .matcher(row);
+                if (matchMatcher.find()) {
+                    try {
+                        Long partidoId = Long.valueOf(matchMatcher.group(1));
+                        AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
+                        builder.mergeHtmlCell("date", htmlCell(row, "date"));
+                        builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
+                        builder.mergeHtmlCell("goalTotal", htmlCell(row, "goalTotal"));
+                        builder.mergeHtmlCell("assist", htmlCell(row, "assist"));
+                        builder.mergeHtmlCell("yellowCard", htmlCell(row, "yellowCard"));
+                        builder.mergeHtmlCell("redCard", htmlCell(row, "redCard"));
+                        builder.mergeHtmlCell("shotsTotal", htmlCell(row, "shotsTotal"));
+                        builder.mergeHtmlCell("passSuccess", htmlCell(row, "passSuccess"));
+                        builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
+                        builder.mergeHtmlCell("rating", htmlCell(row, "rating"));
+                        builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
+                    } catch (NumberFormatException ignored) {
+                        LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta);
+                    }
+                }
             }
         }
 
@@ -358,9 +380,30 @@ public class ScrapingRestAdapter implements ScrapingPort {
                         }
                         return new PageData(json, html);
                     }
+
                 }
             }
         }
+    }
+
+    private static String encodePathSegment(String value) {
+        return URLEncoder.encode(URLDecoder.decode(value, StandardCharsets.UTF_8), StandardCharsets.UTF_8)
+                .replace("+", "%20");
+    }
+
+    private static String htmlCell(String row, String className) {
+        Matcher matcher = Pattern.compile("(?is)<td[^>]*class=[\"'][^\"']*\\b"
+                + Pattern.quote(className) + "\\b[^\"']*[\"'][^>]*>(.*?)</td>").matcher(row);
+        if (!matcher.find()) return null;
+        return decodeHtml(matcher.group(1).replaceAll("(?is)<[^>]+>", " ").replaceAll("\\s+", " ").trim());
+    }
+
+    private static String decodeHtml(String value) {
+        return value.replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&#x27;", "'");
     }
 
     /**
@@ -516,6 +559,37 @@ public class ScrapingRestAdapter implements ScrapingPort {
             });
         }
 
+        private void mergeHtmlCell(String key, String rawValue) {
+            if (rawValue == null || rawValue.isBlank()) return;
+            String value = rawValue.trim();
+            if (!"-".equals(value)) {
+                crudas.putIfAbsent(key, value);
+            }
+            switch (key) {
+                case "date" -> fecha = firstDate(fecha, parseDate(value));
+                case "minsPlayed" -> minutos = first(minutos, parseInteger(value));
+                case "goalTotal" -> putIfPresent("goals", parseIntegerOrNull(value));
+                case "assist" -> putIfPresent("assists", parseIntegerOrNull(value));
+                case "yellowCard" -> putIfPresent("yellowCards", parseIntegerOrNull(value));
+                case "redCard" -> putIfPresent("redCards", parseIntegerOrNull(value));
+                case "shotsTotal" -> putIfPresent("shots", parseIntegerOrNull(value));
+                case "passSuccess" -> putIfPresent("passSuccess", parseDecimalOrNull(value));
+                case "rating" -> rating = first(rating, parseDecimal(value));
+                case "opponent" -> {
+                    String opponent = value.replaceAll("\\s+\\d+\\s*-\\s*\\d+\\s*$", "")
+                            .replaceAll("\\s*\\([HA]\\)\\s*$", "").trim();
+                    rivalNombre = first(rivalNombre, opponent);
+                    localVisitante = first(localVisitante, value.matches(".*\\(H\\).*") ? "LOCAL" : "VISITANTE");
+                }
+                default -> {
+                }
+            }
+        }
+
+        private void putIfPresent(String key, Object value) {
+            if (value != null) crudas.putIfAbsent(key, value);
+        }
+
         private AparicionWhoscoredDto build() {
             return new AparicionWhoscoredDto(partidoId, fecha, torneo, torneoId, equipoId, equipoNombre,
                     rivalId, rivalNombre, localVisitante, minutos, rating, crudas);
@@ -535,6 +609,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         if (value == null || value.isBlank()) {
             return null;
         }
+
         String normalized = value.replace(".", "")
                 .replace(",", "")
                 .replaceAll("[^0-9-]", "");
@@ -544,6 +619,49 @@ public class ScrapingRestAdapter implements ScrapingPort {
         try {
             return Integer.valueOf(normalized);
         } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static Integer parseInteger(String value) {
+        if (value == null || value.isBlank() || "-".equals(value)) return null;
+        try {
+            return Integer.valueOf(value.replaceAll("[^0-9-]", ""));
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static Object parseIntegerOrNull(String value) {
+        return parseInteger(value);
+    }
+
+    private static BigDecimal parseDecimal(String value) {
+        if (value == null || value.isBlank() || "-".equals(value)) return null;
+        try {
+            return new BigDecimal(value.replace("%", "").trim());
+        } catch (NumberFormatException exception) {
+            return null;
+        }
+    }
+
+    private static Object parseDecimalOrNull(String value) {
+        return parseDecimal(value);
+    }
+
+    private static LocalDate parseDate(String value) {
+        if (value == null || value.isBlank() || "-".equals(value)) return null;
+        try {
+            return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+        } catch (RuntimeException exception) {
+            return dateFromIso(value);
+        }
+    }
+
+    private static LocalDate dateFromIso(String value) {
+        try {
+            return LocalDate.parse(value.substring(0, 10));
+        } catch (RuntimeException exception) {
             return null;
         }
     }

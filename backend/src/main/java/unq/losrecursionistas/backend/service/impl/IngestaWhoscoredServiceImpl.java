@@ -174,9 +174,10 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                     continue;
                 }
                 if (estadisticas != null) {
+                    EstadisticaPartido estadistica = construirEstadistica(jugador, aparicion, ejecucion);
                     boolean existente = estadisticas.buscarPorJugadorYPartido(
                             jugador.getId(), aparicion.partidoWhoscoredId()) != null;
-                    estadisticas.upsert(construirEstadistica(jugador, aparicion, ejecucion));
+                    estadisticas.upsert(estadistica);
                     if (existente) ejecucion.setPartidosActualizados(ejecucion.getPartidosActualizados() + 1);
                     else ejecucion.setPartidosInsertados(ejecucion.getPartidosInsertados() + 1);
                 }
@@ -463,7 +464,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                 && aparicion.partidoWhoscoredId() != null
                 && aparicion.fechaPartido() != null
                 && aparicion.minutos() != null
-                && aparicion.minutos() > 0
+                && aparicion.minutos() >= 0
                 && (inicio == null || !aparicion.fechaPartido().isBefore(inicio))
                 && (fin == null || !aparicion.fechaPartido().isAfter(fin));
     }

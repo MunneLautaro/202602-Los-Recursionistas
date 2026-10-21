@@ -76,9 +76,9 @@ class IngestaWhoscoredServiceTest {
 
         EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.COMPLETA, null);
 
-        assertThat(resultado.getPartidosInsertados()).isEqualTo(1);
-        assertThat(resultado.getAnomalias()).isEqualTo(2);
-        verify(estadisticas).upsert(any(EstadisticaPartido.class));
+        assertThat(resultado.getPartidosInsertados()).isEqualTo(2);
+        assertThat(resultado.getAnomalias()).isEqualTo(1);
+        verify(estadisticas, times(2)).upsert(any(EstadisticaPartido.class));
     }
 
     @Test
