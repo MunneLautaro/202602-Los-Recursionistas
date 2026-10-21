@@ -68,6 +68,10 @@ public class MatchingWhoscoredService {
         if (resultado.estado() == Estado.VINCULADO) {
             Jugador jugador = resultado.jugador();
             jugador.setIdWhoscored(descubierto.idWhoscored());
+            jugador.setSlug((descubierto.slug() == null || descubierto.slug().isBlank())
+                    ? normalizar(descubierto.nombre()).replace(' ', '-')
+                    : descubierto.slug().replaceFirst("^.*/players/\\d+/(?:show/|matchstatistics/)?", "")
+                    .replaceAll("[?#].*$", ""));
             if (!descubierto.posiciones().isEmpty()) {
                 jugador.setPosicion(descubierto.posiciones().get(0));
             }

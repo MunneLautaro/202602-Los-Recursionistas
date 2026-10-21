@@ -155,12 +155,48 @@ public class ScrapingRestAdapter implements ScrapingPort {
     @Override
     public List<AparicionWhoscoredDto> obtenerApariciones(Long jugadorWhoscoredId) {
         requireId(jugadorWhoscoredId, "jugador");
-        PageData data = load("/players/" + jugadorWhoscoredId + "/show", "obtener apariciones");
+        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/show", "obtener apariciones");
+        if (apariciones.isEmpty()) {
+            try {
+                apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
+            } catch (Exception ex) {
+                LOGGER.debug("No se obtuvieron apariciones desde /matchstatistics para jugador {}: {}", jugadorWhoscoredId, ex.getMessage());
+            }
+        }
+        return apariciones;
+    }
+
+    @Override
+    public List<AparicionWhoscoredDto> obtenerAparicionesTemporada(Long jugadorWhoscoredId, String slug) {
+        requireId(jugadorWhoscoredId, "jugador");
+        if (slug == null || slug.isBlank()) {
+            throw new ScrapingException("El slug del jugador es obligatorio", null, "obtener estadísticas de temporada", null);
+        }
+        return obtenerAparicionesDesdeRuta(
+                "/players/" + jugadorWhoscoredId + "/matchstatistics/" + slug,
+                "obtener estadísticas de temporada");
+    }
+
+    private List<AparicionWhoscoredDto> obtenerAparicionesDesdeRuta(String ruta, String fase) {
+        PageData data = load(ruta, fase);
         Map<Long, AparicionBuilder> apariciones = new LinkedHashMap<>();
 
-        // 1. Desde JSON
+        // 1. Desde JSON — campos explícitos de partido
         for (JsonNode node : findObjects(data.json(), "matchId", "fixtureId", "gameId")) {
             Long partidoId = number(node, "matchId", "fixtureId", "gameId");
+            if (partidoId == null) {
+                continue;
+            }
+            AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
+            builder.merge(node);
+        }
+
+        // 1b. Desde JSON — objetos con "id" genérico que tienen contexto de partido (fecha o minutos)
+        for (JsonNode node : findObjects(data.json(), "id")) {
+            if (!node.has("date") && !node.has("matchDate") && !node.has("minutes") && !node.has("minutesPlayed")) {
+                continue;
+            }
+            Long partidoId = number(node, "id");
             if (partidoId == null) {
                 continue;
             }
@@ -180,7 +216,12 @@ public class ScrapingRestAdapter implements ScrapingPort {
             }
         }
 
-        return apariciones.values().stream().map(AparicionBuilder::build).toList();
+        List<AparicionWhoscoredDto> resultado = apariciones.values().stream().map(AparicionBuilder::build).toList();
+        if (resultado.isEmpty()) {
+            LOGGER.warn("No se encontraron apariciones en la ruta '{}'. JSON roots: {}, HTML presente: {}",
+                    ruta, data.json().size(), data.html() != null && !data.html().isBlank());
+        }
+        return resultado;
     }
 
     private PageData load(String path, String fase) {
@@ -271,7 +312,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                                 .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
 
                         try {
-                            page.waitForTimeout(1000);
+                            page.waitForTimeout(3000);
                         } catch (Exception ignored) {}
 
                         String html = page.content();
@@ -298,24 +339,72 @@ public class ScrapingRestAdapter implements ScrapingPort {
                             }
                         } catch (Exception ignored) {}
 
-                        for (String script : page.locator("script").allTextContents()) {
-                            if (script.contains("\"playerId\"") || script.contains("\"teamId\"") || script.contains("\"leagueId\"")) {
-                                int start = script.indexOf('{');
-                                int end = script.lastIndexOf('}');
-                                if (start >= 0 && end > start) {
-                                    String candidate = script.substring(start, end + 1);
-                                    try {
-                                        json.add(objectMapper.readTree(candidate));
-                                    } catch (Exception ignored) {
-                                        // Scripts often contain JavaScript around the embedded JSON.
-                                    }
+                        // Extraer variables globales conocidas de WhoScored con datos de apariciones
+                        for (String varName : List.of("playerMatchStats", "matchStatistics", "playerStats", "statsData")) {
+                            try {
+                                Object varData = page.evaluate("() => typeof " + varName + " !== 'undefined' ? JSON.stringify(" + varName + ") : null");
+                                if (varData != null && !varData.toString().isBlank() && !"null".equals(varData.toString())) {
+                                    json.add(objectMapper.readTree(varData.toString()));
                                 }
+                            } catch (Exception ignored) {}
+                        }
+
+                        for (String script : page.locator("script").allTextContents()) {
+                            if (script.contains("\"playerId\"") || script.contains("\"teamId\"")
+                                    || script.contains("\"leagueId\"") || script.contains("\"matchId\"")
+                                    || script.contains("\"fixtureId\"") || script.contains("\"gameId\"")) {
+                                extractJsonCandidatesFromScript(script, json);
                             }
                         }
                         return new PageData(json, html);
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Extrae todos los bloques JSON candidatos de un script inline.
+     * A diferencia de la extracción anterior (que sólo tomaba el bloque mayor),
+     * este método busca todos los bloques objeto de nivel raíz para no perder
+     * estructuras de apariciones que vengan embebidas en asignaciones de variables.
+     */
+    private void extractJsonCandidatesFromScript(String script, List<JsonNode> target) {
+        // Intentar extraer arrays o objetos JSON de asignaciones de variable JS:
+        // e.g.: var playerMatchStats = [{...}, ...];
+        java.util.regex.Pattern assignmentPattern = java.util.regex.Pattern.compile(
+                "(?:var|let|const|window\\.)[\\w.]+=\\s*([\\[{])", java.util.regex.Pattern.DOTALL);
+        java.util.regex.Matcher assignmentMatcher = assignmentPattern.matcher(script);
+        while (assignmentMatcher.find()) {
+            int valueStart = assignmentMatcher.start(1);
+            char openChar = script.charAt(valueStart);
+            char closeChar = openChar == '[' ? ']' : '}';
+            int depth = 0;
+            int end = -1;
+            for (int i = valueStart; i < script.length(); i++) {
+                char c = script.charAt(i);
+                if (c == openChar) depth++;
+                else if (c == closeChar) {
+                    depth--;
+                    if (depth == 0) { end = i + 1; break; }
+                }
+            }
+            if (end > valueStart) {
+                String candidate = script.substring(valueStart, end);
+                try {
+                    target.add(objectMapper.readTree(candidate));
+                } catch (Exception ignored) {}
+            }
+        }
+
+        // Fallback: extraer el bloque objeto más grande del script (comportamiento anterior)
+        int start = script.indexOf('{');
+        int end = script.lastIndexOf('}');
+        if (start >= 0 && end > start) {
+            String candidate = script.substring(start, end + 1);
+            try {
+                target.add(objectMapper.readTree(candidate));
+            } catch (Exception ignored) {}
         }
     }
 
@@ -354,8 +443,17 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
     private static Long number(JsonNode node, String... names) {
         String value = text(node, names);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.replace(".", "")
+                .replace(",", "")
+                .replaceAll("[^0-9-]", "");
+        if (normalized.isEmpty() || "-".equals(normalized)) {
+            return null;
+        }
         try {
-            return value == null ? null : Long.valueOf(value);
+            return Long.valueOf(normalized);
         } catch (NumberFormatException exception) {
             return null;
         }
@@ -433,14 +531,34 @@ public class ScrapingRestAdapter implements ScrapingPort {
     }
 
     private static Integer integer(JsonNode node, String... names) {
-        Long value = number(node, names);
-        return value == null ? null : value.intValue();
+        String value = text(node, names);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.replace(".", "")
+                .replace(",", "")
+                .replaceAll("[^0-9-]", "");
+        if (normalized.isEmpty() || "-".equals(normalized)) {
+            return null;
+        }
+        try {
+            return Integer.valueOf(normalized);
+        } catch (NumberFormatException exception) {
+            return null;
+        }
     }
 
     private static BigDecimal decimal(JsonNode node, String... names) {
         String value = text(node, names);
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String normalized = value.replace("%", "")
+                .replace("'", "")
+                .replace("\u2019", "")
+                .replace("\u2018", "");
         try {
-            return value == null ? null : new BigDecimal(value);
+            return new BigDecimal(normalized);
         } catch (NumberFormatException exception) {
             return null;
         }

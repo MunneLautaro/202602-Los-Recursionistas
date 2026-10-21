@@ -24,6 +24,7 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.Repositor
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.impl.IngestaWhoscoredServiceImpl;
 import unq.losrecursionistas.backend.service.impl.MatchingWhoscoredService;
+import unq.losrecursionistas.backend.service.interfaces.ResultadoIngesta;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -92,6 +93,24 @@ class IngestaWhoscoredServiceTest {
     }
 
     @Test
+    void ingestaEstadisticasDeJugadorUsandoSuIdWhoscored() {
+        Jugador jugador = Jugador.builder().id(7L).idWhoscored(99L).activo(true).build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+        when(scraping.obtenerApariciones(99L)).thenReturn(List.of(
+                new AparicionWhoscoredDto(10L, LocalDate.of(2025, 9, 1), "Liga", 1L,
+                        2L, "Equipo", 3L, "Rival", "LOCAL", 90, BigDecimal.TEN,
+                        Map.of("goals", 1))));
+        when(estadisticas.buscarPorJugadorYPartido(7L, 10L)).thenReturn(null);
+
+        ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(7L);
+
+        assertThat(resultado.partidosInsertados()).isEqualTo(1);
+        verify(scraping).obtenerApariciones(99L);
+        verify(estadisticas).upsert(any(EstadisticaPartido.class));
+        verify(scraping, never()).obtenerAparicionesTemporada(anyLong(), anyString());
+    }
+
+    @Test
     void ejecutaFaseDeVinculacionAntesDeEstadisticasEnIngestaCompleta() {
         Liga ligaLocal = new Liga("Premier League", "PL");
         ligaLocal.setId(1L);
@@ -118,5 +137,112 @@ class IngestaWhoscoredServiceTest {
         verify(ligas).guardar(ligaLocal);
         verify(equipos).guardar(equipoLocal);
         verify(jugadores).guardar(jugadorLocal);
+    }
+
+    // ── Tests para el flujo de procesarJugadorTemporada (ingestarEstadisticasJugador) ──
+
+    /**
+     * Cuando obtenerApariciones devuelve vacío, debe intentar obtenerAparicionesTemporada
+     * usando el slug del jugador (extraído desde el campo slug almacenado).
+     */
+    @Test
+    void usaFallbackAObtenerAparicionesTemporadaCuandoObtenerAparicionesEstaVacio() {
+        Jugador jugador = Jugador.builder()
+                .id(7L)
+                .idWhoscored(99L)
+                .slug("/players/99/show/lionel-messi")
+                .activo(true)
+                .build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+        when(scraping.obtenerApariciones(99L)).thenReturn(List.of());
+        when(scraping.obtenerAparicionesTemporada(99L, "lionel-messi")).thenReturn(List.of(
+                new AparicionWhoscoredDto(20L, LocalDate.of(2025, 10, 5), "Liga", 1L,
+                        5L, "Inter Miami", 6L, "Rival", "LOCAL", 85, new BigDecimal("7.5"),
+                        Map.of("goals", 1))));
+        when(estadisticas.buscarPorJugadorYPartido(7L, 20L)).thenReturn(null);
+
+        ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(7L);
+
+        assertThat(resultado.partidosInsertados()).isEqualTo(1);
+        verify(scraping).obtenerApariciones(99L);
+        verify(scraping).obtenerAparicionesTemporada(99L, "lionel-messi");
+        verify(estadisticas).upsert(any(EstadisticaPartido.class));
+    }
+
+    /**
+     * Cuando obtenerApariciones devuelve vacío y el jugador no tiene slug guardado,
+     * el fallback debe construir el slug a partir del nombre del jugador normalizado.
+     */
+    @Test
+    void usaFallbackConSlugGeneradoDesdeNombreCuandoJugadorNoTieneSlug() {
+        Jugador jugador = Jugador.builder()
+                .id(8L)
+                .idWhoscored(77L)
+                .nombre("Vinicius Junior")
+                .slug(null)
+                .activo(true)
+                .build();
+        when(jugadores.obtenerJugadorPorId(8L)).thenReturn(jugador);
+        when(scraping.obtenerApariciones(77L)).thenReturn(List.of());
+        when(scraping.obtenerAparicionesTemporada(77L, "vinicius-junior")).thenReturn(List.of(
+                new AparicionWhoscoredDto(30L, LocalDate.of(2025, 9, 15), "LaLiga", 2L,
+                        10L, "Real Madrid", 11L, "Barcelona", "LOCAL", 90, new BigDecimal("8.2"),
+                        Map.of())));
+        when(estadisticas.buscarPorJugadorYPartido(8L, 30L)).thenReturn(null);
+
+        ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(8L);
+
+        assertThat(resultado.partidosInsertados()).isEqualTo(1);
+        verify(scraping).obtenerAparicionesTemporada(77L, "vinicius-junior");
+        verify(estadisticas).upsert(any(EstadisticaPartido.class));
+    }
+
+    /**
+     * Cuando ambos métodos devuelven vacío, el contador de anomalías debe incrementarse
+     * y no se deben persistir estadísticas.
+     */
+    @Test
+    void registraAnomaliaYNoInsertaNadaCuandoAmbosMetodosDevuelvenVacio() {
+        Jugador jugador = Jugador.builder()
+                .id(9L)
+                .idWhoscored(55L)
+                .nombre("Jugador Sin Datos")
+                .slug(null)
+                .activo(true)
+                .build();
+        when(jugadores.obtenerJugadorPorId(9L)).thenReturn(jugador);
+        when(scraping.obtenerApariciones(55L)).thenReturn(List.of());
+        when(scraping.obtenerAparicionesTemporada(eq(55L), anyString())).thenReturn(List.of());
+
+        ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(9L);
+
+        assertThat(resultado.partidosInsertados()).isEqualTo(0);
+        assertThat(resultado.partidosActualizados()).isEqualTo(0);
+        verify(estadisticas, never()).upsert(any());
+    }
+
+    /**
+     * Verifica que las apariciones ya existentes en BD incrementen partidos actualizados,
+     * no insertados.
+     */
+    @Test
+    void incrementaPartidosActualizadosSiLaAparicionYaExiste() {
+        Jugador jugador = Jugador.builder().id(7L).idWhoscored(99L).activo(true).build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+
+        AparicionWhoscoredDto aparicion = new AparicionWhoscoredDto(10L, LocalDate.of(2025, 9, 1), "Liga", 1L,
+                2L, "Equipo", 3L, "Rival", "LOCAL", 90, BigDecimal.TEN, Map.of());
+        when(scraping.obtenerApariciones(99L)).thenReturn(List.of(aparicion));
+
+        EstadisticaPartido existente = EstadisticaPartido.builder()
+                .jugador(jugador).partidoWhoscoredId(10L)
+                .fechaPartido(LocalDate.of(2025, 9, 1)).minutos(90).build();
+        when(estadisticas.buscarPorJugadorYPartido(7L, 10L)).thenReturn(existente);
+
+        ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(7L);
+
+        assertThat(resultado.partidosActualizados()).isEqualTo(1);
+        assertThat(resultado.partidosInsertados()).isEqualTo(0);
+        verify(estadisticas).upsert(any(EstadisticaPartido.class));
     }
 }

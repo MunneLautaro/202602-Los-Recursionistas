@@ -15,4 +15,6 @@ public interface ScrapingPort {
     List<JugadorWhoscoredDto> descubrirJugadores(Long equipoWhoscoredId);
 
     List<AparicionWhoscoredDto> obtenerApariciones(Long jugadorWhoscoredId);
+
+    List<AparicionWhoscoredDto> obtenerAparicionesTemporada(Long jugadorWhoscoredId, String slug);
 }

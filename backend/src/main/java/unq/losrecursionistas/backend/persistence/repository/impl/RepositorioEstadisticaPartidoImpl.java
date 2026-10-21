@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaPartido;
 import unq.losrecursionistas.backend.persistence.sql.EstadisticaPartidoDAOSQL;
+import java.time.LocalDate;
+import java.util.List;
 
 @Component
 public class RepositorioEstadisticaPartidoImpl implements RepositorioEstadisticaPartido {
@@ -57,5 +59,10 @@ public class RepositorioEstadisticaPartidoImpl implements RepositorioEstadistica
         existente.setPrecisionPases(estadistica.getPrecisionPases());
         existente.setStatsCrudas(estadistica.getStatsCrudas());
         return dao.save(existente);
+    }
+
+    @Override
+    public List<EstadisticaPartido> buscarPorJugadorYTemporada(Long jugadorId, LocalDate temporadaInicio) {
+        return dao.findByJugadorIdAndTemporadaInicio(jugadorId, temporadaInicio);
     }
 }
