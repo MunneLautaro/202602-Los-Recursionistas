@@ -23,6 +23,21 @@ vincula las ligas, equipos y jugadores de WhoScored antes de cargar sus
 estadisticas. `FOOTBALL_DATA_STARTUP_ENABLED=false` y
 `WHOSCORED_STARTUP_ENABLED=false` desactivan cada etapa por separado.
 
+## Cotizaciones
+
+El historial se consulta en `GET /players/{id}/quotes` con filtros inclusivos
+`desde`/`hasta` y paginacion (tamano predeterminado 12). El ranking paginado
+esta disponible en `GET /players/ranking` y acepta `ligaId` y `posicion`.
+`POST /quotes/recalculate` es público para facilitar las pruebas, responde
+`202` y ejecuta el recálculo en segundo plano; una ejecución concurrente
+responde `409`.
+
+La estrategia activa se configura con `COTIZACION_ESTRATEGIA_ACTIVA` y puede
+ser `PERFORMANCE_GENERAL` o `PERFORMANCE_POR_POSICION`. El scheduler semanal
+se controla con `COTIZACION_SCHEDULER_ENABLED` y
+`COTIZACION_SCHEDULER_CRON` (por defecto, domingos a las 04:00 de
+`America/Argentina/Buenos_Aires`).
+
 ## Ingesta WhoScored
 
 `IngestaWhoscoredService` procesa jugadores activos con `idWhoscored` y

@@ -1,16 +1,16 @@
 <!-- Sync Impact Report
-Version change: 2.0.0 -> 2.1.0
-Modified principles: Requisitos no funcionales transversales
-Added sections: none
+Version change: 2.1.0 -> 2.2.0
+Modified principles: Principio VII — Testing obligatorio; Requisitos no funcionales transversales
+Added sections: Principio XIV — Sistema de cotización con estrategia intercambiable
 Removed sections: none
 Follow-up TODOs: none
 -->
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.1.0
+**Versión:** 2.2.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-10-19
+**Última modificación:** 2026-10-21
 
 **Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
 para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
@@ -182,6 +182,8 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
 - **Alcance en `model`:** Mantener únicamente tests unitarios simples para métodos de negocio específicos que pertenezcan intrínsecamente al dominio/entidad (ej. cálculo de totales, cambio de estados, lógica pura de negocio). Si una clase de modelo solo contiene atributos, getters, setters y constructores generados por Lombok (`@Data`, `@Getter`, `@Setter`, `@Builder`), **NO debe tener archivo de test individual**.
 - **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ArquitecturaBaseTest`, `ValidacionInfraestructuraTest`, o clases de prueba dentro de `configuration` o `security`).
 - Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación. El alcance actual incluye: `AuthServiceTest`, `EquipoServiceTest`, `JugadorServiceTest`, `LigaServiceTest`, `SincronizacionServiceTest`, `UsuarioDetailsServiceTest` y `UsuarioServiceTest`. Los adaptadores de identidad (`UsuarioDetailsServiceImpl`) también son testeables dentro de `service`.
+- El alcance de tests de la capa `service` MUST incluir también `CotizacionServiceTest`
+  y un test unitario por cada implementación concreta de `EstrategiaCotizacion`.
 - El adapter de scraping MUST probarse con tests unitarios basados en fixtures
   HTML/JSON locales, sin acceder a WhoScored durante CI. Los tests de integración
   que levanten Playwright o accedan a la web real MUST quedar marcados aparte y
@@ -265,6 +267,36 @@ Cada scraping MUST registrar de forma estructurada la URL, duración y resultado
 sin incluir credenciales ni datos sensibles. Los tests MUST verificar happy path,
 timeouts, HTML/JSON inválido, retry y errores envueltos usando fixtures locales;
 el CI MUST permanecer independiente de la web real.
+
+---
+
+## Principio XIV — Sistema de cotización con estrategia intercambiable
+
+El sistema de cotización MUST implementarse como un módulo aislado que no conoce
+los detalles del scraping ni de la ingesta. La lógica de cada estrategia de
+cotización MUST vivir en implementaciones intercambiables del contrato
+`EstrategiaCotizacion`, cuya interfaz residirá en `service/interfaces`. Las
+implementaciones concretas MUST ubicarse en `service/impl/estrategia/`.
+Queda prohibido ubicar lógica de cálculo de cotización en `model`, `controller`
+o `adapter`.
+
+La estrategia activa MUST seleccionarse mediante la configuración
+`cotizacion.estrategia.activa` en `application.yml`, como nombre `String` del
+bean o enum. El servicio de cotización MUST inyectar la estrategia activa por
+nombre de bean o mediante un mapa de beans; quedan prohibidos los condicionales
+hardcodeados para seleccionar estrategias.
+
+Cada `Cotizacion` persistida MUST registrar el nombre de la estrategia usada
+para calcularla. Este campo MUST ser inmutable una vez persistido.
+
+El scheduler de cotización MUST llamarse `CotizacionScheduler`, ubicarse en
+`scheduler/` y configurarse mediante `scheduler.cotizacion.cron` en
+`application.yml`. Su ventana de ejecución MUST ser posterior a la ventana de
+`WhoScoredScheduler`.
+
+Los pesos de cada estrategia y los parámetros `valorBase`, `factorEscala` y
+`ventana-dias` MUST externalizarse en `application.yml`; no se permiten valores
+hardcodeados para esos parámetros.
 
 ---
 
@@ -353,6 +385,11 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
   desacoplada de la sesión HTTP y del `SecurityContext`, sin depender de un usuario
   autenticado. Su ventana de ejecución MUST garantizar que los datos base de
   Football-Data existan previamente antes de iniciar la ingesta de WhoScored.
+- **Cotización:** el recálculo periódico de cotizaciones MUST vivir en `scheduler/`
+  bajo `CotizacionScheduler`, con cron configurable bajo
+  `scheduler.cotizacion.cron` y zona `America/Argentina/Buenos_Aires`. MUST
+  ejecutarse sin sesión HTTP ni `SecurityContext`. Su ventana MUST ser posterior
+  a la de `WhoScoredScheduler`.
 - **Scraping:** toda operación de WhoScored MUST respetar el Principio XIII y
   sus propiedades externalizadas; no se permite activar scraping real en CI.
 
