@@ -4,6 +4,7 @@ package unq.losrecursionistas.backend.controller;
 import jakarta.validation.constraints.Positive;
 import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
+import unq.losrecursionistas.backend.controller.dto.jugador.EstadisticaTemporadaResponseDTO;
 import unq.losrecursionistas.backend.controller.dto.jugador.JugadorFiltroRequestDTO;
 import unq.losrecursionistas.backend.controller.dto.jugador.JugadorResponseDTO;
 import unq.losrecursionistas.backend.model.Jugador;
@@ -54,17 +55,21 @@ public class JugadorController {
         respuesta.put("nombre", jugador.getNombre());
         respuesta.put("posicion", jugador.getPosicion());
         respuesta.put("equipo", jugador.getEquipo() == null ? null : jugador.getEquipo().getNombre());
-        respuesta.put("estadisticasPorTorneo", porTorneo);
+        respuesta.put("estadisticasPorTorneo", porTorneo.stream()
+                .map(EstadisticaTemporadaResponseDTO::desdeModelo)
+                .toList());
         respuesta.put("totalesGlobal", totales(porTorneo));
         return respuesta;
     }
 
     @GetMapping("/ranking")
-    public List<EstadisticaTemporada> ranking(@RequestParam(required = false) String liga,
-                                               @RequestParam(required = false) String posicion,
-                                               @RequestParam(defaultValue = "20") int limit) {
+    public List<EstadisticaTemporadaResponseDTO> ranking(@RequestParam(required = false) String liga,
+                                                         @RequestParam(required = false) String posicion,
+                                                         @RequestParam(defaultValue = "20") int limit) {
         return estadisticas.buscarRanking(liga, posicion, configuracion.getTemporadaInicio(),
-                Math.max(1, Math.min(limit, 100)));
+                        Math.max(1, Math.min(limit, 100))).stream()
+                .map(EstadisticaTemporadaResponseDTO::desdeModelo)
+                .toList();
     }
 
     @GetMapping("/{id}/quotes")
