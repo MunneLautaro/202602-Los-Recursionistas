@@ -9,11 +9,22 @@ import java.time.LocalDate;
 import java.util.List;
 
 public interface EstadisticaTemporadaDAOSQL extends JpaRepository<EstadisticaTemporada, Long> {
-    List<EstadisticaTemporada> findByJugadorIdAndTemporadaInicio(Long jugadorId, LocalDate temporadaInicio);
+    @Query("""
+        select e from EstadisticaTemporada e
+        join fetch e.jugador j
+        join fetch j.equipo
+        where j.id = :jugadorId
+          and e.temporadaInicio = :temporadaInicio
+        """)
+    List<EstadisticaTemporada> findByJugadorIdAndTemporadaInicio(
+            @Param("jugadorId") Long jugadorId,
+            @Param("temporadaInicio") LocalDate temporadaInicio);
 
     @Query("""
         select e from EstadisticaTemporada e
-        join e.jugador j join j.equipo equipo join equipo.liga liga
+        join fetch e.jugador j
+        join fetch j.equipo equipo
+        join equipo.liga liga
         where e.temporadaInicio = :temporadaInicio
           and (:liga is null or liga.nombre = :liga)
           and (:posicion is null or j.posicion = :posicion)
