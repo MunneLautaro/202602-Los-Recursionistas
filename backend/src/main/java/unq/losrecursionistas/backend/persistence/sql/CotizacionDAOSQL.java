@@ -11,8 +11,8 @@ public interface CotizacionDAOSQL extends JpaRepository<Cotizacion, Long> {
     @Query("""
             SELECT c FROM Cotizacion c
             WHERE c.jugador.id = :jugadorId
-              AND (:desde IS NULL OR c.timestampCalculo >= :desde)
-              AND (:hasta IS NULL OR c.timestampCalculo < :hasta)
+              AND c.timestampCalculo >= :desde
+              AND c.timestampCalculo < :hasta
             """)
     Page<Cotizacion> buscarPorJugador(@Param("jugadorId") Long jugadorId,
                                       @Param("desde") java.time.LocalDateTime desde,

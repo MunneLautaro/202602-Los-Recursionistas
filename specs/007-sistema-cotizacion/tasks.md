@@ -123,7 +123,7 @@ description: "Task list for the player quotation system"
 - [X] T031 [P] Update backend API documentation and feature notes in `backend/README.md` with the three quotation endpoints, scheduler configuration, strategy names, and admin requirement
 - [X] T032 [P] Review `backend/src/main/resources/application.yml` and all quotation classes for ASCII Spanish naming, constructor injection, no functional changes to existing entities, no execution/version tables, and no frontend scope leakage
 - [X] T033 Run the focused unit suite from `backend/` with `.\gradlew.bat test --tests "*CotizacionServiceImplTest" --tests "*PerformanceGeneralEstrategiaTest" --tests "*PerformancePorPosicionEstrategiaTest" --tests "*CotizacionTest"` and resolve regressions in `backend/src/test/java/unq/losrecursionistas/backend/`
-- [ ] T034 Run the scenarios in `specs/007-sistema-cotizacion/quickstart.md`, including REST authorization, inclusive ranges, empty pages, scheduler-without-session, concurrent acceptance, non-null persisted fields, omitted-player logs, and the p95 targets for 100 concurrent history/ranking requests
+- [X] T034 Run the scenarios in `specs/007-sistema-cotizacion/quickstart.md`, including REST authorization, inclusive ranges, empty pages, scheduler-without-session, concurrent acceptance, non-null persisted fields, omitted-player logs, and the p95 targets for 100 concurrent history/ranking requests
 
 ---
 
