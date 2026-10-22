@@ -30,6 +30,16 @@ public class ControladorErrores {
 		return respuesta(HttpStatus.UNPROCESSABLE_ENTITY, excepcion.getMessage());
 	}
 
+	@ExceptionHandler(ExcepcionRecursoNoEncontrado.class)
+	public ResponseEntity<RespuestaError> manejarRecursoNoEncontrado(ExcepcionRecursoNoEncontrado excepcion) {
+	    return respuesta(HttpStatus.NOT_FOUND, excepcion.getMessage());
+	}
+
+	@ExceptionHandler(ExcepcionCotizacionActiva.class)
+	public ResponseEntity<RespuestaError> manejarCotizacionActiva(ExcepcionCotizacionActiva excepcion) {
+	    return respuesta(HttpStatus.CONFLICT, excepcion.getMessage());
+	}
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RespuestaError> manejarErrorNoControlado(Exception excepcion) {
         log.error("Error no controlado", excepcion);

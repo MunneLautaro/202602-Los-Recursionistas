@@ -40,6 +40,8 @@ public class SecurityConfig {
 				.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
 						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**", "/players/**", "/leagues/**", "/teams/**","/api/admin/whoscored/**", "/whoscored/**", "/ingesta/**")
 				.permitAll()
+				.requestMatchers("/players/{id}/quotes", "/players/ranking", "/quotes/recalculate")
+				.permitAll()
 //				.requestMatchers("/api/admin/whoscored/**", "/whoscored/**").hasAuthority("ROLE_ADMIN")
 //				.requestMatchers("/ruta-admin").hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());

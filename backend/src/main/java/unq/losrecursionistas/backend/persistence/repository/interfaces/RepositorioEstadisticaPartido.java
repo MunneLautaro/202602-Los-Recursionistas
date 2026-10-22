@@ -11,4 +11,5 @@ public interface RepositorioEstadisticaPartido {
 
     EstadisticaPartido upsert(EstadisticaPartido estadistica);
     List<EstadisticaPartido> buscarPorJugadorYTemporada(Long jugadorId, LocalDate temporadaInicio);
+    List<EstadisticaPartido> buscarPorJugadorYRango(Long jugadorId, LocalDate desde, LocalDate hasta);
 }

@@ -42,6 +42,11 @@ public class RepositorioJugadorImpl implements RepositorioJugador {
     }
 
     @Override
+    public boolean existe(Long id) {
+        return jugadorDAOSQL.existsById(id);
+    }
+
+    @Override
     public Jugador buscarPorIdWhoscored(Long idWhoscored) {
         return jugadorDAOSQL.findByIdWhoscored(idWhoscored).orElse(null);
     }
