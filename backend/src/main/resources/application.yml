@@ -61,4 +61,6 @@ whoscored:
     temporada-inicio: ${WHOSCORED_SEASON_START:2025-08-01}
     temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
     ligas-permitidas: ${WHOSCORED_ALLOWED_LEAGUES:}
-    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:true}
+    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:false}
+    linking-cron: ${WHOSCORED_LINKING_CRON:0 0 2 * * SUN}
+    stats-cron: ${WHOSCORED_STATS_CRON:0 0 3 * * SUN}

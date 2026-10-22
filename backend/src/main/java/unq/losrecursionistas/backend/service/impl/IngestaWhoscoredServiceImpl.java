@@ -14,15 +14,18 @@ import unq.losrecursionistas.backend.model.CasoVinculacion;
 import unq.losrecursionistas.backend.model.EjecucionIngesta;
 import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
+import unq.losrecursionistas.backend.model.EstadisticaTemporada;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCasoVinculacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEjecucionIngesta;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEquipo;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaPartido;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaTemporada;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.interfaces.IngestaWhoscoredService;
+import unq.losrecursionistas.backend.service.interfaces.ResultadoIngesta;
 
 import java.math.BigDecimal;
 import java.text.Normalizer;
@@ -46,6 +49,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     private final ScrapingConfiguration configuracion;
     private final RepositorioLiga ligas;
     private final RepositorioEquipo equipos;
+    private final RepositorioEstadisticaTemporada estadisticasTemporada;
 
     @Autowired
     public IngestaWhoscoredServiceImpl(RepositorioEjecucionIngesta ejecuciones,
@@ -56,7 +60,8 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                                        ScrapingPort scraping,
                                        ScrapingConfiguration configuracion,
                                        @Autowired(required = false) RepositorioLiga ligas,
-                                       @Autowired(required = false) RepositorioEquipo equipos) {
+                                       @Autowired(required = false) RepositorioEquipo equipos,
+                                       @Autowired(required = false) RepositorioEstadisticaTemporada estadisticasTemporada) {
         this.ejecuciones = ejecuciones;
         this.jugadores = jugadores;
         this.casos = casos;
@@ -66,6 +71,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         this.configuracion = configuracion;
         this.ligas = ligas;
         this.equipos = equipos;
+        this.estadisticasTemporada = estadisticasTemporada;
     }
 
     public IngestaWhoscoredServiceImpl(RepositorioEjecucionIngesta ejecuciones,
@@ -75,7 +81,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                                        MatchingWhoscoredService matching,
                                        ScrapingPort scraping,
                                        ScrapingConfiguration configuracion) {
-        this(ejecuciones, jugadores, casos, estadisticas, matching, scraping, configuracion, null, null);
+        this(ejecuciones, jugadores, casos, estadisticas, matching, scraping, configuracion, null, null, null);
     }
 
     /**
@@ -86,7 +92,149 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                                        RepositorioCasoVinculacion casos,
                                        MatchingWhoscoredService matching,
                                        ScrapingPort scraping) {
-        this(ejecuciones, jugadores, casos, null, matching, scraping, null, null, null);
+        this(ejecuciones, jugadores, casos, null, matching, scraping, null, null, null, null);
+    }
+
+    public IngestaWhoscoredServiceImpl(RepositorioEjecucionIngesta ejecuciones,
+                                       RepositorioJugador jugadores, RepositorioCasoVinculacion casos,
+                                       RepositorioEstadisticaPartido estadisticas, MatchingWhoscoredService matching,
+                                       ScrapingPort scraping, ScrapingConfiguration configuracion,
+                                       RepositorioLiga ligas, RepositorioEquipo equipos) {
+        this(ejecuciones, jugadores, casos, estadisticas, matching, scraping, configuracion,
+                ligas, equipos, null);
+    }
+
+    @Override
+    public ResultadoIngesta ejecutarLinking() {
+        EjecucionIngesta ejecucion = crearEjecucion(EjecucionIngesta.Alcance.COMPLETA);
+        ejecutarFaseVinculacion(EjecucionIngesta.Alcance.COMPLETA, null, ejecucion);
+        finalizar(ejecucion);
+        return resultado(ejecucion);
+    }
+
+    @Override
+    public ResultadoIngesta ejecutarIngesta() {
+        EjecucionIngesta ejecucion = crearEjecucion(EjecucionIngesta.Alcance.COMPLETA);
+        for (Jugador jugador : seleccionarJugadores(EjecucionIngesta.Alcance.COMPLETA, null)) {
+            procesarJugadorTemporada(jugador, ejecucion);
+        }
+        finalizar(ejecucion);
+        return resultado(ejecucion);
+    }
+
+    @Override
+    public ResultadoIngesta ingestarEstadisticasJugador(Long jugadorId) {
+        Jugador jugador = jugadores.obtenerJugadorPorId(jugadorId);
+        if (jugador.getIdWhoscored() == null) {
+            throw new IllegalStateException("El jugador " + jugadorId + " no tiene idWhoscored vinculado");
+        }
+        EjecucionIngesta ejecucion = crearEjecucion(EjecucionIngesta.Alcance.JUGADOR);
+        procesarJugadorTemporada(jugador, ejecucion);
+        finalizar(ejecucion);
+        return resultado(ejecucion);
+    }
+
+    private EjecucionIngesta crearEjecucion(EjecucionIngesta.Alcance alcance) {
+        EjecucionIngesta ejecucion = EjecucionIngesta.builder().estado(EjecucionIngesta.Estado.ACTIVA)
+                .alcance(alcance).temporadaInicio(configuracion.getTemporadaInicio())
+                .temporadaFin(configuracion.getTemporadaFin()).inicio(OffsetDateTime.now()).build();
+        return ejecuciones.guardar(ejecucion);
+    }
+
+    private ResultadoIngesta resultado(EjecucionIngesta ejecucion) {
+        return new ResultadoIngesta(ejecucion.getJugadoresProcesados(), ejecucion.getPartidosInsertados(),
+                ejecucion.getPartidosActualizados(), ejecucion.getErrores());
+    }
+
+    private void procesarJugadorTemporada(Jugador jugador, EjecucionIngesta ejecucion) {
+        ejecucion.setJugadoresProcesados(ejecucion.getJugadoresProcesados() + 1);
+        long inicio = System.nanoTime();
+        try {
+            List<AparicionWhoscoredDto> apariciones = scraping.obtenerApariciones(jugador.getIdWhoscored());
+            if (apariciones.isEmpty()) {
+                String slug = jugador.getSlug();
+                if (slug == null || slug.isBlank()) {
+                    slug = MatchingWhoscoredService.normalizar(jugador.getNombre()).replace(' ', '-');
+                } else {
+                    slug = slug.replaceFirst("^.*/players/\\d+/(?:show/|matchstatistics/)?", "")
+                            .replaceAll("[?#].*$", "");
+                }
+                apariciones = scraping.obtenerAparicionesTemporada(jugador.getIdWhoscored(), slug);
+            }
+            if (apariciones.isEmpty()) {
+                LOGGER.warn("WhoScored no devolvió apariciones para el jugador {} (idWhoscored: {})",
+                        jugador.getId(), jugador.getIdWhoscored());
+                ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
+                return;
+            }
+            int descartadas = 0;
+            for (AparicionWhoscoredDto aparicion : apariciones) {
+                if (!esPersistible(aparicion)) {
+                    descartadas++;
+                    continue;
+                }
+                if (estadisticas != null) {
+                    EstadisticaPartido estadistica = construirEstadistica(jugador, aparicion, ejecucion);
+                    boolean existente = estadisticas.buscarPorJugadorYPartido(
+                            jugador.getId(), aparicion.partidoWhoscoredId()) != null;
+                    estadisticas.upsert(estadistica);
+                    if (existente) ejecucion.setPartidosActualizados(ejecucion.getPartidosActualizados() + 1);
+                    else ejecucion.setPartidosInsertados(ejecucion.getPartidosInsertados() + 1);
+                }
+            }
+            if (descartadas > 0) {
+                ejecucion.setAnomalias(ejecucion.getAnomalias() + descartadas);
+                LOGGER.warn("Se descartaron {} apariciones no persistibles del jugador {}",
+                        descartadas, jugador.getId());
+            }
+            recalcularTemporada(jugador);
+        } catch (RuntimeException ex) {
+            ejecucion.setErrores(ejecucion.getErrores() + 1);
+            LOGGER.warn("Error al procesar estadísticas del jugador {}: {}", jugador.getId(), ex.getMessage());
+        } finally {
+            LOGGER.info("Scraping de estadísticas del jugador {} finalizado en {} ms",
+                    jugador.getId(), (System.nanoTime() - inicio) / 1_000_000);
+        }
+    }
+
+    private void recalcularTemporada(Jugador jugador) {
+        if (estadisticasTemporada == null) return;
+        List<EstadisticaPartido> partidos = estadisticas.buscarPorJugadorYTemporada(
+                jugador.getId(), configuracion.getTemporadaInicio());
+        Map<String, List<EstadisticaPartido>> grupos = partidos.stream()
+                .collect(java.util.stream.Collectors.groupingBy(
+                        p -> p.getTorneo() + "|" + p.getTorneoWhoscoredId()));
+        List<EstadisticaTemporada> agregadas = grupos.values().stream().map(this::agregar).toList();
+        estadisticasTemporada.reemplazarPorJugadorYTemporada(jugador.getId(),
+                configuracion.getTemporadaInicio(), agregadas);
+    }
+
+    private EstadisticaTemporada agregar(List<EstadisticaPartido> partidos) {
+        EstadisticaPartido primero = partidos.get(0);
+        return EstadisticaTemporada.builder().jugador(primero.getJugador()).torneo(primero.getTorneo())
+                .torneoWhoscoredId(primero.getTorneoWhoscoredId())
+                .temporadaInicio(configuracion.getTemporadaInicio()).temporadaFin(configuracion.getTemporadaFin())
+                .ultimaActualizacion(java.time.LocalDateTime.now()).apps(partidos.size())
+                .minutosTotales(suma(partidos, EstadisticaPartido::getMinutos))
+                .goles(suma(partidos, EstadisticaPartido::getGoles)).asistencias(suma(partidos, EstadisticaPartido::getAsistencias))
+                .tirosAlArco(suma(partidos, EstadisticaPartido::getTirosAlArco)).pasesClave(suma(partidos, EstadisticaPartido::getPasesClave))
+                .regates(suma(partidos, EstadisticaPartido::getRegates)).tackles(suma(partidos, EstadisticaPartido::getTackles))
+                .intercepciones(suma(partidos, EstadisticaPartido::getIntercepciones)).amarillas(suma(partidos, EstadisticaPartido::getAmarillas))
+                .rojas(suma(partidos, EstadisticaPartido::getRojas)).ratingPromedio(promedio(partidos, EstadisticaPartido::getRating))
+                .precisionPasesPromedio(promedio(partidos, EstadisticaPartido::getPrecisionPases)).build();
+    }
+
+    private static Integer suma(List<EstadisticaPartido> partidos,
+                                java.util.function.Function<EstadisticaPartido, Integer> getter) {
+        return partidos.stream().map(getter).filter(java.util.Objects::nonNull).mapToInt(Integer::intValue).sum();
+    }
+
+    private static BigDecimal promedio(List<EstadisticaPartido> partidos,
+                                       java.util.function.Function<EstadisticaPartido, BigDecimal> getter) {
+        List<BigDecimal> valores = partidos.stream().map(getter).filter(java.util.Objects::nonNull).toList();
+        if (valores.isEmpty()) return null;
+        return valores.stream().reduce(BigDecimal.ZERO, BigDecimal::add)
+                .divide(BigDecimal.valueOf(valores.size()), 2, java.math.RoundingMode.HALF_UP);
     }
 
     @Override
@@ -306,31 +454,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     }
 
     private void procesarJugador(Jugador jugador, EjecucionIngesta ejecucion) {
-        ejecucion.setJugadoresProcesados(ejecucion.getJugadoresProcesados() + 1);
-        try {
-            List<AparicionWhoscoredDto> apariciones = scraping.obtenerApariciones(jugador.getIdWhoscored());
-            for (AparicionWhoscoredDto aparicion : apariciones) {
-                if (!esPersistible(aparicion)) {
-                    ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-                    continue;
-                }
-                EstadisticaPartido estadistica = construirEstadistica(jugador, aparicion, ejecucion);
-                if (estadisticas != null) {
-                    boolean existente = estadisticas.buscarPorJugadorYPartido(
-                            jugador.getId(), aparicion.partidoWhoscoredId()) != null;
-                    estadisticas.upsert(estadistica);
-                    if (existente) {
-                        ejecucion.setPartidosActualizados(ejecucion.getPartidosActualizados() + 1);
-                    } else {
-                        ejecucion.setPartidosInsertados(ejecucion.getPartidosInsertados() + 1);
-                    }
-                }
-            }
-        } catch (Exception exception) {
-            LOGGER.warn("Error al procesar apariciones del jugador {} (id: {}): {}", jugador.getNombre(), jugador.getId(), exception.getMessage());
-            ejecucion.setErrores(ejecucion.getErrores() + 1);
-            ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-        }
+        procesarJugadorTemporada(jugador, ejecucion);
     }
 
     private boolean esPersistible(AparicionWhoscoredDto aparicion) {
@@ -340,7 +464,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                 && aparicion.partidoWhoscoredId() != null
                 && aparicion.fechaPartido() != null
                 && aparicion.minutos() != null
-                && aparicion.minutos() > 0
+                && aparicion.minutos() >= 0
                 && (inicio == null || !aparicion.fechaPartido().isBefore(inicio))
                 && (fin == null || !aparicion.fechaPartido().isAfter(fin));
     }
