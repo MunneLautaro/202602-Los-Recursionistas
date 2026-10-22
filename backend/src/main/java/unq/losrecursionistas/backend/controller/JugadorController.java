@@ -62,21 +62,6 @@ public class JugadorController {
         return respuesta;
     }
 
-    @GetMapping("/ranking")
-    public List<EstadisticaTemporadaResponseDTO> ranking(@RequestParam(required = false) String liga,
-                                                         @RequestParam(required = false) String posicion,
-                                                         @RequestParam(defaultValue = "20") int limit) {
-        return estadisticas.buscarRanking(liga, posicion, configuracion.getTemporadaInicio(),
-                        Math.max(1, Math.min(limit, 100))).stream()
-                .map(EstadisticaTemporadaResponseDTO::desdeModelo)
-                .toList();
-    }
-
-    @GetMapping("/{id}/quotes")
-    public List<Object> cotizaciones(@PathVariable Long id) {
-        return List.of();
-    }
-
     private Map<String, Object> totales(List<EstadisticaTemporada> stats) {
         Map<String, Object> total = new LinkedHashMap<>();
         total.put("apps", stats.stream().mapToInt(s -> value(s.getApps())).sum());

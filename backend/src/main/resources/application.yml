@@ -46,6 +46,32 @@ scheduler:
     executor-core-pool-size: ${WHOSCORED_EXECUTOR_CORE_POOL_SIZE:1}
     executor-max-pool-size: ${WHOSCORED_EXECUTOR_MAX_POOL_SIZE:1}
     executor-queue-capacity: ${WHOSCORED_EXECUTOR_QUEUE_CAPACITY:1}
+  cotizacion:
+    enabled: ${COTIZACION_SCHEDULER_ENABLED:true}
+    cron: ${COTIZACION_SCHEDULER_CRON:0 0 4 * * SUN}
+    zone: ${COTIZACION_SCHEDULER_ZONE:America/Argentina/Buenos_Aires}
+
+cotizacion:
+  estrategia:
+    activa: ${COTIZACION_ESTRATEGIA_ACTIVA:PERFORMANCE_GENERAL}
+  ventana-dias: ${COTIZACION_VENTANA_DIAS:7}
+  valor-base: ${COTIZACION_VALOR_BASE:100}
+  factor-escala: ${COTIZACION_FACTOR_ESCALA:900}
+  escala-monetaria: ${COTIZACION_ESCALA_MONETARIA:2}
+  pesos:
+    general:
+      goles: ${COTIZACION_PESO_GENERAL_GOLES:0.25}
+      asistencias: ${COTIZACION_PESO_GENERAL_ASISTENCIAS:0.15}
+      tiros: ${COTIZACION_PESO_GENERAL_TIROS:0.10}
+      pases-clave: ${COTIZACION_PESO_GENERAL_PASES_CLAVE:0.10}
+      regates: ${COTIZACION_PESO_GENERAL_REGATES:0.10}
+      tackles: ${COTIZACION_PESO_GENERAL_TACKLES:0.10}
+      rating: ${COTIZACION_PESO_GENERAL_RATING:0.20}
+    posicion:
+      portero: ${COTIZACION_PESOS_PORTERO:}
+      defensor: ${COTIZACION_PESOS_DEFENSOR:}
+      mediocampista: ${COTIZACION_PESOS_MEDIOCAMPISTA:}
+      delantero: ${COTIZACION_PESOS_DELANTERO:}
 
 whoscored:
   scraping:
