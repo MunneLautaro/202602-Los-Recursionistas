@@ -65,4 +65,9 @@ public class RepositorioEstadisticaPartidoImpl implements RepositorioEstadistica
     public List<EstadisticaPartido> buscarPorJugadorYTemporada(Long jugadorId, LocalDate temporadaInicio) {
         return dao.findByJugadorIdAndTemporadaInicio(jugadorId, temporadaInicio);
     }
+
+    @Override
+    public List<EstadisticaPartido> buscarPorJugadorYRango(Long jugadorId, LocalDate desde, LocalDate hasta) {
+        return dao.findByJugadorIdAndFechaPartidoBetween(jugadorId, desde, hasta);
+    }
 }

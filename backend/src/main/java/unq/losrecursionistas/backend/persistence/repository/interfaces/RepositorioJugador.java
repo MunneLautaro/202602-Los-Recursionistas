@@ -13,6 +13,7 @@ public interface RepositorioJugador {
     Jugador guardar(Jugador jugador);
 
     Jugador obtenerJugadorPorId(Long id);
+    boolean existe(Long id);
     Jugador buscarPorIdWhoscored(Long idWhoscored);
     List<Jugador> obtenerJugadoresActivos();
 
