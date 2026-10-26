@@ -2,6 +2,7 @@ package unq.losrecursionistas.backend.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.adapter.footballdata.FootballDataApiClient;
@@ -14,6 +15,7 @@ import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
+import unq.losrecursionistas.backend.service.interfaces.LiquidezInicialService;
 
 import java.util.List;
 
@@ -28,17 +30,29 @@ public class SincronizacionService {
     private final JugadorService jugadorService;
     private final EquipoService equipoService;
     private final RepositorioLiga repositorioLiga;
+    private final LiquidezInicialService liquidezInicial;
+
+    @Autowired
+    public SincronizacionService(FootballDataApiClient apiClient,
+                                 FootballDataMapper mapper,
+                                 JugadorService jugadorService,
+                                 EquipoService equipoService,
+                                 RepositorioLiga repositorioLiga,
+                                 LiquidezInicialService liquidezInicial) {
+        this.apiClient = apiClient;
+        this.mapper = mapper;
+        this.jugadorService = jugadorService;
+        this.equipoService = equipoService;
+        this.repositorioLiga = repositorioLiga;
+        this.liquidezInicial = liquidezInicial;
+    }
 
     public SincronizacionService(FootballDataApiClient apiClient,
                                  FootballDataMapper mapper,
                                  JugadorService jugadorService,
                                  EquipoService equipoService,
                                  RepositorioLiga repositorioLiga) {
-        this.apiClient = apiClient;
-        this.mapper = mapper;
-        this.jugadorService = jugadorService;
-        this.equipoService = equipoService;
-        this.repositorioLiga = repositorioLiga;
+        this(apiClient, mapper, jugadorService, equipoService, repositorioLiga, null);
     }
 
     public void sincronizarTodasLasLigas(List<String> codigosLigas) {
@@ -88,6 +102,7 @@ public class SincronizacionService {
                 jugador.setEquipo(equipoGuardado);
             }
             jugadorService.guardarTodos(jugadores);
+            inicializarLiquidez(jugadores);
         }
     }
 
@@ -105,5 +120,22 @@ public class SincronizacionService {
         }
 
         jugadorService.guardarTodos(jugadores);
+        inicializarLiquidez(jugadores);
+    }
+
+    private void inicializarLiquidez(List<Jugador> jugadores) {
+        if (liquidezInicial == null) {
+            return;
+        }
+        for (Jugador jugador : jugadores) {
+            if (jugador.getId() != null) {
+                try {
+                    liquidezInicial.inicializar(jugador);
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("No se pudo inicializar liquidez para jugador {}: {}",
+                            jugador.getId(), exception.getMessage());
+                }
+            }
+        }
     }
 }

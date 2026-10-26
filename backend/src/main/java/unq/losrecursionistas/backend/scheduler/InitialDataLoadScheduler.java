@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
 import unq.losrecursionistas.backend.service.impl.SincronizacionService;
 import unq.losrecursionistas.backend.service.impl.WhoscoredBootstrapService;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
+import unq.losrecursionistas.backend.service.interfaces.LiquidezInicialService;
 
 import java.util.List;
 
@@ -23,17 +25,23 @@ public class InitialDataLoadScheduler {
     private final ScrapingConfiguration scrapingConfiguration;
     private final String footballDataApiKey;
     private final boolean footballDataStartupEnabled;
+    private final RepositorioJugador jugadores;
+    private final LiquidezInicialService liquidezInicial;
 
     public InitialDataLoadScheduler(SincronizacionService footballData,
                                     WhoscoredBootstrapService whoscored,
                                     ScrapingConfiguration scrapingConfiguration,
                                     @Value("${football.api.key}") String footballDataApiKey,
-                                    @Value("${scheduler.football-data.startup-enabled:true}") boolean footballDataStartupEnabled) {
+                                    @Value("${scheduler.football-data.startup-enabled:true}") boolean footballDataStartupEnabled,
+                                    RepositorioJugador jugadores,
+                                    LiquidezInicialService liquidezInicial) {
         this.footballData = footballData;
         this.whoscored = whoscored;
         this.scrapingConfiguration = scrapingConfiguration;
         this.footballDataApiKey = footballDataApiKey;
         this.footballDataStartupEnabled = footballDataStartupEnabled;
+        this.jugadores = jugadores;
+        this.liquidezInicial = liquidezInicial;
     }
 
     @EventListener(ApplicationReadyEvent.class)
@@ -52,6 +60,16 @@ public class InitialDataLoadScheduler {
         }
         try {
             whoscored.cargarDatosIniciales();
+            if (jugadores != null && liquidezInicial != null) {
+                jugadores.obtenerJugadoresActivos().forEach(jugador -> {
+                    try {
+                        liquidezInicial.inicializar(jugador);
+                    } catch (RuntimeException exception) {
+                        LOGGER.warn("No se pudo inicializar liquidez para jugador {}: {}",
+                                jugador.getId(), exception.getMessage());
+                    }
+                });
+            }
             LOGGER.info("Carga inicial de WhoScored finalizada.");
         } catch (RuntimeException exception) {
             LOGGER.error("La carga inicial de WhoScored fallo. Verifique Playwright, conectividad y la configuracion de scraping.", exception);
