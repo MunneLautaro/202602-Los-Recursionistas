@@ -24,6 +24,18 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 	}
 
 	@Override
+	public Usuario buscarPorIdBloqueado(Long id) {
+		return usuarioDAOSQL.findLockedById(id)
+				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+	}
+
+	@Override
+	public Usuario buscarCustodio() {
+		return usuarioDAOSQL.findFirstCustodio("ROLE_ADMIN")
+				.orElseThrow(() -> new RuntimeException("No existe un usuario custodio"));
+	}
+
+	@Override
 	public Usuario crearUsuario(Usuario usuario) {
 		return usuarioDAOSQL.save(usuario);
 	}

@@ -5,9 +5,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import unq.losrecursionistas.backend.model.Cotizacion;
 
+@Repository
 public interface CotizacionDAOSQL extends JpaRepository<Cotizacion, Long> {
+    java.util.Optional<Cotizacion> findFirstByJugadorIdOrderByTimestampCalculoDesc(Long jugadorId);
     @Query("""
             SELECT c FROM Cotizacion c
             WHERE c.jugador.id = :jugadorId

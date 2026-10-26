@@ -3,6 +3,7 @@ spring:
     import: optional:file:.env[.properties],optional:file:backend/.env[.properties]
   application:
     name: ${SPRING_APPLICATION_NAME:backend}
+  time-zone: ${SPRING_TIME_ZONE:America/Argentina/Buenos_Aires}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/football_market}
     username: ${SPRING_DATASOURCE_USERNAME:postgres}
@@ -16,6 +17,13 @@ spring:
       hibernate:
         dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
         format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
+        jdbc:
+          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:America/Argentina/Buenos_Aires}
+
+mercado:
+  zona-horaria: ${MERCADO_ZONA_HORARIA:America/Argentina/Buenos_Aires}
+  pagina-defecto: ${MERCADO_PAGINA_DEFECTO:12}
+  aislamiento: ${MERCADO_AISLAMIENTO:REPEATABLE_READ}
 
 jwt:
   secret: ${JWT_SECRET:clave-local-de-desarrollo-de-32-bytes-minimo}
@@ -37,7 +45,8 @@ football:
 scheduler:
   football-data:
     cron: ${FOOTBALL_DATA_SCHEDULER_CRON:0 0 0 * * SUN}
-    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:false}
+    #Aca se pone si queres que footboall-data se ejecute al iniciar la app, si no queres que se ejecute al iniciar la app, poner false
+    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:true}
   whoscored:
     enabled: ${WHOSCORED_SCHEDULER_ENABLED:true}
     cron: ${WHOSCORED_SCHEDULER_CRON:0 0 3 * * SUN}
@@ -87,6 +96,7 @@ whoscored:
     temporada-inicio: ${WHOSCORED_SEASON_START:2025-08-01}
     temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
     ligas-permitidas: ${WHOSCORED_ALLOWED_LEAGUES:}
-    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:false}
+    #Aca se pone si queres que whoscored se ejecute al iniciar la app, si no queres que se ejecute al iniciar la app, poner false
+    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:true}
     linking-cron: ${WHOSCORED_LINKING_CRON:0 0 2 * * SUN}
     stats-cron: ${WHOSCORED_STATS_CRON:0 0 3 * * SUN}
