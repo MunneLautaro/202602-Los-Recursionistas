@@ -155,6 +155,29 @@ class UsuarioTest {
     }
 
     @Test
+    void reservaLiberaYExponeSaldoDisponible() {
+        Usuario usuario = new Usuario("mercado", "secreto", 100.00);
+
+        usuario.reservar(40.00);
+        assertThat(usuario.getSaldoReservado()).isEqualTo(40.00);
+        assertThat(usuario.saldoDisponible()).isEqualTo(60.00);
+
+        usuario.liberar(10.00);
+        assertThat(usuario.saldoDisponible()).isEqualTo(70.00);
+    }
+
+    @Test
+    void rechazaReservarPorEncimaDelSaldoDisponible() {
+        Usuario usuario = new Usuario("mercado2", "secreto", 100.00);
+
+        usuario.reservar(80.00);
+
+        assertThatThrownBy(() -> usuario.reservar(21.00))
+                .isInstanceOf(ExcepcionDominio.class)
+                .hasMessage("Saldo disponible insuficiente");
+    }
+
+    @Test
     @DisplayName("Caso No Feliz: Acreditar monto null lanza excepción")
     void acreditarMontoNullLanzaExcepcion() {
         Usuario usuario = new Usuario("jugador1", "secreto", 100.00);

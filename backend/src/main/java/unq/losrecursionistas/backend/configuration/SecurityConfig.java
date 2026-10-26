@@ -2,6 +2,7 @@ package unq.losrecursionistas.backend.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -38,12 +39,12 @@ public class SecurityConfig {
 			.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
 			.authorizeHttpRequests(autorizacion -> autorizacion
 				.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
-						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health", "/admin/sync/**", "/jugador/**", "/players/**", "/leagues/**", "/teams/**","/api/admin/whoscored/**", "/whoscored/**", "/ingesta/**")
+						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health")
 				.permitAll()
-				.requestMatchers("/players/{id}/quotes", "/players/ranking", "/quotes/recalculate")
+				.requestMatchers(HttpMethod.GET, "/players/**", "/leagues/**", "/teams/**", "/orders")
 				.permitAll()
-//				.requestMatchers("/api/admin/whoscored/**", "/whoscored/**").hasAuthority("ROLE_ADMIN")
-//				.requestMatchers("/ruta-admin").hasAuthority("ROLE_ADMIN")
+				.requestMatchers("/api/admin/whoscored/**", "/admin/sync/**", "/ingesta/**", "/quotes/recalculate")
+				.hasAuthority("ROLE_ADMIN")
 				.anyRequest().authenticated());
 		return http.build();
 	}
