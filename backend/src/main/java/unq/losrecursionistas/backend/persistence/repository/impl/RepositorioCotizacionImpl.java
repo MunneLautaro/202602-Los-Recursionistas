@@ -26,6 +26,11 @@ public class RepositorioCotizacionImpl implements RepositorioCotizacion {
     }
 
     @Override
+    public Cotizacion vigente(Long jugadorId) {
+        return dao.findFirstByJugadorIdOrderByTimestampCalculoDesc(jugadorId).orElse(null);
+    }
+
+    @Override
     public Page<Cotizacion> buscarPorJugador(Long jugadorId, java.time.LocalDate desde,
                                              java.time.LocalDate hasta, Pageable pageable) {
         return dao.buscarPorJugador(jugadorId,

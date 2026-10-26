@@ -7,6 +7,7 @@ import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
 
 public interface RepositorioCotizacion {
     Cotizacion guardar(Cotizacion cotizacion);
+    Cotizacion vigente(Long jugadorId);
     Page<Cotizacion> buscarPorJugador(Long jugadorId, java.time.LocalDate desde,
                                       java.time.LocalDate hasta, Pageable pageable);
     Page<CotizacionDAOSQL.RankingProyeccion> buscarRanking(Long ligaId, String posicion,
