@@ -1,16 +1,18 @@
 <!-- Sync Impact Report
-Version change: 2.1.0 -> 2.2.0
-Modified principles: Principio VII — Testing obligatorio; Requisitos no funcionales transversales
-Added sections: Principio XIV — Sistema de cotización con estrategia intercambiable
+Version change: 2.2.0 -> 2.3.0
+Modified principles: Principio VII — Testing obligatorio; Governance
+Added sections: Principio XV — Consistencia transaccional e integridad financiera;
+Principio XVI — Inmutabilidad y auditoría transaccional;
+Principio XVII — Aislamiento del motor de emparejamiento
 Removed sections: none
 Follow-up TODOs: none
 -->
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.2.0
+**Versión:** 2.3.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-10-21
+**Última modificación:** 2026-10-25
 
 **Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
 para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
@@ -40,6 +42,12 @@ aprobación explícita del equipo.
 
 **Resumen del cambio 1.1.0:** Se incorpora Spring Security como dependencia
 obligatoria para autenticación y autorización dentro del paquete `security`.
+
+**Resumen del cambio 2.3.0:** Se establecen controles transaccionales y de
+concurrencia para saldos, tokens y órdenes; auditoría financiera append-only e
+inmutable; y aislamiento del motor de emparejamiento en la capa de servicios.
+También se hacen obligatorias las pruebas de rollback y concurrencia para los
+servicios financieros y de mercado.
 
 ## Propósito
 
@@ -192,6 +200,11 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
   - **Camino feliz (Happy path):** verificación del funcionamiento correcto con datos válidos.
   - **Casos de borde y excepciones (Edge cases):** búsqueda de recursos inexistentes, credenciales inválidas, duplicaciones, saldos/tokens insuficientes y excepciones del dominio.
 - **Estilo conciso y directo:** usar bloques `@BeforeEach` para instanciar fixture de pruebas, Mocks simples (`@ExtendWith(MockitoExtension.class)`) para tests unitarios y nombres de métodos de prueba descriptivos en español sin caracteres no ASCII (ej. `testLoginConCredencialesInvalidasLanzaExcepcion`).
+- Todo servicio financiero o de mercado MUST contar además con pruebas
+  unitarias aisladas que verifiquen rollback ante excepciones, rechazo por
+  fondos o tokens insuficientes y simulación de condiciones de carrera o
+  concurrencia. Estas pruebas MUST demostrar que no quedan saldos negativos,
+  doble gasto ni reservas parciales después de un fallo.
 
 ---
 
@@ -300,6 +313,58 @@ hardcodeados para esos parámetros.
 
 ---
 
+## Principio XV — Consistencia transaccional e integridad financiera
+
+- Toda operación que modifique saldos de crédito, tenencia de tokens o reserve
+  recursos en órdenes activas MUST ejecutarse dentro de una transacción atómica
+  (`@Transactional`) con un nivel de aislamiento que prevenga lecturas sucias y
+  no repetibles.
+- El sistema MUST aplicar control de concurrencia pesimista u optimista a nivel
+  de base de datos sobre los registros de saldo del usuario y las tenencias de
+  tokens antes de admitir o emparejar una orden. Bajo ninguna condición se
+  permite doble gasto ni saldo negativo.
+- La transacción MUST revertir todas las modificaciones parciales cuando una
+  validación, reserva, emparejamiento o persistencia falle.
+
+Esta consistencia es un requisito crítico e innegociable: cualquier fallo de
+concurrencia puede corromper la integridad financiera del sistema.
+
+---
+
+## Principio XVI — Inmutabilidad y auditoría transaccional
+
+- Toda transacción ejecutada en el mercado, incluyendo intercambios de tokens y
+  créditos, MUST generar un registro de auditoría append-only e inmutable en la
+  base de datos.
+- El sistema MUST NOT actualizar ni eliminar registros históricos de
+  transacciones financieras o auditorías.
+- Cada registro de auditoría MUST almacenar el identificador de la entidad
+  afectada, el autor de la operación, una marca temporal exacta con zona
+  horaria, el detalle del cambio y los estados anterior y posterior.
+- Los mecanismos de persistencia y autorización MUST impedir modificaciones o
+  eliminaciones de registros históricos después de su creación.
+
+La inmutabilidad garantiza trazabilidad regulatoria y permite auditar y
+reproducir la evolución del historial financiero y del portfolio.
+
+---
+
+## Principio XVII — Aislamiento del motor de emparejamiento
+
+- La lógica de emparejamiento de órdenes MUST orquestarse íntegramente en la
+  capa `service/` mediante puertos e interfaces bien definidos; la validación
+  de invariantes MUST delegarse al modelo `model/`.
+- El motor MUST ser agnóstico del protocolo de entrada y poder dispararse tanto
+  por solicitudes HTTP sincrónicas como por procesos asíncronos o schedulers.
+- El motor MUST NOT acoplarse a sesiones web, DTOs de transporte ni detalles de
+  infraestructura. Los adaptadores de entrada solo deben traducir la entrada
+  al puerto del caso de uso.
+
+Este aislamiento respeta la arquitectura hexagonal y permite probar
+unitariamente el libro de órdenes sin dependencias de infraestructura.
+
+---
+
 ## Principio IX — Consultar ante ambigüedad arquitectónica
 
 Ante cualquier duda de diseño o implementación no resuelta explícitamente por
@@ -399,8 +464,18 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
 
 - Esta constitution prevalece sobre cualquier spec, plan o tarea que la
   contradiga.
-- Toda modificación a este documento MUST versionarse (semver) y justificarse
-  con un resumen del cambio y su motivo.
+- Toda modificación a este documento MUST versionarse (semver), incluir un
+  resumen del cambio y su motivo, y actualizar la fecha de última modificación.
+  Una nueva sección o una expansión material de un principio incrementa MINOR;
+  una redefinición incompatible o eliminación incrementa MAJOR; una aclaración
+  no semántica incrementa PATCH.
+- Toda enmienda MUST revisar la plantilla activa, preservar las reglas aún
+  aplicables, registrar un Sync Impact Report temporal al inicio del documento
+  y eliminar dicho comentario antes de crear el commit de la enmienda.
+- Las enmiendas MUST ser revisadas por el equipo antes de aprobarse. La
+  revisión de cumplimiento MUST comprobar la versión, las fechas ISO, la
+  ausencia de placeholders sin justificar y la naturaleza declarativa y
+  verificable de cada principio.
 - Las specs y planes generados por speckit se revisan contra esta
   constitution antes de aprobarse; cualquier desviación MUST quedar
   explícitamente documentada y aprobada.
@@ -416,3 +491,8 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
   aumente la concurrencia o modifique los límites de scraping MUST documentar
   el impacto legal, operativo y de disponibilidad, y requerir aprobación antes
   de implementarse.
+- Toda feature financiera o de mercado MUST demostrar en su revisión el uso de
+  transacciones atómicas, control de concurrencia, auditoría append-only,
+  aislamiento del motor de emparejamiento y la cobertura de rollback,
+  insuficiencia de fondos/tokens y condiciones de carrera exigida por el
+  Principio VII.
