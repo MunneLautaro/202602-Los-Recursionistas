@@ -1,0 +1,258 @@
+{
+  "info": {
+    "_postman_id": "4fc86a8b-1e9c-4a2f-a8f8-6ab1f5a2c2d1",
+    "name": "Los Recursionistas API",
+    "description": "Colección para probar todos los endpoints REST del backend. Ejecutar primero Registrar usuario y Login; el token se guarda automáticamente en la variable de colección. Las operaciones administrativas requieren un usuario con ROLE_ADMIN.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "username", "value": "postman-user" },
+    { "key": "password", "value": "postman-password" },
+    { "key": "token", "value": "" },
+    { "key": "userId", "value": "1" },
+    { "key": "playerId", "value": "1" },
+    { "key": "leagueId", "value": "1" },
+    { "key": "teamId", "value": "1" },
+    { "key": "externalTeamId", "value": "1" },
+    { "key": "position", "value": "DEL" },
+    { "key": "ingestaExecutionId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Autenticación",
+      "item": [
+        {
+          "name": "Registrar usuario",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"{{username}}\",\n  \"contrasena\": \"{{password}}\",\n  \"saldo\": 10000,\n  \"habilitado\": true\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/registrar",
+            "description": "Crea un usuario común. El registro no requiere token."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.id) pm.collectionVariables.set('userId', body.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login y guardar JWT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombreUsuario\": \"{{username}}\",\n  \"contrasena\": \"{{password}}\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login exitoso', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "if (body.token) pm.collectionVariables.set('token', body.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Catálogo público",
+      "item": [
+        {
+          "name": "Listar ligas",
+          "request": { "method": "GET", "url": "{{baseUrl}}/leagues" }
+        },
+        {
+          "name": "Listar equipos de una liga",
+          "request": { "method": "GET", "url": "{{baseUrl}}/teams/{{leagueId}}" }
+        },
+        {
+          "name": "Buscar jugadores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/players?nombre=&posicion={{position}}&ligaId={{leagueId}}&equipoId={{teamId}}&page=0"
+          }
+        },
+        {
+          "name": "Obtener jugador",
+          "request": { "method": "GET", "url": "{{baseUrl}}/players/{{playerId}}" }
+        },
+        {
+          "name": "Obtener estadísticas del jugador",
+          "request": { "method": "GET", "url": "{{baseUrl}}/players/{{playerId}}/stats" }
+        },
+        {
+          "name": "Historial de cotizaciones",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/players/{{playerId}}/quotes?page=0&size=12&desde=2026-01-01&hasta=2026-12-31"
+          }
+        },
+        {
+          "name": "Ranking de jugadores",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/players/ranking?ligaId={{leagueId}}&posicion={{position}}&page=0&size=12"
+          }
+        },
+        {
+          "name": "Listar órdenes del mercado",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/orders?page=0&size=12"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mercado (requiere JWT)",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Crear orden de compra",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jugadorId\": {{playerId}},\n  \"cantidad\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/orders/buy"
+          }
+        },
+        {
+          "name": "Crear orden de venta",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"jugadorId\": {{playerId}},\n  \"cantidad\": 1\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/orders/sell"
+          }
+        },
+        {
+          "name": "Recargar créditos",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto\": 1000\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/users/{{userId}}/credits"
+          }
+        },
+        {
+          "name": "Listar transacciones del usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/users/{{userId}}/transactions?page=0&size=12"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Administración (requiere ROLE_ADMIN)",
+      "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+      "item": [
+        {
+          "name": "Recalcular cotizaciones",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/quotes/recalculate"
+          }
+        },
+        {
+          "name": "Sincronizar jugadores de equipo",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/admin/sync/jugadores/{{externalTeamId}}"
+          }
+        },
+        {
+          "name": "Ejecutar linking Whoscored",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ingesta/linking"
+          }
+        },
+        {
+          "name": "Ejecutar ingesta de estadísticas",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ingesta/estadisticas"
+          }
+        },
+        {
+          "name": "Ingestar estadísticas de jugador",
+          "request": {
+            "method": "POST",
+            "url": "{{baseUrl}}/ingesta/jugador/{{playerId}}/estadisticas"
+          }
+        },
+        {
+          "name": "Iniciar ingesta Whoscored",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"alcance\": \"COMPLETA\",\n  \"id\": null\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{baseUrl}}/api/admin/whoscored/ingestas"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 202) {",
+                  "  const body = pm.response.json();",
+                  "  if (body.ejecucionId) pm.collectionVariables.set('ingestaExecutionId', body.ejecucionId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar última ingesta Whoscored",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/admin/whoscored/ingestas/ultima"
+          }
+        }
+      ]
+    }
+  ]
+}
