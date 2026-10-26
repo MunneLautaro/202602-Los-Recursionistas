@@ -54,3 +54,17 @@ Playwright se mantiene aislado en `adapter/whoscored`. WhoScored no ofrece un
 contrato estable y puede responder con anti-bot o cambiar su estructura; la
 prueba real es opcional, debe etiquetarse `real-web` y no forma parte del build
 normal ni debe usarse para evadir protecciones de la fuente.
+
+## Mercado de tokens
+
+El mercado opera exclusivamente con créditos ficticios y usa la cotización
+vigente al crear cada orden; el precio capturado no cambia durante su
+ejecución. Las órdenes de compra y venta se reservan de forma transaccional y
+se procesan con matching FIFO, incluyendo ejecuciones parciales.
+
+La liquidez inicial emite 100 tokens por jugador activo con cotización vigente.
+La inicialización es idempotente y no reemplaza órdenes existentes. No se
+ofrecen cancelaciones, vencimientos, comisiones, precios límite ni pagos
+reales. Las transacciones y auditorías se registran como historial
+append-only, y las consultas de órdenes e historial son paginadas con tamaño
+predeterminado 12.
