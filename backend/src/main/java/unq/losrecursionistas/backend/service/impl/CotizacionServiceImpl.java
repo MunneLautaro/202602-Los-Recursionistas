@@ -89,9 +89,27 @@ public class CotizacionServiceImpl implements CotizacionService {
                 BigDecimal valor = estrategia.calcular(item.resumen, item.jugador.getPosicion(), maximos, parametros);
                 cotizaciones.guardar(Cotizacion.crear(item.jugador, valor, LocalDateTime.now(),
                         estrategiaActiva, inicio, fin));
+                log.info("Cotización recalculada para jugador '{}' (ID: {}): ${}",
+                        item.jugador.getNombre(), item.jugador.getId(), valor);
             } catch (RuntimeException ex) {
                 log.error("No se pudo calcular la cotizacion del jugador {}", item.jugador.getId(), ex);
             }
+        }
+    }
+
+    @Override
+    public void asegurarCotizacionInicial(Jugador jugador) {
+        if (jugador == null || !jugador.isActivo() || jugador.getId() == null) {
+            return;
+        }
+        if (cotizaciones.vigente(jugador.getId()) == null) {
+            BigDecimal valor = (valorBase != null && valorBase.signum() > 0) ? valorBase : BigDecimal.valueOf(100);
+            LocalDate hoy = LocalDate.now();
+            Cotizacion cotizacion = Cotizacion.crear(jugador, valor, LocalDateTime.now(),
+                    "VALOR_BASE_INICIAL", hoy.minusDays(ventanaDias), hoy);
+            cotizaciones.guardar(cotizacion);
+            log.info("Cotización inicial base creada para el jugador '{}' (ID: {}): ${}",
+                    jugador.getNombre(), jugador.getId(), valor);
         }
     }
 

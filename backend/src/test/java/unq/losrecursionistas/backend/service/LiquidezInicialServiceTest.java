@@ -40,6 +40,7 @@ class LiquidezInicialServiceTest {
                 new BigDecimal("15.00"), java.time.LocalDateTime.now(), "test",
                 java.time.LocalDate.now(), java.time.LocalDate.now()));
         when(tenencias.buscarBloqueada(99L, 10L)).thenReturn(null);
+        when(ordenes.guardar(any(Orden.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test

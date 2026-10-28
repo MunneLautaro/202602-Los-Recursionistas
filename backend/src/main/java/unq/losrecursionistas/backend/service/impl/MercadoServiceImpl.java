@@ -1,5 +1,7 @@
 package unq.losrecursionistas.backend.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -22,6 +24,7 @@ import java.math.BigDecimal;
 
 @Service
 public class MercadoServiceImpl implements MercadoService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MercadoServiceImpl.class);
     private static final int PAGINA_DEFECTO = 12;
 
     private final RepositorioUsuario usuarios;
@@ -88,6 +91,10 @@ public class MercadoServiceImpl implements MercadoService {
         }
         Orden orden = ordenes.guardar(Orden.crear(usuarioBloqueado, jugador, tipo, cantidad,
                 precio, false));
+        LOGGER.info("Orden de {} creada con éxito [ID: {}] por el usuario '{}' para el jugador '{}' (ID: {}): {} tokens a ${} c/u (Total: ${}).",
+                tipo, orden.getId(), usuarioBloqueado.getNombreUsuario(), jugador.getNombre(), jugadorId, cantidad, precio,
+                precio.multiply(BigDecimal.valueOf(cantidad)));
+
         matching.ejecutar(orden);
         return orden;
     }
@@ -127,6 +134,8 @@ public class MercadoServiceImpl implements MercadoService {
                     solicitante, "Recarga de creditos",
                     "saldo=" + saldoAnterior, "saldo=" + usuario.getSaldo()));
         }
+        LOGGER.info("Recarga de créditos exitosa: el usuario '{}' recargó ${} (Saldo anterior: ${}, Saldo actual: ${}).",
+                usuario.getNombreUsuario(), monto, saldoAnterior, usuario.getSaldo());
         return usuario;
     }
 
