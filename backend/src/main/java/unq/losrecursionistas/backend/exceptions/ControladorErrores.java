@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.Instant;
+import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class ControladorErrores {
@@ -22,7 +23,13 @@ public class ControladorErrores {
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<RespuestaError> manejarArgumentoInvalido(MethodArgumentNotValidException excepcion) {
-		return respuesta(HttpStatus.BAD_REQUEST, "La solicitud no supera las validaciones");
+		String detalle = excepcion.getBindingResult().getFieldErrors().stream()
+				.map(error -> error.getField() + ": " + error.getDefaultMessage())
+				.collect(Collectors.joining("; "));
+		if (detalle.isBlank()) {
+			detalle = excepcion.getMessage();
+		}
+		return respuesta(HttpStatus.BAD_REQUEST, "La solicitud no supera las validaciones", detalle);
 	}
 
 	@ExceptionHandler(ExcepcionDominio.class)
@@ -43,11 +50,29 @@ public class ControladorErrores {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<RespuestaError> manejarErrorNoControlado(Exception excepcion) {
         log.error("Error no controlado", excepcion);
-        return respuesta(HttpStatus.INTERNAL_SERVER_ERROR, "Ocurrio un error interno");
+        String mensaje = excepcion.getMessage() != null && !excepcion.getMessage().isBlank()
+                ? excepcion.getMessage()
+                : excepcion.getClass().getSimpleName();
+        String detalle = obtenerCausaRaiz(excepcion);
+        return respuesta(HttpStatus.INTERNAL_SERVER_ERROR, mensaje, detalle);
     }
 
+	private String obtenerCausaRaiz(Throwable excepcion) {
+		Throwable causa = excepcion;
+		while (causa.getCause() != null && causa.getCause() != causa) {
+			causa = causa.getCause();
+		}
+		return causa.getMessage() != null && !causa.getMessage().isBlank()
+				? causa.getMessage()
+				: causa.toString();
+	}
+
 	private ResponseEntity<RespuestaError> respuesta(HttpStatus estado, String mensaje) {
-		RespuestaError cuerpo = new RespuestaError(estado.value(), mensaje, estado.getReasonPhrase(), Instant.now());
+		return respuesta(estado, mensaje, estado.getReasonPhrase());
+	}
+
+	private ResponseEntity<RespuestaError> respuesta(HttpStatus estado, String mensaje, String detalle) {
+		RespuestaError cuerpo = new RespuestaError(estado.value(), mensaje, detalle, Instant.now());
 		return ResponseEntity.status(estado).body(cuerpo);
 	}
 }
