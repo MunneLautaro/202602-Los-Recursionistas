@@ -35,6 +35,7 @@ public class Usuario {
 	private Double saldo;
 
 	@Column(name = "saldo_reservado", nullable = false)
+	@org.hibernate.annotations.ColumnDefault("0.0")
 	@Builder.Default
 	private Double saldoReservado = 0.0;
 

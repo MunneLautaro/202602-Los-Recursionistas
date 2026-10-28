@@ -31,7 +31,7 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 
 	@Override
 	public Usuario buscarCustodio() {
-		return usuarioDAOSQL.findFirstCustodio("ROLE_ADMIN")
+		return usuarioDAOSQL.findFirstByAutoridadesContainingOrderByIdAsc("ROLE_ADMIN")
 				.orElseThrow(() -> new RuntimeException("No existe un usuario custodio"));
 	}
 
