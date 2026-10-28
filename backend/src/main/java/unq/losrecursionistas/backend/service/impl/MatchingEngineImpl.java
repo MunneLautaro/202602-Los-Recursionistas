@@ -1,5 +1,7 @@
 package unq.losrecursionistas.backend.service.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.model.*;
@@ -10,6 +12,8 @@ import java.math.BigDecimal;
 
 @Service
 public class MatchingEngineImpl implements MatchingEngine {
+    private static final Logger LOGGER = LoggerFactory.getLogger(MatchingEngineImpl.class);
+
     private final RepositorioOrden ordenes;
     private final RepositorioTenenciaToken tenencias;
     private final RepositorioTransaccionMercado transacciones;
@@ -75,5 +79,9 @@ public class MatchingEngineImpl implements MatchingEngine {
                 transaccion.getId(), comprador, "Liquidacion de match",
                 "ordenes activas; reservas pendientes",
                 "cantidad=" + cantidad + ";total=" + total));
+
+        LOGGER.info("Transacción de mercado ejecutada con éxito [ID: {}]: Comprador '{}' adquirió {} tokens de '{}' del vendedor '{}' a ${} c/u (Total: ${}).",
+                transaccion.getId(), comprador.getNombreUsuario(), cantidad, compra.getJugador().getNombre(),
+                vendedor.getNombreUsuario(), compra.getPrecioUnitario(), total);
     }
 }

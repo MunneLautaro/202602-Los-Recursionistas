@@ -17,4 +17,5 @@ public interface CotizacionService {
     Page<RankingJugadorResponse> ranking(Long ligaId, String posicion, int pagina, int tamano);
     boolean reservarRecalculo();
     void liberarRecalculo();
+    void asegurarCotizacionInicial(Jugador jugador);
 }

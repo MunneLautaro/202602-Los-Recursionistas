@@ -28,6 +28,7 @@ class LiquidezInicialConcurrencyTest {
                 java.time.LocalDate.now(), java.time.LocalDate.now()));
         when(ordenes.buscarLiquidezInicialBloqueada(1L, 2L)).thenReturn(null);
         when(tenencias.buscarBloqueada(1L, 2L)).thenReturn(null);
+        when(ordenes.guardar(any(Orden.class))).thenAnswer(invocation -> invocation.getArgument(0));
         LiquidezInicialServiceImpl service = new LiquidezInicialServiceImpl(
                 usuarios, cotizaciones, tenencias, ordenes);
 
