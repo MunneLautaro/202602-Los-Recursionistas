@@ -80,10 +80,13 @@ public class CotizacionServiceImpl implements CotizacionService {
 
         List<ResumenJugador> resumenes = new ArrayList<>();
         for (Jugador jugador : jugadoresElegibles) {
-            if (!jugador.isActivo() || jugador.getIdWhoscored() == null || jugador.getId() == null) continue;
-            List<EstadisticaPartido> datos = estadisticas.buscarPorJugadorYRango(jugador.getId(), inicio, fin);
-            if (datos.isEmpty()) continue;
-            resumenes.add(new ResumenJugador(jugador, resumir(datos)));
+            if (jugador.isActivo() && jugador.getIdWhoscored() != null && jugador.getId() != null) {
+                List<EstadisticaPartido> datos =
+                        estadisticas.buscarPorJugadorYRango(jugador.getId(), inicio, fin);
+                if (!datos.isEmpty()) {
+                    resumenes.add(new ResumenJugador(jugador, resumir(datos)));
+                }
+            }
         }
         Map<String, Integer> maximos = maximos(resumenes);
         ParametrosCotizacion parametros = new ParametrosCotizacion(valorBase, factorEscala, Map.of());

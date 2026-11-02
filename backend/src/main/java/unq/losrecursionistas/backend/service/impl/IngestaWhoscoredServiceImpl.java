@@ -658,9 +658,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         if (local == null || descubierta == null) return false;
         String normLocal = normalizar(local);
         String normDesc = normalizar(descubierta);
-        if (normLocal.equals(normDesc) || normDesc.contains(normLocal) || normLocal.contains(normDesc)) {
-            return true;
-        }
+        if (normLocal.equals(normDesc) || normDesc.contains(normLocal) || normLocal.contains(normDesc)) return true;
         boolean esLocalEspana = normLocal.contains("primera division") || normLocal.contains("la liga") || normLocal.contains("laliga");
         boolean esDescEspana = normDesc.contains("la liga") || normDesc.contains("laliga") || normDesc.contains("primera division");
         return esLocalEspana && esDescEspana;
@@ -681,11 +679,8 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
             return false;
         }
 
-        if (cleanLocal.length() >= 5 && cleanDesc.length() >= 5
-                && (cleanLocal.startsWith(cleanDesc) || cleanDesc.startsWith(cleanLocal))) {
-            return true;
-        }
-        return false;
+        return cleanLocal.length() >= 5 && cleanDesc.length() >= 5
+                && (cleanLocal.startsWith(cleanDesc) || cleanDesc.startsWith(cleanLocal));
     }
 
     private static String limpiarNombreEquipo(String nombre) {
@@ -714,9 +709,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         boolean bAtletico = b.contains(ATLETICO);
         boolean aReal = a.contains("real");
         boolean bReal = b.contains("real");
-        if ((aAtletico && bReal) || (bAtletico && aReal)) return true;
-
-        return false;
+        return (aAtletico && bReal) || (bAtletico && aReal);
     }
 
     private static String normalizar(String valor) {

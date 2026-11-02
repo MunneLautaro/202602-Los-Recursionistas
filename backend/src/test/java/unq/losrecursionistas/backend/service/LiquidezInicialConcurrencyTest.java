@@ -6,8 +6,6 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.LiquidezInicialServiceImpl;
 
 import java.math.BigDecimal;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
