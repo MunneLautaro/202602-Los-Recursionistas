@@ -6,7 +6,6 @@ import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import java.util.Optional;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Set;
 
 public interface EstadisticaPartidoDAOSQL extends JpaRepository<EstadisticaPartido, Long> {
     Optional<EstadisticaPartido> findByJugadorIdAndPartidoWhoscoredId(Long jugadorId, Long partidoWhoscoredId);

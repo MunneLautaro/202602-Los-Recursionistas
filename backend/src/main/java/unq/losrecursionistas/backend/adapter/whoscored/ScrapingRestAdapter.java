@@ -33,6 +33,34 @@ import java.util.regex.Pattern;
 @Component
 public class ScrapingRestAdapter implements ScrapingPort {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingRestAdapter.class);
+    private static final String TEMPORADA_ACTUAL = "2025/2026";
+    private static final String FIELD_GOAL_TOTAL = "goalTotal";
+    private static final String FIELD_ASSIST = "assist";
+    private static final String FIELD_DATE = "date";
+    private static final String FIELD_NAME = "name";
+    private static final String FIELD_PLAYER_ID = "playerId";
+    private static final String FIELD_SLUG = "slug";
+    private static final String FIELD_URL = "url";
+    private static final String FIELD_YELLOW_CARD = "yellowCard";
+    private static final String FIELD_RED_CARD = "redCard";
+    private static final String FIELD_SHOTS_TOTAL = "shotsTotal";
+    private static final String FIELD_PASS_SUCCESS = "passSuccess";
+    private static final String FIELD_RATING = "rating";
+    private static final String FIELD_MINS_PLAYED = "minsPlayed";
+    private static final String FIELD_DUEL_AERIAL_WON = "duelAerialWon";
+    private static final String FIELD_OPPONENT = "opponent";
+    private static final String FIELD_TEAM_ID = "teamId";
+    private static final String FIELD_TEAM_NAME = "teamName";
+    private static final String NON_NUMERIC_CHARACTERS = "[^0-9-]";
+    private static final int PAGE_SETTLE_DELAY_MS = 3_000;
+    private static final String BROWSER_INIT_SCRIPT = """
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'languages', { get: () => ['es-ES', 'es', 'en'] });
+            """;
+    static final String DEFAULT_BROWSER_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
     private static final Map<Long, String> TOURNAMENT_PATHS = Map.of(
             252L, "/Regions/252/Tournaments/2/England-Premier-League",
@@ -43,11 +71,11 @@ public class ScrapingRestAdapter implements ScrapingPort {
     );
 
     private static final List<LigaWhoscoredDto> LIGAS_TOP = List.of(
-            new LigaWhoscoredDto(252L, "Premier League", "/Regions/252/Tournaments/2/England-Premier-League", "2025/2026"),
-            new LigaWhoscoredDto(206L, "LaLiga", "/Regions/206/Tournaments/4/Spain-LaLiga", "2025/2026"),
-            new LigaWhoscoredDto(81L, "Bundesliga", "/Regions/81/Tournaments/3/Germany-Bundesliga", "2025/2026"),
-            new LigaWhoscoredDto(108L, "Serie A", "/Regions/108/Tournaments/5/Italy-Serie-A", "2025/2026"),
-            new LigaWhoscoredDto(74L, "Ligue 1", "/Regions/74/Tournaments/22/France-Ligue-1", "2025/2026")
+            new LigaWhoscoredDto(252L, "Premier League", "/Regions/252/Tournaments/2/England-Premier-League", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(206L, "LaLiga", "/Regions/206/Tournaments/4/Spain-LaLiga", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(81L, "Bundesliga", "/Regions/81/Tournaments/3/Germany-Bundesliga", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(108L, "Serie A", "/Regions/108/Tournaments/5/Italy-Serie-A", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(74L, "Ligue 1", "/Regions/74/Tournaments/22/France-Ligue-1", TEMPORADA_ACTUAL)
     );
 
     private final ScrapingConfiguration configuration;
@@ -65,9 +93,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
             PageData data = load("/Regions", "descubrir ligas");
             for (JsonNode node : findObjects(data.json(), "leagueId", "id")) {
                 Long id = number(node, "leagueId", "id");
-                String nombre = text(node, "name", "leagueName");
+                String nombre = text(node, FIELD_NAME, "leagueName");
                 if (id != null && nombre != null) {
-                    result.add(new LigaWhoscoredDto(id, nombre, text(node, "slug", "url"), text(node, "season")));
+                    result.add(new LigaWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL), text(node, "season")));
                 }
             }
         } catch (Exception ex) {
@@ -82,37 +110,63 @@ public class ScrapingRestAdapter implements ScrapingPort {
         String path = TOURNAMENT_PATHS.getOrDefault(ligaWhoscoredId, "/Regions/" + ligaWhoscoredId + "/Tournaments");
         PageData data = load(path, "descubrir equipos");
         Map<Long, EquipoWhoscoredDto> result = new LinkedHashMap<>();
-
-        // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), "teamId", "team")) {
-            Long id = number(node, "teamId", "id");
-            String nombre = text(node, "name", "teamName");
-            if (id != null && nombre != null) {
-                result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, "slug", "url"), ligaWhoscoredId));
-            }
-        }
-
-        // 2. Parsear enlaces HTML del DOM (/teams/{id}/show/{slug})
-        if (data.html() != null) {
-            Pattern pattern = Pattern.compile("(?i)href=[\"']/teams/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>", Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(data.html());
-            while (matcher.find()) {
-                try {
-                    Long id = Long.valueOf(matcher.group(1));
-                    String slugPart = matcher.group(2);
-                    String rawText = matcher.group(3).replaceAll("<[^>]*>", "").trim();
-                    String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
-                    if (nombre.isBlank() || nombre.equalsIgnoreCase("teammate") || nombre.toLowerCase().contains("statistics")) {
-                        nombre = slugPart.replaceAll("^[a-z]+-", "").replace("-", " ").trim();
-                    }
-                    if (!nombre.isBlank() && !nombre.equalsIgnoreCase("teammate") && !nombre.toLowerCase().contains("statistics")) {
-                        result.putIfAbsent(id, new EquipoWhoscoredDto(id, nombre, "/teams/" + id + "/show/" + slugPart, ligaWhoscoredId));
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
-        }
-
+        addTeamsFromJson(data.json(), ligaWhoscoredId, result);
+        addTeamsFromHtml(data.html(), ligaWhoscoredId, result);
         return new ArrayList<>(result.values());
+    }
+
+    private void addTeamsFromJson(List<JsonNode> roots, Long ligaWhoscoredId,
+                                  Map<Long, EquipoWhoscoredDto> result) {
+        for (JsonNode node : findObjects(roots, FIELD_TEAM_ID, "team")) {
+            Long id = number(node, FIELD_TEAM_ID, "id");
+            String nombre = text(node, FIELD_NAME, FIELD_TEAM_NAME);
+            if (id != null && nombre != null) {
+                result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL), ligaWhoscoredId));
+            }
+        }
+    }
+
+    private void addTeamsFromHtml(String html, Long ligaWhoscoredId,
+                                  Map<Long, EquipoWhoscoredDto> result) {
+        if (html == null) {
+            return;
+        }
+        Pattern pattern = Pattern.compile(
+                "(?i)href=[\"']/teams/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>",
+                Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(html);
+        while (matcher.find()) {
+            addTeamFromHtmlMatch(matcher, ligaWhoscoredId, result);
+        }
+    }
+
+    private void addTeamFromHtmlMatch(Matcher matcher, Long ligaWhoscoredId,
+                                      Map<Long, EquipoWhoscoredDto> result) {
+        try {
+            Long id = Long.valueOf(matcher.group(1));
+            String slugPart = matcher.group(2);
+            String nombre = cleanTeamName(matcher.group(3), slugPart);
+            if (isValidTeamName(nombre)) {
+                result.putIfAbsent(id, new EquipoWhoscoredDto(
+                        id, nombre, "/teams/" + id + "/show/" + slugPart, ligaWhoscoredId));
+            }
+        } catch (NumberFormatException exception) {
+            LOGGER.debug("No se pudo interpretar un ID de equipo en el HTML de WhoScored", exception);
+        }
+    }
+
+    private String cleanTeamName(String rawHtml, String slugPart) {
+        String nombre = rawHtml.replaceAll("<[^>]*>", "").trim().replaceAll("^\\d+\\s*", "").trim();
+        if (nombre.isBlank() || nombre.equalsIgnoreCase("teammate")
+                || nombre.toLowerCase().contains("statistics")) {
+            return slugPart.replaceAll("^[a-z]+-", "").replace("-", " ").trim();
+        }
+        return nombre;
+    }
+
+    private boolean isValidTeamName(String nombre) {
+        return !nombre.isBlank() && !nombre.equalsIgnoreCase("teammate")
+                && !nombre.toLowerCase().contains("statistics");
     }
 
     @Override
@@ -121,35 +175,19 @@ public class ScrapingRestAdapter implements ScrapingPort {
         PageData data = load("/teams/" + equipoWhoscoredId + "/show", "descubrir jugadores");
         Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
 
-        // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), "playerId", "player")) {
-            Long id = number(node, "playerId", "id");
-            String nombre = text(node, "name", "playerName");
+        for (JsonNode node : findObjects(data.json(), FIELD_PLAYER_ID, "playerID", "player_id", "playerName")) {
+            Long id = number(node, FIELD_PLAYER_ID, "playerID", "player_id", "id");
+            String nombre = text(node, FIELD_NAME, "playerName", "fullName");
             if (id != null && nombre != null) {
-                result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, "slug", "url"),
+                result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL),
                         date(node, "dateOfBirth", "birthDate"), text(node, "nationality", "countryName"),
-                        equipoWhoscoredId, text(node, "teamName"), strings(node, "positions", "position")));
+                        equipoWhoscoredId, text(node, FIELD_TEAM_NAME), strings(node, "positions", "position")));
             }
         }
 
-        // 2. Parsear enlaces HTML del DOM (/players/{id}/show/{slug})
         if (data.html() != null) {
-            Pattern pattern = Pattern.compile("(?i)href=[\"']/players/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>", Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(data.html());
-            while (matcher.find()) {
-                try {
-                    Long id = Long.valueOf(matcher.group(1));
-                    String slugPart = matcher.group(2);
-                    String rawText = matcher.group(3).replaceAll("<[^>]*>", "").trim();
-                    String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
-                    if (nombre.isBlank()) {
-                        nombre = slugPart.replace("-", " ").trim();
-                    }
-                    if (!nombre.isBlank()) {
-                        result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre, "/players/" + id + "/show/" + slugPart,
-                                null, null, equipoWhoscoredId, null, List.of()));
-                    }
-                } catch (NumberFormatException ignored) {}
+            for (JugadorWhoscoredDto jugador : parsePlayerLinks(data.html(), equipoWhoscoredId, playerPath())) {
+                result.putIfAbsent(jugador.idWhoscored(), jugador);
             }
         }
 
@@ -159,10 +197,10 @@ public class ScrapingRestAdapter implements ScrapingPort {
     @Override
     public List<AparicionWhoscoredDto> obtenerApariciones(Long jugadorWhoscoredId) {
         requireId(jugadorWhoscoredId, "jugador");
-        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/show", "obtener apariciones");
+        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta(playerPath() + jugadorWhoscoredId + "/show", "obtener apariciones");
         if (apariciones.isEmpty()) {
             try {
-                apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
+                apariciones = obtenerAparicionesDesdeRuta(playerPath() + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
             } catch (Exception ex) {
                 LOGGER.debug("No se obtuvieron apariciones desde /matchstatistics para jugador {}: {}", jugadorWhoscoredId, ex.getMessage());
             }
@@ -177,66 +215,16 @@ public class ScrapingRestAdapter implements ScrapingPort {
             throw new ScrapingException("El slug del jugador es obligatorio", null, "obtener estadísticas de temporada", null);
         }
         return obtenerAparicionesDesdeRuta(
-                "/players/" + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
+                playerPath() + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
                 "obtener estadísticas de temporada");
     }
 
     private List<AparicionWhoscoredDto> obtenerAparicionesDesdeRuta(String ruta, String fase) {
         PageData data = load(ruta, fase);
         Map<Long, AparicionBuilder> apariciones = new LinkedHashMap<>();
-
-        // 1. Desde JSON — campos explícitos de partido
-        for (JsonNode node : findObjects(data.json(), "matchId", "fixtureId", "gameId")) {
-            Long partidoId = number(node, "matchId", "fixtureId", "gameId");
-            if (partidoId == null) {
-                continue;
-            }
-            AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-            builder.merge(node);
-        }
-
-        // 1b. Desde JSON — objetos con "id" genérico que tienen contexto de partido (fecha o minutos)
-        for (JsonNode node : findObjects(data.json(), "id")) {
-            if (!node.has("date") && !node.has("matchDate") && !node.has("minutes") && !node.has("minutesPlayed")) {
-                continue;
-            }
-            Long partidoId = number(node, "id");
-            if (partidoId == null) {
-                continue;
-            }
-            AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-            builder.merge(node);
-        }
-
-        // 2. Desde HTML si hay enlaces /matches/{id}/
-        if (data.html() != null) {
-            Pattern rowPattern = Pattern.compile("(?is)<tr[^>]*>(.*?)</tr>");
-            Matcher rowMatcher = rowPattern.matcher(data.html());
-            while (rowMatcher.find()) {
-                String row = rowMatcher.group(1);
-                Matcher matchMatcher = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)/[^\"'/?#]+[\"']")
-                        .matcher(row);
-                if (matchMatcher.find()) {
-                    try {
-                        Long partidoId = Long.valueOf(matchMatcher.group(1));
-                        AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-                        builder.mergeHtmlCell("date", htmlCell(row, "date"));
-                        builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
-                        builder.mergeHtmlCell("goalTotal", htmlCell(row, "goalTotal"));
-                        builder.mergeHtmlCell("assist", htmlCell(row, "assist"));
-                        builder.mergeHtmlCell("yellowCard", htmlCell(row, "yellowCard"));
-                        builder.mergeHtmlCell("redCard", htmlCell(row, "redCard"));
-                        builder.mergeHtmlCell("shotsTotal", htmlCell(row, "shotsTotal"));
-                        builder.mergeHtmlCell("passSuccess", htmlCell(row, "passSuccess"));
-                        builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
-                        builder.mergeHtmlCell("rating", htmlCell(row, "rating"));
-                        builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
-                    } catch (NumberFormatException ignored) {
-                        LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta);
-                    }
-                }
-            }
-        }
+        mergeExplicitJsonAppearances(data.json(), apariciones);
+        mergeContextualJsonAppearances(data.json(), apariciones);
+        mergeHtmlAppearances(data.html(), ruta, apariciones);
 
         List<AparicionWhoscoredDto> resultado = apariciones.values().stream().map(AparicionBuilder::build).toList();
         if (resultado.isEmpty()) {
@@ -246,8 +234,77 @@ public class ScrapingRestAdapter implements ScrapingPort {
         return resultado;
     }
 
+    private void mergeExplicitJsonAppearances(List<JsonNode> roots,
+                                              Map<Long, AparicionBuilder> apariciones) {
+        for (JsonNode node : findObjects(roots, "matchId", "fixtureId", "gameId")) {
+            Long partidoId = number(node, "matchId", "fixtureId", "gameId");
+            if (partidoId != null) {
+                apariciones.computeIfAbsent(partidoId, AparicionBuilder::new).merge(node);
+            }
+        }
+    }
+
+    private void mergeContextualJsonAppearances(List<JsonNode> roots,
+                                                Map<Long, AparicionBuilder> apariciones) {
+        for (JsonNode node : findObjects(roots, "id")) {
+            if (!hasMatchContext(node)) {
+                continue;
+            }
+            Long partidoId = number(node, "id");
+            if (partidoId != null) {
+                apariciones.computeIfAbsent(partidoId, AparicionBuilder::new).merge(node);
+            }
+        }
+    }
+
+    private boolean hasMatchContext(JsonNode node) {
+        return node.has(FIELD_DATE) || node.has("matchDate")
+                || node.has("minutes") || node.has("minutesPlayed");
+    }
+
+    private void mergeHtmlAppearances(String html, String ruta,
+                                      Map<Long, AparicionBuilder> apariciones) {
+        if (html == null) {
+            return;
+        }
+        Pattern rowPattern = Pattern.compile("(?is)<tr[^>]*>(.*?)</tr>");
+        Matcher rowMatcher = rowPattern.matcher(html);
+        while (rowMatcher.find()) {
+            mergeHtmlAppearanceRow(rowMatcher.group(1), ruta, apariciones);
+        }
+    }
+
+    private void mergeHtmlAppearanceRow(String row, String ruta,
+                                        Map<Long, AparicionBuilder> apariciones) {
+        Matcher matchMatcher = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)/[^\"'/?#]+[\"']")
+                .matcher(row);
+        if (!matchMatcher.find()) {
+            return;
+        }
+        try {
+            Long partidoId = Long.valueOf(matchMatcher.group(1));
+            mergeHtmlAppearanceCells(apariciones.computeIfAbsent(partidoId, AparicionBuilder::new), row);
+        } catch (NumberFormatException exception) {
+            LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta, exception);
+        }
+    }
+
+    private void mergeHtmlAppearanceCells(AparicionBuilder builder, String row) {
+        builder.mergeHtmlCell(FIELD_DATE, htmlCell(row, FIELD_DATE));
+        builder.mergeHtmlCell(FIELD_MINS_PLAYED, htmlCell(row, FIELD_MINS_PLAYED));
+        builder.mergeHtmlCell(FIELD_GOAL_TOTAL, htmlCell(row, FIELD_GOAL_TOTAL));
+        builder.mergeHtmlCell(FIELD_ASSIST, htmlCell(row, FIELD_ASSIST));
+        builder.mergeHtmlCell(FIELD_YELLOW_CARD, htmlCell(row, FIELD_YELLOW_CARD));
+        builder.mergeHtmlCell(FIELD_RED_CARD, htmlCell(row, FIELD_RED_CARD));
+        builder.mergeHtmlCell(FIELD_SHOTS_TOTAL, htmlCell(row, FIELD_SHOTS_TOTAL));
+        builder.mergeHtmlCell(FIELD_PASS_SUCCESS, htmlCell(row, FIELD_PASS_SUCCESS));
+        builder.mergeHtmlCell(FIELD_DUEL_AERIAL_WON, htmlCell(row, FIELD_DUEL_AERIAL_WON));
+        builder.mergeHtmlCell(FIELD_RATING, htmlCell(row, FIELD_RATING));
+        builder.mergeHtmlCell(FIELD_OPPONENT, htmlCell(row, "grid-abs"));
+    }
+
     private PageData load(String path, String fase) {
-        String url = configuration.getBaseUrl() + path;
+        String url = normalizedBaseUrl() + path;
         int maxRetries = Math.max(1, configuration.getMaxRetries() + 1);
         Exception lastException = null;
 
@@ -270,120 +327,192 @@ public class ScrapingRestAdapter implements ScrapingPort {
     }
 
     private PageData executeLoad(String url, String fase) {
-        if (configuration.getPauseMs() > 0) {
-            try {
-                Thread.sleep(configuration.getPauseMs());
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
+        pauseBeforeLoad();
         List<String> jsonResponses = new CopyOnWriteArrayList<>();
         try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(configuration.isHeadless())
-                    .setArgs(List.of(
-                            "--disable-blink-features=AutomationControlled",
-                            "--no-sandbox",
-                            "--disable-dev-shm-usage",
-                            "--disable-infobars"
-                    ));
-
-            try (Browser browser = playwright.chromium().launch(launchOptions)) {
-                Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
-                        .setUserAgent(configuration.getUserAgent())
-                        .setViewportSize(1920, 1080)
-                        .setLocale("es-ES")
-                        .setTimezoneId("America/Argentina/Buenos_Aires")
-                        .setExtraHTTPHeaders(Map.of(
-                                "Accept-Language", "es-ES,es;q=0.9,en;q=0.8",
-                                "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                                "sec-ch-ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
-                                "sec-ch-ua-mobile", "?0",
-                                "sec-ch-ua-platform", "\"Windows\""
-                        ));
-
-                try (BrowserContext context = browser.newContext(contextOptions)) {
-                    context.addInitScript("""
-                        Object.defineProperty(navigator, 'webdriver', {
-                            get: () => undefined
-                        });
-                        window.chrome = {
-                            runtime: {}
-                        };
-                        Object.defineProperty(navigator, 'languages', {
-                            get: () => ['es-ES', 'es', 'en']
-                        });
-                    """);
-
-                    try (Page page = context.newPage()) {
-                        page.setDefaultNavigationTimeout(configuration.getNavigationTimeoutMs());
-                        page.onResponse(response -> {
-                            try {
-                                String contentType = response.headerValue("content-type");
-                                if (contentType != null && contentType.contains("json")) {
-                                    jsonResponses.add(response.text());
-                                }
-                            } catch (RuntimeException ignored) {
-                                // A response can be closed by the browser while the page is navigating.
-                            }
-                        });
-
-                        page.navigate(url, new Page.NavigateOptions()
-                                .setTimeout(configuration.getNavigationTimeoutMs())
-                                .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-
-                        try {
-                            page.waitForTimeout(3000);
-                        } catch (Exception ignored) {}
-
-                        String html = page.content();
-                        List<JsonNode> json = new ArrayList<>();
-                        for (String response : jsonResponses) {
-                            try {
-                                json.add(objectMapper.readTree(response));
-                            } catch (Exception ignored) {
-                                // Non-JSON responses are ignored; embedded JSON is tried below.
-                            }
-                        }
-
-                        try {
-                            Object ds = page.evaluate("() => typeof DataStore !== 'undefined' ? JSON.stringify(DataStore) : null");
-                            if (ds != null && !ds.toString().isBlank() && !"null".equals(ds.toString())) {
-                                json.add(objectMapper.readTree(ds.toString()));
-                            }
-                        } catch (Exception ignored) {}
-
-                        try {
-                            Object mcd = page.evaluate("() => typeof matchCentreData !== 'undefined' ? JSON.stringify(matchCentreData) : null");
-                            if (mcd != null && !mcd.toString().isBlank() && !"null".equals(mcd.toString())) {
-                                json.add(objectMapper.readTree(mcd.toString()));
-                            }
-                        } catch (Exception ignored) {}
-
-                        // Extraer variables globales conocidas de WhoScored con datos de apariciones
-                        for (String varName : List.of("playerMatchStats", "matchStatistics", "playerStats", "statsData")) {
-                            try {
-                                Object varData = page.evaluate("() => typeof " + varName + " !== 'undefined' ? JSON.stringify(" + varName + ") : null");
-                                if (varData != null && !varData.toString().isBlank() && !"null".equals(varData.toString())) {
-                                    json.add(objectMapper.readTree(varData.toString()));
-                                }
-                            } catch (Exception ignored) {}
-                        }
-
-                        for (String script : page.locator("script").allTextContents()) {
-                            if (script.contains("\"playerId\"") || script.contains("\"teamId\"")
-                                    || script.contains("\"leagueId\"") || script.contains("\"matchId\"")
-                                    || script.contains("\"fixtureId\"") || script.contains("\"gameId\"")) {
-                                extractJsonCandidatesFromScript(script, json);
-                            }
-                        }
-                        return new PageData(json, html);
-                    }
-
+            try (Browser browser = playwright.chromium().launch(browserLaunchOptions());
+                 BrowserContext context = createBrowserContext(browser)) {
+                context.addInitScript(BROWSER_INIT_SCRIPT);
+                try (Page page = context.newPage()) {
+                    return capturePage(page, url, fase, jsonResponses);
                 }
             }
         }
+    }
+
+    private void pauseBeforeLoad() {
+        if (configuration.getPauseMs() <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(configuration.getPauseMs());
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private BrowserType.LaunchOptions browserLaunchOptions() {
+        return new BrowserType.LaunchOptions().setHeadless(configuration.isHeadless()).setArgs(List.of(
+                "--disable-blink-features=AutomationControlled", "--no-sandbox",
+                "--disable-dev-shm-usage", "--disable-infobars"));
+    }
+
+    private BrowserContext createBrowserContext(Browser browser) {
+        Browser.NewContextOptions options = new Browser.NewContextOptions()
+                .setUserAgent(effectiveUserAgent()).setViewportSize(1920, 1080)
+                .setLocale("es-ES").setTimezoneId("America/Argentina/Buenos_Aires")
+                .setExtraHTTPHeaders(Map.of(
+                        "Accept-Language", "es-ES,es;q=0.9,en;q=0.8",
+                        "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                        "sec-ch-ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+                        "sec-ch-ua-mobile", "?0", "sec-ch-ua-platform", "\"Windows\""));
+        return browser.newContext(options);
+    }
+
+    private PageData capturePage(Page page, String url, String fase, List<String> jsonResponses) {
+        page.setDefaultNavigationTimeout(configuration.getNavigationTimeoutMs());
+        page.onResponse(response -> {
+            try {
+                String contentType = response.headerValue("content-type");
+                if (contentType != null && contentType.contains("json")) {
+                    jsonResponses.add(response.text());
+                }
+            } catch (RuntimeException exception) {
+                LOGGER.trace("No se pudo leer una respuesta durante la navegación de {}", url, exception);
+            }
+        });
+        var navigationResponse = page.navigate(url, new Page.NavigateOptions()
+                .setTimeout(configuration.getNavigationTimeoutMs())
+                .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+        if (navigationResponse != null && navigationResponse.status() >= 400) {
+            throw new ScrapingException("WhoScored respondió HTTP " + navigationResponse.status(), url, fase);
+        }
+        try {
+            page.waitForTimeout(PAGE_SETTLE_DELAY_MS);
+        } catch (RuntimeException exception) {
+            LOGGER.debug("No se pudo esperar la carga completa de {}", url, exception);
+        }
+        String html = page.content();
+        if (looksBlocked(html)) {
+            throw new ScrapingException("WhoScored devolvió una página de bloqueo o verificación", url, fase);
+        }
+        List<JsonNode> json = parseResponses(jsonResponses);
+        addKnownPageData(page, json);
+        return new PageData(json, html);
+    }
+
+    private List<JsonNode> parseResponses(List<String> responses) {
+        List<JsonNode> json = new ArrayList<>();
+        for (String response : responses) {
+            try {
+                json.add(objectMapper.readTree(response));
+            } catch (Exception exception) {
+                LOGGER.trace("Se descartó una respuesta que no contiene JSON válido", exception);
+            }
+        }
+        return json;
+    }
+
+    private void addKnownPageData(Page page, List<JsonNode> json) {
+        addPageVariable(page, "DataStore", json);
+        addPageVariable(page, "matchCentreData", json);
+        for (String varName : List.of("playerMatchStats", "matchStatistics", "playerStats", "statsData")) {
+            addPageVariable(page, varName, json);
+        }
+        for (String script : page.locator("script").allTextContents()) {
+            if (script.contains("\"playerId\"") || script.contains("\"teamId\"")
+                    || script.contains("\"leagueId\"") || script.contains("\"matchId\"")
+                    || script.contains("\"fixtureId\"") || script.contains("\"gameId\"")) {
+                extractJsonCandidatesFromScript(script, json);
+            }
+        }
+    }
+
+    private void addPageVariable(Page page, String variableName, List<JsonNode> json) {
+        try {
+            Object value = page.evaluate("() => typeof " + variableName
+                    + " !== 'undefined' ? JSON.stringify(" + variableName + ") : null");
+            if (value != null && !value.toString().isBlank() && !"null".equals(value.toString())) {
+                json.add(objectMapper.readTree(value.toString()));
+            }
+        } catch (Exception exception) {
+            LOGGER.debug("No se pudo leer la variable de página {}", variableName, exception);
+        }
+    }
+
+    String effectiveUserAgent() {
+        String configured = configuration.getUserAgent();
+        return configured != null && configured.startsWith("Mozilla/")
+                ? configured
+                : DEFAULT_BROWSER_USER_AGENT;
+    }
+
+    String normalizedBaseUrl() {
+        String baseUrl = configuration.getBaseUrl();
+        if (baseUrl == null) {
+            return "";
+        }
+        int end = baseUrl.length();
+        while (end > 0 && baseUrl.charAt(end - 1) == '/') {
+            end--;
+        }
+        return baseUrl.substring(0, end);
+    }
+
+    private String playerPath() {
+        String path = configuration.getPlayerPath();
+        if (path == null || path.isBlank()) {
+            throw new ScrapingException("La ruta de jugadores de WhoScored es obligatoria", null, "configuración");
+        }
+        return path.endsWith("/") ? path : path + "/";
+    }
+
+    static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId) {
+        return parsePlayerLinks(html, equipoWhoscoredId, null);
+    }
+
+    private static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId,
+                                                               String playerPath) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
+        Pattern pattern = Pattern.compile(
+                "(?is)href=[\"'](?:https?://[^/]+)?(\\/players?\\/)(\\d+)"
+                        + "(?:/(?:show|profile))?/([^\"'/?#]+)[\"'][^>]*>(.*?)</a>");
+        Matcher matcher = pattern.matcher(html);
+        while (matcher.find()) {
+            try {
+                String matchedPlayerPath = matcher.group(1);
+                Long id = Long.valueOf(matcher.group(2));
+                String slugPart = matcher.group(3);
+                String rawText = decodeHtml(matcher.group(4)
+                        .replaceAll("<[^>]*>", " ")
+                        .replaceAll("\\s+", " ").trim());
+                String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
+                if (nombre.isBlank()) {
+                    nombre = slugPart.replace("-", " ").trim();
+                }
+                if (!nombre.isBlank()) {
+                    result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre,
+                            (playerPath == null ? matchedPlayerPath : playerPath) + id + "/show/" + slugPart,
+                            null, null, equipoWhoscoredId, null, List.of()));
+                }
+            } catch (NumberFormatException ignored) {
+                LOGGER.debug("No se pudo interpretar un ID de jugador en el HTML de WhoScored");
+            }
+        }
+        return new ArrayList<>(result.values());
+    }
+
+    static boolean looksBlocked(String html) {
+        if (html == null || html.isBlank()) {
+            return true;
+        }
+        String content = html.toLowerCase();
+        return content.contains("cf-chl-") || content.contains("just a moment")
+                || content.contains("checking your browser") || content.contains("access denied")
+                || content.contains("captcha");
     }
 
     private static String encodePathSegment(String value) {
@@ -413,41 +542,46 @@ public class ScrapingRestAdapter implements ScrapingPort {
      * estructuras de apariciones que vengan embebidas en asignaciones de variables.
      */
     private void extractJsonCandidatesFromScript(String script, List<JsonNode> target) {
-        // Intentar extraer arrays o objetos JSON de asignaciones de variable JS:
-        // e.g.: var playerMatchStats = [{...}, ...];
-        java.util.regex.Pattern assignmentPattern = java.util.regex.Pattern.compile(
-                "(?:var|let|const|window\\.)[\\w.]+=\\s*([\\[{])", java.util.regex.Pattern.DOTALL);
-        java.util.regex.Matcher assignmentMatcher = assignmentPattern.matcher(script);
-        while (assignmentMatcher.find()) {
-            int valueStart = assignmentMatcher.start(1);
-            char openChar = script.charAt(valueStart);
-            char closeChar = openChar == '[' ? ']' : '}';
-            int depth = 0;
-            int end = -1;
-            for (int i = valueStart; i < script.length(); i++) {
-                char c = script.charAt(i);
-                if (c == openChar) depth++;
-                else if (c == closeChar) {
-                    depth--;
-                    if (depth == 0) { end = i + 1; break; }
-                }
-            }
-            if (end > valueStart) {
-                String candidate = script.substring(valueStart, end);
-                try {
-                    target.add(objectMapper.readTree(candidate));
-                } catch (Exception ignored) {}
-            }
-        }
-
-        // Fallback: extraer el bloque objeto más grande del script (comportamiento anterior)
+        addAssignedJsonCandidates(script, target);
         int start = script.indexOf('{');
         int end = script.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-            String candidate = script.substring(start, end + 1);
-            try {
-                target.add(objectMapper.readTree(candidate));
-            } catch (Exception ignored) {}
+        addJsonCandidate(script, start, end + 1, target);
+    }
+
+    private void addAssignedJsonCandidates(String script, List<JsonNode> target) {
+        Pattern assignmentPattern = Pattern.compile(
+                "(?:var|let|const|window\\.)[\\w.]+=\\s*([\\[{])", Pattern.DOTALL);
+        Matcher assignmentMatcher = assignmentPattern.matcher(script);
+        while (assignmentMatcher.find()) {
+            int valueStart = assignmentMatcher.start(1);
+            int end = findJsonBlockEnd(script, valueStart);
+            addJsonCandidate(script, valueStart, end, target);
+        }
+    }
+
+    private int findJsonBlockEnd(String script, int valueStart) {
+        char openChar = script.charAt(valueStart);
+        char closeChar = openChar == '[' ? ']' : '}';
+        int depth = 0;
+        for (int index = valueStart; index < script.length(); index++) {
+            char current = script.charAt(index);
+            if (current == openChar) {
+                depth++;
+            } else if (current == closeChar && --depth == 0) {
+                return index + 1;
+            }
+        }
+        return -1;
+    }
+
+    private void addJsonCandidate(String script, int start, int end, List<JsonNode> target) {
+        if (start < 0 || end <= start) {
+            return;
+        }
+        try {
+            target.add(objectMapper.readTree(script.substring(start, end)));
+        } catch (Exception exception) {
+            LOGGER.trace("No se pudo interpretar un candidato JSON embebido", exception);
         }
     }
 
@@ -491,7 +625,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
         String normalized = value.replace(".", "")
                 .replace(",", "")
-                .replaceAll("[^0-9-]", "");
+                .replaceAll(NON_NUMERIC_CHARACTERS, "");
         if (normalized.isEmpty() || "-".equals(normalized)) {
             return null;
         }
@@ -516,7 +650,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             JsonNode value = node.get(name);
             if (value != null && value.isArray()) {
                 List<String> result = new ArrayList<>();
-                value.forEach(item -> result.add(item.isValueNode() ? item.asText() : text(item, "name")));
+                value.forEach(item -> result.add(item.isValueNode() ? item.asText() : text(item, FIELD_NAME)));
                 return result;
             }
         }
@@ -542,16 +676,16 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
 
         private void merge(JsonNode node) {
-            fecha = firstDate(fecha, date(node, "date", "matchDate", "gameDate"));
+            fecha = firstDate(fecha, date(node, FIELD_DATE, "matchDate", "gameDate"));
             torneo = first(torneo, text(node, "tournamentName", "competitionName", "tournament", "competition"));
             torneoId = first(torneoId, number(node, "tournamentId", "competitionId"));
-            equipoId = first(equipoId, number(node, "teamId", "playerTeamId"));
-            equipoNombre = first(equipoNombre, text(node, "teamName", "playerTeam"));
+            equipoId = first(equipoId, number(node, FIELD_TEAM_ID, "playerTeamId"));
+            equipoNombre = first(equipoNombre, text(node, FIELD_TEAM_NAME, "playerTeam"));
             rivalId = first(rivalId, number(node, "opponentId", "rivalId"));
             rivalNombre = first(rivalNombre, text(node, "opponentName", "rivalName"));
             localVisitante = first(localVisitante, text(node, "venue", "homeAway", "location"));
             minutos = first(minutos, integer(node, "minutes", "minutesPlayed", "mins"));
-            rating = first(rating, decimal(node, "rating", "playerRating"));
+            rating = first(rating, decimal(node, FIELD_RATING, "playerRating"));
             node.properties().forEach(entry -> {
                 if (entry.getValue().isValueNode()) {
                     crudas.putIfAbsent(entry.getKey(), value(entry.getValue()));
@@ -566,24 +700,62 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 crudas.putIfAbsent(key, value);
             }
             switch (key) {
-                case "date" -> fecha = firstDate(fecha, parseDate(value));
-                case "minsPlayed" -> minutos = first(minutos, parseInteger(value));
-                case "goalTotal" -> putIfPresent("goals", parseIntegerOrNull(value));
-                case "assist" -> putIfPresent("assists", parseIntegerOrNull(value));
-                case "yellowCard" -> putIfPresent("yellowCards", parseIntegerOrNull(value));
-                case "redCard" -> putIfPresent("redCards", parseIntegerOrNull(value));
-                case "shotsTotal" -> putIfPresent("shots", parseIntegerOrNull(value));
-                case "passSuccess" -> putIfPresent("passSuccess", parseDecimalOrNull(value));
-                case "rating" -> rating = first(rating, parseDecimal(value));
-                case "opponent" -> {
-                    String opponent = value.replaceAll("\\s+\\d+\\s*-\\s*\\d+\\s*$", "")
-                            .replaceAll("\\s*\\([HA]\\)\\s*$", "").trim();
+                case FIELD_DATE -> fecha = firstDate(fecha, parseDate(value));
+                case FIELD_MINS_PLAYED -> minutos = first(minutos, parseInteger(value));
+                case FIELD_GOAL_TOTAL -> putIfPresent("goals", parseIntegerOrNull(value));
+                case FIELD_ASSIST -> putIfPresent("assists", parseIntegerOrNull(value));
+                case FIELD_YELLOW_CARD -> putIfPresent("yellowCards", parseIntegerOrNull(value));
+                case FIELD_RED_CARD -> putIfPresent("redCards", parseIntegerOrNull(value));
+                case FIELD_SHOTS_TOTAL -> putIfPresent("shots", parseIntegerOrNull(value));
+                case FIELD_PASS_SUCCESS -> putIfPresent(FIELD_PASS_SUCCESS, parseDecimalOrNull(value));
+                case FIELD_RATING -> rating = first(rating, parseDecimal(value));
+                case FIELD_OPPONENT -> {
+                    String opponent = removeTrailingVenue(removeTrailingScore(value));
                     rivalNombre = first(rivalNombre, opponent);
-                    localVisitante = first(localVisitante, value.matches(".*\\(H\\).*") ? "LOCAL" : "VISITANTE");
+                    localVisitante = first(localVisitante, value.contains("(H)") ? "LOCAL" : "VISITANTE");
                 }
-                default -> {
-                }
+                default -> LOGGER.trace("Se ignoró la celda HTML no soportada '{}'", key);
             }
+        }
+
+        private String removeTrailingScore(String value) {
+            int end = value.length();
+            while (end > 0 && Character.isWhitespace(value.charAt(end - 1))) {
+                end--;
+            }
+            int cursor = end - 1;
+            while (cursor >= 0 && Character.isDigit(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor == end - 1) {
+                return value;
+            }
+            while (cursor >= 0 && Character.isWhitespace(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor < 0 || value.charAt(cursor) != '-') {
+                return value;
+            }
+            cursor--;
+            while (cursor >= 0 && Character.isWhitespace(value.charAt(cursor))) {
+                cursor--;
+            }
+            int firstScoreEnd = cursor + 1;
+            while (cursor >= 0 && Character.isDigit(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor == firstScoreEnd - 1) {
+                return value;
+            }
+            return value.substring(0, cursor + 1);
+        }
+
+        private String removeTrailingVenue(String value) {
+            String trimmed = value.trim();
+            if (trimmed.endsWith("(H)") || trimmed.endsWith("(A)")) {
+                return trimmed.substring(0, trimmed.length() - 3).trim();
+            }
+            return trimmed;
         }
 
         private void putIfPresent(String key, Object value) {
@@ -602,91 +774,87 @@ public class ScrapingRestAdapter implements ScrapingPort {
         private static LocalDate firstDate(LocalDate current, LocalDate candidate) {
             return current != null ? current : candidate;
         }
-    }
 
-    private static Integer integer(JsonNode node, String... names) {
-        String value = text(node, names);
-        if (value == null || value.isBlank()) {
-            return null;
+        private static Integer integer(JsonNode node, String... names) {
+            String value = text(node, names);
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+
+            String normalized = value.replace(".", "")
+                    .replace(",", "")
+                    .replaceAll(NON_NUMERIC_CHARACTERS, "");
+            if (normalized.isEmpty() || "-".equals(normalized)) {
+                return null;
+            }
+            try {
+                return Integer.valueOf(normalized);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
 
-        String normalized = value.replace(".", "")
-                .replace(",", "")
-                .replaceAll("[^0-9-]", "");
-        if (normalized.isEmpty() || "-".equals(normalized)) {
-            return null;
+        private static Integer parseInteger(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return Integer.valueOf(value.replaceAll(NON_NUMERIC_CHARACTERS, ""));
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-        try {
-            return Integer.valueOf(normalized);
-        } catch (NumberFormatException exception) {
-            return null;
+
+        private static BigDecimal parseDecimal(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return new BigDecimal(value.replace("%", "").trim());
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-    }
 
-    private static Integer parseInteger(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return Integer.valueOf(value.replaceAll("[^0-9-]", ""));
-        } catch (NumberFormatException exception) {
-            return null;
+        private static LocalDate parseDate(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            } catch (RuntimeException exception) {
+                try {
+                    return LocalDate.parse(value.substring(0, 10));
+                } catch (RuntimeException ignored) {
+                    return null;
+                }
+            }
         }
-    }
 
-    private static Object parseIntegerOrNull(String value) {
-        return parseInteger(value);
-    }
-
-    private static BigDecimal parseDecimal(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return new BigDecimal(value.replace("%", "").trim());
-        } catch (NumberFormatException exception) {
-            return null;
+        private static Object parseIntegerOrNull(String value) {
+            return parseInteger(value);
         }
-    }
 
-    private static Object parseDecimalOrNull(String value) {
-        return parseDecimal(value);
-    }
-
-    private static LocalDate parseDate(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        } catch (RuntimeException exception) {
-            return dateFromIso(value);
+        private static Object parseDecimalOrNull(String value) {
+            return parseDecimal(value);
         }
-    }
 
-    private static LocalDate dateFromIso(String value) {
-        try {
-            return LocalDate.parse(value.substring(0, 10));
-        } catch (RuntimeException exception) {
-            return null;
+        private static BigDecimal decimal(JsonNode node, String... names) {
+            String value = text(node, names);
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            String normalized = value.replace("%", "")
+                    .replace("'", "")
+                    .replace("\u2019", "")
+                    .replace("\u2018", "");
+            try {
+                return new BigDecimal(normalized);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-    }
 
-    private static BigDecimal decimal(JsonNode node, String... names) {
-        String value = text(node, names);
-        if (value == null || value.isBlank()) {
-            return null;
+        private static Object value(JsonNode node) {
+            if (node.isBoolean()) return node.booleanValue();
+            if (node.isIntegralNumber()) return node.longValue();
+            if (node.isFloatingPointNumber()) return node.doubleValue();
+            return node.asText();
         }
-        String normalized = value.replace("%", "")
-                .replace("'", "")
-                .replace("\u2019", "")
-                .replace("\u2018", "");
-        try {
-            return new BigDecimal(normalized);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
-
-    private static Object value(JsonNode node) {
-        if (node.isBoolean()) return node.booleanValue();
-        if (node.isIntegralNumber()) return node.longValue();
-        if (node.isFloatingPointNumber()) return node.doubleValue();
-        return node.asText();
     }
 
     private static List<LigaWhoscoredDto> distinctLigas(List<LigaWhoscoredDto> ligas) {

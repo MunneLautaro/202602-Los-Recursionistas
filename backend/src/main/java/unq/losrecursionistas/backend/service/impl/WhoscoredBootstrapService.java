@@ -71,12 +71,15 @@ public class WhoscoredBootstrapService {
             }
             equipo.setIdWhoscored(descubierto.idWhoscored());
             equipos.guardar(equipo);
-            vincularJugadores(descubierto);
+            vincularJugadoresEnTransaccion(descubierto);
         }
     }
 
-    @Transactional
     public void vincularJugadores(EquipoWhoscoredDto equipo) {
+        vincularJugadoresEnTransaccion(equipo);
+    }
+
+    private void vincularJugadoresEnTransaccion(EquipoWhoscoredDto equipo) {
         for (JugadorWhoscoredDto descubierto : scraping.descubrirJugadores(equipo.idWhoscored())) {
             MatchingWhoscoredService.ResultadoMatching resultado = matching.vincular(descubierto);
             if (resultado.estado() == MatchingWhoscoredService.Estado.VINCULADO) {

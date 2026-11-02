@@ -14,9 +14,9 @@ import org.springframework.stereotype.Service;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.text.ParseException;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -32,12 +32,13 @@ public class JwtServiceImpl implements JwtService {
 	}
 
 	@Override
+	@SuppressWarnings("java:S6180")
 	public String generarToken(UserDetails usuario) {
-		Instant emision = Instant.now();
+		Instant emision = Instant.now(Clock.systemUTC());
 		JWTClaimsSet claims = new JWTClaimsSet.Builder()
 				.subject(usuario.getUsername())
-				.issueTime(Date.from(emision))
-				.expirationTime(Date.from(emision.plusSeconds(DURACION_SEGUNDOS)))
+				.issueTime(java.util.Date.from(emision))
+				.expirationTime(java.util.Date.from(emision.plusSeconds(DURACION_SEGUNDOS)))
 				.build();
 		SignedJWT token = new SignedJWT(new JWSHeader.Builder(ALGORITMO).build(), claims);
 		try {
@@ -58,7 +59,7 @@ public class JwtServiceImpl implements JwtService {
 		return leerClaimsVerificados(token)
 				.filter(claims -> usuario.getUsername().equals(claims.getSubject()))
 				.filter(claims -> claims.getExpirationTime() != null)
-				.filter(claims -> claims.getExpirationTime().toInstant().isAfter(Instant.now()))
+				.filter(claims -> claims.getExpirationTime().toInstant().isAfter(Instant.now(Clock.systemUTC())))
 				.isPresent();
 	}
 

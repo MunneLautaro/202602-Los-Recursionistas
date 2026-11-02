@@ -55,14 +55,22 @@ export function useLogin() {
       })
 
       localStorage.setItem("token", response.token)
-      localStorage.setItem("nombreUsuario", formData.nombreUsuario.trim())
+      localStorage.setItem(
+        "nombreUsuario",
+        response.nombreUsuario ?? formData.nombreUsuario.trim(),
+      )
+      if (response.userId !== undefined) {
+        localStorage.setItem("userId", String(response.userId))
+      } else {
+        localStorage.removeItem("userId")
+      }
 
       navigate("/")
       window.location.reload()
-    } catch (err: any) {
+    } catch (error) {
       setErrors({
         general:
-          err.message ||
+          (error instanceof Error && error.message) ||
           "Credenciales inválidas. Verificá tu usuario y contraseña.",
       })
     } finally {

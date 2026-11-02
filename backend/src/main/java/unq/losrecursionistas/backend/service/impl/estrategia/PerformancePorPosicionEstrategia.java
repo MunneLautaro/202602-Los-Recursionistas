@@ -8,18 +8,38 @@ import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.util.Map;
 
-@Component("PERFORMANCE_POR_POSICION")
+@Component("performancePorPosicionEstrategia")
 public class PerformancePorPosicionEstrategia implements EstrategiaCotizacion {
+    private static final String PORTERO = "portero";
+    private static final String DEFENSOR = "defensor";
+    private static final String MEDIOCAMPISTA = "mediocampista";
+    private static final String DELANTERO = "delantero";
+    private static final String GOLES = "goles";
+    private static final String ASISTENCIAS = "asistencias";
+    private static final String TIROS = "tiros";
+    private static final String PASES_CLAVE = "pasesClave";
+    private static final String REGATES = "regates";
+    private static final String TACKLES = "tackles";
+    private static final String INTERCEPCIONES = "intercepciones";
+    private static final String MINUTOS = "minutos";
+    private static final String RATING = "rating";
+    private static final BigDecimal PESO_35 = new BigDecimal("0.35");
+    private static final BigDecimal PESO_30 = new BigDecimal("0.30");
+    private static final BigDecimal PESO_25 = new BigDecimal("0.25");
+    private static final BigDecimal PESO_20 = new BigDecimal("0.20");
+    private static final BigDecimal PESO_15 = new BigDecimal("0.15");
+    private static final BigDecimal PESO_10 = new BigDecimal("0.10");
+
     private static final Map<String, Map<String, BigDecimal>> PESOS = Map.of(
-            "portero", Map.of("intercepciones", new BigDecimal("0.30"), "minutos", new BigDecimal("0.30"), "rating", new BigDecimal("0.20")),
-            "defensor", Map.of("tackles", new BigDecimal("0.30"), "intercepciones", new BigDecimal("0.20"), "rating", new BigDecimal("0.20")),
-            "mediocampista", Map.of("pasesClave", new BigDecimal("0.20"), "asistencias", new BigDecimal("0.20"), "rating", new BigDecimal("0.20")),
-            "delantero", Map.of("goles", new BigDecimal("0.35"), "tiros", new BigDecimal("0.20"), "rating", new BigDecimal("0.20")));
+            PORTERO, Map.of(INTERCEPCIONES, PESO_30, MINUTOS, PESO_30, RATING, PESO_20),
+            DEFENSOR, Map.of(TACKLES, PESO_30, INTERCEPCIONES, PESO_20, RATING, PESO_20),
+            MEDIOCAMPISTA, Map.of(PASES_CLAVE, PESO_20, ASISTENCIAS, PESO_20, RATING, PESO_20),
+            DELANTERO, Map.of(GOLES, PESO_35, TIROS, PESO_20, RATING, PESO_20));
     private static final Map<String, BigDecimal> PESOS_GENERALES = Map.of(
-            "goles", new BigDecimal("0.25"), "asistencias", new BigDecimal("0.15"),
-            "tiros", new BigDecimal("0.10"), "pasesClave", new BigDecimal("0.10"),
-            "regates", new BigDecimal("0.10"), "tackles", new BigDecimal("0.10"),
-            "rating", new BigDecimal("0.20"));
+            GOLES, PESO_25, ASISTENCIAS, PESO_15,
+            TIROS, PESO_10, PASES_CLAVE, PESO_10,
+            REGATES, PESO_10, TACKLES, PESO_10,
+            RATING, PESO_20);
 
     @Override
     public BigDecimal calcular(ResumenRendimiento r, String posicion,
@@ -29,14 +49,14 @@ public class PerformancePorPosicionEstrategia implements EstrategiaCotizacion {
         BigDecimal score = BigDecimal.ZERO;
         for (Map.Entry<String, BigDecimal> peso : pesos.entrySet()) {
             int valor = switch (peso.getKey()) {
-                case "goles" -> r.goles();
-                case "asistencias" -> r.asistencias();
-                case "tiros" -> r.tiros();
-                case "pasesClave" -> r.pasesClave();
-                case "tackles" -> r.tackles();
-                case "intercepciones" -> r.intercepciones();
-                case "minutos" -> r.minutos();
-                case "rating" -> r.rating().intValue();
+                case GOLES -> r.goles();
+                case ASISTENCIAS -> r.asistencias();
+                case TIROS -> r.tiros();
+                case PASES_CLAVE -> r.pasesClave();
+                case TACKLES -> r.tackles();
+                case INTERCEPCIONES -> r.intercepciones();
+                case MINUTOS -> r.minutos();
+                case RATING -> r.rating().intValue();
                 default -> 0;
             };
             score = score.add(normalizar(valor, maximos.get(peso.getKey())).multiply(peso.getValue()));
@@ -52,10 +72,10 @@ public class PerformancePorPosicionEstrategia implements EstrategiaCotizacion {
 
     private String categoria(String posicion) {
         String p = normalizarPosicion(posicion);
-        if (p.contains("portero") || p.contains("goalkeeper")) return "portero";
-        if (p.contains("defensor") || p.contains("defender")) return "defensor";
-        if (p.contains("delantero") || p.contains("forward") || p.contains("striker")) return "delantero";
-        if (p.contains("medio") || p.contains("midfielder")) return "mediocampista";
+        if (p.contains(PORTERO) || p.contains("goalkeeper")) return PORTERO;
+        if (p.contains(DEFENSOR) || p.contains("defender")) return DEFENSOR;
+        if (p.contains(DELANTERO) || p.contains("forward") || p.contains("striker")) return DELANTERO;
+        if (p.contains("medio") || p.contains("midfielder")) return MEDIOCAMPISTA;
         return "";
     }
 

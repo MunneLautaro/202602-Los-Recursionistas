@@ -37,9 +37,11 @@ class LiquidezInicialServiceTest {
         jugador.setId(10L);
         when(usuarios.buscarCustodio()).thenReturn(custodio);
         when(cotizaciones.vigente(10L)).thenReturn(Cotizacion.crear(jugador,
-                new BigDecimal("15.00"), java.time.LocalDateTime.now(), "test",
-                java.time.LocalDate.now(), java.time.LocalDate.now()));
+                new BigDecimal("15.00"), java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")), "test",
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")),
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"))));
         when(tenencias.buscarBloqueada(99L, 10L)).thenReturn(null);
+        when(ordenes.guardar(any(Orden.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test

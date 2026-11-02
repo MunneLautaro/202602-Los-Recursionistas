@@ -47,8 +47,11 @@ class MercadoServiceVentaTest {
         lenient().when(jugadores.obtenerJugadorPorId(10L)).thenReturn(jugador);
         lenient().when(tenencias.buscarBloqueada(2L, 10L)).thenReturn(tenencia);
         lenient().when(cotizaciones.vigente(10L)).thenReturn(Cotizacion.crear(jugador,
-                new BigDecimal("7.50"), java.time.LocalDateTime.now(), "test",
-                java.time.LocalDate.now(), java.time.LocalDate.now()));
+                new BigDecimal("7.50"),
+                java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")),
+                "test",
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")),
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"))));
         lenient().when(ordenes.guardar(any(Orden.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
     }

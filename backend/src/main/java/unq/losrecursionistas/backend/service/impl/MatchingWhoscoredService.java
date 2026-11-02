@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Service
 public class MatchingWhoscoredService {
@@ -34,7 +33,7 @@ public class MatchingWhoscoredService {
                 .filter(jugador -> coincideNombre(jugador, descubierto))
                 .filter(jugador -> descubierto.fechaNacimiento() == null
                         || Objects.equals(descubierto.fechaNacimiento(), jugador.getFechaNacimiento()))
-                .collect(Collectors.toList());
+                .toList();
 
         if (candidatos.isEmpty()) {
             return ResultadoMatching.noEncontrado();

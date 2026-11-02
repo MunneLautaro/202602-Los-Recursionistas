@@ -3,6 +3,7 @@ package unq.losrecursionistas.backend.persistence.repository.impl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.persistence.sql.UsuarioDAOSQL;
@@ -19,19 +20,19 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 
 	@Override
 	public Usuario buscarPorNombreUsuario(String nombreUsuario) {
-        //TODO: Cambiar la excepción a una personalizada
-		return usuarioDAOSQL.findByNombreUsuario(nombreUsuario).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+		return usuarioDAOSQL.findByNombreUsuario(nombreUsuario)
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
 	}
 
 	@Override
 	public Usuario buscarPorIdBloqueado(Long id) {
 		return usuarioDAOSQL.findLockedById(id)
-				.orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
 	}
 
 	@Override
 	public Usuario buscarCustodio() {
-		return usuarioDAOSQL.findFirstCustodio("ROLE_ADMIN")
+		return usuarioDAOSQL.findFirstByAutoridadesContainingOrderByIdAsc("ROLE_ADMIN")
 				.orElseThrow(() -> new RuntimeException("No existe un usuario custodio"));
 	}
 
