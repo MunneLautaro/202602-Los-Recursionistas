@@ -3,7 +3,6 @@ package unq.losrecursionistas.backend.service;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.MercadoServiceImpl;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;

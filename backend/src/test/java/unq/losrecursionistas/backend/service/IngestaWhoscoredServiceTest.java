@@ -216,8 +216,8 @@ class IngestaWhoscoredServiceTest {
 
         ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(9L);
 
-        assertThat(resultado.partidosInsertados()).isEqualTo(0);
-        assertThat(resultado.partidosActualizados()).isEqualTo(0);
+        assertThat(resultado.partidosInsertados()).isZero();
+        assertThat(resultado.partidosActualizados()).isZero();
         verify(estadisticas, never()).upsert(any());
     }
 
@@ -242,7 +242,7 @@ class IngestaWhoscoredServiceTest {
         ResultadoIngesta resultado = servicio.ingestarEstadisticasJugador(7L);
 
         assertThat(resultado.partidosActualizados()).isEqualTo(1);
-        assertThat(resultado.partidosInsertados()).isEqualTo(0);
+        assertThat(resultado.partidosInsertados()).isZero();
         verify(estadisticas).upsert(any(EstadisticaPartido.class));
     }
 }

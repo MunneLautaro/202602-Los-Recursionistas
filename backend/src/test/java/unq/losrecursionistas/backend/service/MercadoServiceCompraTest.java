@@ -7,7 +7,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import unq.losrecursionistas.backend.exceptions.ExcepcionCotizacionNoEncontrada;
 import unq.losrecursionistas.backend.exceptions.ExcepcionJugadorInactivo;
-import unq.losrecursionistas.backend.exceptions.ExcepcionRecursosInsuficientes;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.MercadoServiceImpl;

@@ -71,7 +71,7 @@ public class EjecucionIngesta {
             case LIGA -> ligaId = idAlcance;
             case EQUIPO -> equipoId = idAlcance;
             case JUGADOR -> jugadorId = idAlcance;
-            case COMPLETA -> { }
+            case COMPLETA -> throw new IllegalStateException("El alcance COMPLETA no requiere identificador");
             default -> throw new IllegalStateException("Alcance de ingesta no soportado: " + alcance);
         }
     }
