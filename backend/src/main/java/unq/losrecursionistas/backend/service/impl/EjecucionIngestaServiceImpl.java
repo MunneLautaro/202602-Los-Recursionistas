@@ -8,9 +8,12 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.Repositor
 import unq.losrecursionistas.backend.service.interfaces.EjecucionIngestaService;
 
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 
 @Service
 public class EjecucionIngestaServiceImpl implements EjecucionIngestaService {
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+
     private final RepositorioEjecucionIngesta repositorio;
     private final ScrapingConfiguration configuracion;
 
@@ -26,7 +29,7 @@ public class EjecucionIngestaServiceImpl implements EjecucionIngestaService {
         EjecucionIngesta ejecucion = EjecucionIngesta.builder()
                 .estado(EjecucionIngesta.Estado.ACTIVA)
                 .alcance(alcance)
-                .inicio(OffsetDateTime.now())
+                .inicio(OffsetDateTime.now(ZONA_ARGENTINA))
                 .temporadaInicio(configuracion.getTemporadaInicio())
                 .temporadaFin(configuracion.getTemporadaFin())
                 .build();

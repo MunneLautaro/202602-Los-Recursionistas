@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.text.ParseException;
 import java.time.Instant;
 import java.util.Date;
@@ -33,7 +34,7 @@ public class JwtServiceImpl implements JwtService {
 
 	@Override
 	public String generarToken(UserDetails usuario) {
-		Instant emision = Instant.now();
+		Instant emision = Instant.now(Clock.systemUTC());
 		JWTClaimsSet claims = new JWTClaimsSet.Builder()
 				.subject(usuario.getUsername())
 				.issueTime(Date.from(emision))
@@ -58,7 +59,7 @@ public class JwtServiceImpl implements JwtService {
 		return leerClaimsVerificados(token)
 				.filter(claims -> usuario.getUsername().equals(claims.getSubject()))
 				.filter(claims -> claims.getExpirationTime() != null)
-				.filter(claims -> claims.getExpirationTime().toInstant().isAfter(Instant.now()))
+				.filter(claims -> claims.getExpirationTime().toInstant().isAfter(Instant.now(Clock.systemUTC())))
 				.isPresent();
 	}
 

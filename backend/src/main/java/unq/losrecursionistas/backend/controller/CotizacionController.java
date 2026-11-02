@@ -14,10 +14,13 @@ import unq.losrecursionistas.backend.service.impl.CotizacionAsyncWorker;
 import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Map;
 
 @RestController
 public class CotizacionController {
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+
     private final CotizacionService servicio;
     private final CotizacionAsyncWorker worker;
     private final int ventanaDias;
@@ -65,7 +68,7 @@ public class CotizacionController {
         if (!servicio.reservarRecalculo()) {
             throw new ExcepcionCotizacionActiva();
         }
-        LocalDate fin = LocalDate.now();
+        LocalDate fin = LocalDate.now(ZONA_ARGENTINA);
         try {
             worker.ejecutar(fin.minusDays(ventanaDias), fin);
         } catch (RuntimeException ex) {

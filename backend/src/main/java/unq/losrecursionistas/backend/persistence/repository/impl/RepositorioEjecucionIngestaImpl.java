@@ -5,8 +5,13 @@ import unq.losrecursionistas.backend.model.EjecucionIngesta;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEjecucionIngesta;
 import unq.losrecursionistas.backend.persistence.sql.EjecucionIngestaDAOSQL;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+
 @Component
 public class RepositorioEjecucionIngestaImpl implements RepositorioEjecucionIngesta {
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+
     private final EjecucionIngestaDAOSQL dao;
 
     public RepositorioEjecucionIngestaImpl(EjecucionIngestaDAOSQL dao) {
@@ -28,7 +33,7 @@ public class RepositorioEjecucionIngestaImpl implements RepositorioEjecucionInge
         if (existeActiva()) {
             ejecucion.setEstado(EjecucionIngesta.Estado.RECHAZADA);
             ejecucion.setMotivoRechazo("Ya existe una ejecucion activa");
-            ejecucion.setFin(java.time.OffsetDateTime.now());
+            ejecucion.setFin(OffsetDateTime.now(ZONA_ARGENTINA));
         }
         return dao.save(ejecucion);
     }

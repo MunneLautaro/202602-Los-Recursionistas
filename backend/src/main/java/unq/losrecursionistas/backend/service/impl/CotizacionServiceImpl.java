@@ -21,12 +21,15 @@ import unq.losrecursionistas.backend.service.interfaces.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Transactional
 public class CotizacionServiceImpl implements CotizacionService {
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+
     private static final Logger log = LoggerFactory.getLogger(CotizacionServiceImpl.class);
     private final RepositorioJugador jugadores;
     private final RepositorioEstadisticaPartido estadisticas;
@@ -58,7 +61,7 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     public void recalcular() {
-        LocalDate fin = LocalDate.now();
+        LocalDate fin = LocalDate.now(ZONA_ARGENTINA);
         recalcular(jugadores.obtenerJugadoresActivos(), fin.minusDays(ventanaDias), fin);
     }
 
@@ -87,7 +90,7 @@ public class CotizacionServiceImpl implements CotizacionService {
         for (ResumenJugador item : resumenes) {
             try {
                 BigDecimal valor = estrategia.calcular(item.resumen, item.jugador.getPosicion(), maximos, parametros);
-                cotizaciones.guardar(Cotizacion.crear(item.jugador, valor, LocalDateTime.now(),
+                cotizaciones.guardar(Cotizacion.crear(item.jugador, valor, LocalDateTime.now(ZONA_ARGENTINA),
                         estrategiaActiva, inicio, fin));
                 log.info("Cotización recalculada para jugador '{}' (ID: {}): ${}",
                         item.jugador.getNombre(), item.jugador.getId(), valor);
@@ -104,8 +107,8 @@ public class CotizacionServiceImpl implements CotizacionService {
         }
         if (cotizaciones.vigente(jugador.getId()) == null) {
             BigDecimal valor = (valorBase != null && valorBase.signum() > 0) ? valorBase : BigDecimal.valueOf(100);
-            LocalDate hoy = LocalDate.now();
-            Cotizacion cotizacion = Cotizacion.crear(jugador, valor, LocalDateTime.now(),
+            LocalDate hoy = LocalDate.now(ZONA_ARGENTINA);
+            Cotizacion cotizacion = Cotizacion.crear(jugador, valor, LocalDateTime.now(ZONA_ARGENTINA),
                     "VALOR_BASE_INICIAL", hoy.minusDays(ventanaDias), hoy);
             cotizaciones.guardar(cotizacion);
             log.info("Cotización inicial base creada para el jugador '{}' (ID: {}): ${}",

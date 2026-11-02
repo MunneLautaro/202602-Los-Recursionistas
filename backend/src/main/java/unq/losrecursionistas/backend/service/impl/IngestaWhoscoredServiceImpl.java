@@ -30,7 +30,9 @@ import unq.losrecursionistas.backend.service.interfaces.ResultadoIngesta;
 import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -39,6 +41,7 @@ import java.util.function.Predicate;
 @Service
 public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IngestaWhoscoredServiceImpl.class);
+    private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final RepositorioEjecucionIngesta ejecuciones;
     private final RepositorioJugador jugadores;
@@ -137,7 +140,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     private EjecucionIngesta crearEjecucion(EjecucionIngesta.Alcance alcance) {
         EjecucionIngesta ejecucion = EjecucionIngesta.builder().estado(EjecucionIngesta.Estado.ACTIVA)
                 .alcance(alcance).temporadaInicio(configuracion.getTemporadaInicio())
-                .temporadaFin(configuracion.getTemporadaFin()).inicio(OffsetDateTime.now()).build();
+                .temporadaFin(configuracion.getTemporadaFin()).inicio(OffsetDateTime.now(ZONA_ARGENTINA)).build();
         return ejecuciones.guardar(ejecucion);
     }
 
@@ -214,7 +217,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         return EstadisticaTemporada.builder().jugador(primero.getJugador()).torneo(primero.getTorneo())
                 .torneoWhoscoredId(primero.getTorneoWhoscoredId())
                 .temporadaInicio(configuracion.getTemporadaInicio()).temporadaFin(configuracion.getTemporadaFin())
-                .ultimaActualizacion(java.time.LocalDateTime.now()).apps(partidos.size())
+                .ultimaActualizacion(LocalDateTime.now(ZONA_ARGENTINA)).apps(partidos.size())
                 .minutosTotales(suma(partidos, EstadisticaPartido::getMinutos))
                 .goles(suma(partidos, EstadisticaPartido::getGoles)).asistencias(suma(partidos, EstadisticaPartido::getAsistencias))
                 .tirosAlArco(suma(partidos, EstadisticaPartido::getTirosAlArco)).pasesClave(suma(partidos, EstadisticaPartido::getPasesClave))
@@ -247,7 +250,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                 .alcance(alcance)
                 .temporadaInicio(configuracion == null ? null : configuracion.getTemporadaInicio())
                 .temporadaFin(configuracion == null ? null : configuracion.getTemporadaFin())
-                .inicio(OffsetDateTime.now())
+                .inicio(OffsetDateTime.now(ZONA_ARGENTINA))
                 .build();
         ejecucion.setIdAlcance(alcanceId);
         EjecucionIngesta reservada = ejecuciones.reservar(ejecucion);
@@ -537,15 +540,15 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                 .jugadorId(alcance == EjecucionIngesta.Alcance.JUGADOR ? alcanceId : null)
                 .temporadaInicio(configuracion == null ? null : configuracion.getTemporadaInicio())
                 .temporadaFin(configuracion == null ? null : configuracion.getTemporadaFin())
-                .inicio(OffsetDateTime.now())
-                .fin(OffsetDateTime.now())
+                .inicio(OffsetDateTime.now(ZONA_ARGENTINA))
+                .fin(OffsetDateTime.now(ZONA_ARGENTINA))
                 .motivoRechazo("Ya existe una ejecucion activa")
                 .build());
     }
 
     private void finalizar(EjecucionIngesta ejecucion) {
         ejecucion.setEstado(EjecucionIngesta.Estado.FINALIZADA);
-        ejecucion.setFin(OffsetDateTime.now());
+        ejecucion.setFin(OffsetDateTime.now(ZONA_ARGENTINA));
         ejecuciones.guardar(ejecucion);
     }
 
@@ -590,7 +593,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                     .estado(CasoVinculacion.Estado.PENDIENTE)
                     .candidatos(Map.of("jugadores", resultado.candidatos().stream().map(Jugador::getId).toList()))
                     .ejecucion(ejecucion)
-                    .creadoEn(OffsetDateTime.now())
+                    .creadoEn(OffsetDateTime.now(ZONA_ARGENTINA))
                     .detalleOperativo("Jugador descubierto sin vinculacion automatica")
                     .build());
         } catch (Exception ex) {
