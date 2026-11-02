@@ -33,6 +33,9 @@ import java.util.regex.Pattern;
 @Component
 public class ScrapingRestAdapter implements ScrapingPort {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingRestAdapter.class);
+    static final String DEFAULT_BROWSER_USER_AGENT =
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                    + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
 
     private static final Map<Long, String> TOURNAMENT_PATHS = Map.of(
             252L, "/Regions/252/Tournaments/2/England-Premier-League",
@@ -122,9 +125,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
         Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
 
         // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), "playerId", "player")) {
-            Long id = number(node, "playerId", "id");
-            String nombre = text(node, "name", "playerName");
+        for (JsonNode node : findObjects(data.json(), "playerId", "playerID", "player_id", "playerName")) {
+            Long id = number(node, "playerId", "playerID", "player_id", "id");
+            String nombre = text(node, "name", "playerName", "fullName");
             if (id != null && nombre != null) {
                 result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, "slug", "url"),
                         date(node, "dateOfBirth", "birthDate"), text(node, "nationality", "countryName"),
@@ -134,22 +137,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
         // 2. Parsear enlaces HTML del DOM (/players/{id}/show/{slug})
         if (data.html() != null) {
-            Pattern pattern = Pattern.compile("(?i)href=[\"']/players/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>", Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(data.html());
-            while (matcher.find()) {
-                try {
-                    Long id = Long.valueOf(matcher.group(1));
-                    String slugPart = matcher.group(2);
-                    String rawText = matcher.group(3).replaceAll("<[^>]*>", "").trim();
-                    String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
-                    if (nombre.isBlank()) {
-                        nombre = slugPart.replace("-", " ").trim();
-                    }
-                    if (!nombre.isBlank()) {
-                        result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre, "/players/" + id + "/show/" + slugPart,
-                                null, null, equipoWhoscoredId, null, List.of()));
-                    }
-                } catch (NumberFormatException ignored) {}
+            for (JugadorWhoscoredDto jugador : parsePlayerLinks(data.html(), equipoWhoscoredId)) {
+                result.putIfAbsent(jugador.idWhoscored(), jugador);
             }
         }
 
@@ -247,7 +236,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
     }
 
     private PageData load(String path, String fase) {
-        String url = configuration.getBaseUrl() + path;
+        String url = normalizedBaseUrl() + path;
         int maxRetries = Math.max(1, configuration.getMaxRetries() + 1);
         Exception lastException = null;
 
@@ -291,7 +280,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
             try (Browser browser = playwright.chromium().launch(launchOptions)) {
                 Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
-                        .setUserAgent(configuration.getUserAgent())
+                        .setUserAgent(effectiveUserAgent())
                         .setViewportSize(1920, 1080)
                         .setLocale("es-ES")
                         .setTimezoneId("America/Argentina/Buenos_Aires")
@@ -329,15 +318,23 @@ public class ScrapingRestAdapter implements ScrapingPort {
                             }
                         });
 
-                        page.navigate(url, new Page.NavigateOptions()
+                        var navigationResponse = page.navigate(url, new Page.NavigateOptions()
                                 .setTimeout(configuration.getNavigationTimeoutMs())
                                 .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+                        if (navigationResponse != null && navigationResponse.status() >= 400) {
+                            throw new ScrapingException("WhoScored respondió HTTP " + navigationResponse.status(),
+                                    url, fase);
+                        }
 
                         try {
                             page.waitForTimeout(3000);
                         } catch (Exception ignored) {}
 
                         String html = page.content();
+                        if (looksBlocked(html)) {
+                            throw new ScrapingException("WhoScored devolvió una página de bloqueo o verificación",
+                                    url, fase);
+                        }
                         List<JsonNode> json = new ArrayList<>();
                         for (String response : jsonResponses) {
                             try {
@@ -345,6 +342,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                             } catch (Exception ignored) {
                                 // Non-JSON responses are ignored; embedded JSON is tried below.
                             }
+
                         }
 
                         try {
@@ -384,6 +382,60 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 }
             }
         }
+    }
+
+    String effectiveUserAgent() {
+        String configured = configuration.getUserAgent();
+        return configured != null && configured.startsWith("Mozilla/")
+                ? configured
+                : DEFAULT_BROWSER_USER_AGENT;
+    }
+
+    String normalizedBaseUrl() {
+        String baseUrl = configuration.getBaseUrl();
+        return baseUrl == null ? "" : baseUrl.replaceFirst("/+$", "");
+    }
+
+    static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId) {
+        if (html == null || html.isBlank()) {
+            return List.of();
+        }
+        Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
+        Pattern pattern = Pattern.compile(
+                "(?is)href=[\"'](?:https?://[^/]+)?/players?/(\\d+)"
+                        + "(?:/(?:show|profile))?/([^\"'/?#]+)[\"'][^>]*>(.*?)</a>");
+        Matcher matcher = pattern.matcher(html);
+        while (matcher.find()) {
+            try {
+                Long id = Long.valueOf(matcher.group(1));
+                String slugPart = matcher.group(2);
+                String rawText = decodeHtml(matcher.group(3)
+                        .replaceAll("<[^>]*>", " ")
+                        .replaceAll("\\s+", " ").trim());
+                String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
+                if (nombre.isBlank()) {
+                    nombre = slugPart.replace("-", " ").trim();
+                }
+                if (!nombre.isBlank()) {
+                    result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre,
+                            "/players/" + id + "/show/" + slugPart,
+                            null, null, equipoWhoscoredId, null, List.of()));
+                }
+            } catch (NumberFormatException ignored) {
+                LOGGER.debug("No se pudo interpretar un ID de jugador en el HTML de WhoScored");
+            }
+        }
+        return new ArrayList<>(result.values());
+    }
+
+    static boolean looksBlocked(String html) {
+        if (html == null || html.isBlank()) {
+            return true;
+        }
+        String content = html.toLowerCase();
+        return content.contains("cf-chl-") || content.contains("just a moment")
+                || content.contains("checking your browser") || content.contains("access denied")
+                || content.contains("captcha");
     }
 
     private static String encodePathSegment(String value) {
