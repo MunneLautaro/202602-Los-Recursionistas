@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useState } from "react"
 import {
   fetchJugadores,
   fetchJugadorDetalle,
@@ -27,18 +27,18 @@ export const JugadoresPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  const loadJugadores = async () => {
+  const loadJugadores = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
       const data = await fetchJugadores(filters, page, size)
       setJugadores(data)
-    } catch (e: any) {
-      setError(e.message ?? "Error al cargar jugadores")
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Error al cargar jugadores")
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters, page, size])
 
   const openDetalle = async (id: number) => {
     setDetailLoading(true)
@@ -47,17 +47,21 @@ export const JugadoresPage: React.FC = () => {
       const data = await fetchJugadorDetalle(id)
       setSelectedJugador(data)
       setModalOpen(true)
-    } catch (e: any) {
-      setDetailError(e.message ?? "Error al cargar detalle")
+    } catch (error) {
+      setDetailError(
+        error instanceof Error ? error.message : "Error al cargar detalle",
+      )
     } finally {
       setDetailLoading(false)
     }
   }
 
   useEffect(() => {
-    loadJugadores()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, page])
+    const timer = window.setTimeout(() => {
+      void loadJugadores()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadJugadores])
 
   return (
     <div className="container mx-auto p-4">

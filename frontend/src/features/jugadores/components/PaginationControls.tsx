@@ -12,12 +12,6 @@ export const PaginationControls: React.FC<PaginationProps> = ({
   totalPages,
   onPageChange,
 }) => {
-  const handlePrev = () => {
-    if (page > 0) onPageChange(page - 1);
-  };
-  const handleNext = () => {
-    if (page + 1 < totalPages) onPageChange(page + 1);
-  };
   const goToPage = (p: number) => onPageChange(p);
 
   const pageNumbers: number[] = [];
