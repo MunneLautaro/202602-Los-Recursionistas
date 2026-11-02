@@ -41,6 +41,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private static final String FIELD_SHOTS_TOTAL = "shotsTotal";
     private static final String FIELD_PASS_SUCCESS = "passSuccess";
     private static final String FIELD_RATING = "rating";
+    private static final String FIELD_MINS_PLAYED = "minsPlayed";
+    private static final String FIELD_DUEL_AERIAL_WON = "duelAerialWon";
+    private static final String FIELD_OPPONENT = "opponent";
     private static final String FIELD_TEAM_ID = "teamId";
     private static final String FIELD_TEAM_NAME = "teamName";
     private static final String PLAYER_PATH = "/players/";
@@ -97,37 +100,62 @@ public class ScrapingRestAdapter implements ScrapingPort {
         String path = TOURNAMENT_PATHS.getOrDefault(ligaWhoscoredId, "/Regions/" + ligaWhoscoredId + "/Tournaments");
         PageData data = load(path, "descubrir equipos");
         Map<Long, EquipoWhoscoredDto> result = new LinkedHashMap<>();
+        addTeamsFromJson(data.json(), ligaWhoscoredId, result);
+        addTeamsFromHtml(data.html(), ligaWhoscoredId, result);
+        return new ArrayList<>(result.values());
+    }
 
-        // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), FIELD_TEAM_ID, "team")) {
+    private void addTeamsFromJson(List<JsonNode> roots, Long ligaWhoscoredId,
+                                  Map<Long, EquipoWhoscoredDto> result) {
+        for (JsonNode node : findObjects(roots, FIELD_TEAM_ID, "team")) {
             Long id = number(node, FIELD_TEAM_ID, "id");
             String nombre = text(node, "name", FIELD_TEAM_NAME);
             if (id != null && nombre != null) {
                 result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, "slug", "url"), ligaWhoscoredId));
             }
         }
+    }
 
-        // 2. Parsear enlaces HTML del DOM (/teams/{id}/show/{slug})
-        if (data.html() != null) {
-            Pattern pattern = Pattern.compile("(?i)href=[\"']/teams/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>", Pattern.DOTALL);
-            Matcher matcher = pattern.matcher(data.html());
-            while (matcher.find()) {
-                try {
-                    Long id = Long.valueOf(matcher.group(1));
-                    String slugPart = matcher.group(2);
-                    String rawText = matcher.group(3).replaceAll("<[^>]*>", "").trim();
-                    String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
-                    if (nombre.isBlank() || nombre.equalsIgnoreCase("teammate") || nombre.toLowerCase().contains("statistics")) {
-                        nombre = slugPart.replaceAll("^[a-z]+-", "").replace("-", " ").trim();
-                    }
-                    if (!nombre.isBlank() && !nombre.equalsIgnoreCase("teammate") && !nombre.toLowerCase().contains("statistics")) {
-                        result.putIfAbsent(id, new EquipoWhoscoredDto(id, nombre, "/teams/" + id + "/show/" + slugPart, ligaWhoscoredId));
-                    }
-                } catch (NumberFormatException ignored) {}
-            }
+    private void addTeamsFromHtml(String html, Long ligaWhoscoredId,
+                                  Map<Long, EquipoWhoscoredDto> result) {
+        if (html == null) {
+            return;
         }
+        Pattern pattern = Pattern.compile(
+                "(?i)href=[\"']/teams/(\\d+)/(?:show/)?([^\"'/?#]+)[\"'][^>]*>(.*?)</a>",
+                Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(html);
+        while (matcher.find()) {
+            addTeamFromHtmlMatch(matcher, ligaWhoscoredId, result);
+        }
+    }
 
-        return new ArrayList<>(result.values());
+    private void addTeamFromHtmlMatch(Matcher matcher, Long ligaWhoscoredId,
+                                      Map<Long, EquipoWhoscoredDto> result) {
+        try {
+            Long id = Long.valueOf(matcher.group(1));
+            String slugPart = matcher.group(2);
+            String nombre = cleanTeamName(matcher.group(3), slugPart);
+            if (isValidTeamName(nombre)) {
+                result.putIfAbsent(id, new EquipoWhoscoredDto(
+                        id, nombre, "/teams/" + id + "/show/" + slugPart, ligaWhoscoredId));
+            }
+        } catch (NumberFormatException ignored) {
+        }
+    }
+
+    private String cleanTeamName(String rawHtml, String slugPart) {
+        String nombre = rawHtml.replaceAll("<[^>]*>", "").trim().replaceAll("^\\d+\\s*", "").trim();
+        if (nombre.isBlank() || nombre.equalsIgnoreCase("teammate")
+                || nombre.toLowerCase().contains("statistics")) {
+            return slugPart.replaceAll("^[a-z]+-", "").replace("-", " ").trim();
+        }
+        return nombre;
+    }
+
+    private boolean isValidTeamName(String nombre) {
+        return !nombre.isBlank() && !nombre.equalsIgnoreCase("teammate")
+                && !nombre.toLowerCase().contains("statistics");
     }
 
     @Override
@@ -221,12 +249,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                     try {
                         Long partidoId = Long.valueOf(matchMatcher.group(1));
                         AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-                        builder.mergeHtmlCell("date", htmlCell(row, "date"));
-                        builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
                         mergeHtmlAppearanceCells(builder, row);
-                        builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
-                        builder.mergeHtmlCell(FIELD_RATING, htmlCell(row, FIELD_RATING));
-                        builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
                     } catch (NumberFormatException ignored) {
                         LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta);
                     }
@@ -244,16 +267,16 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
     private void mergeHtmlAppearanceCells(AparicionBuilder builder, String row) {
         builder.mergeHtmlCell("date", htmlCell(row, "date"));
-        builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
+        builder.mergeHtmlCell(FIELD_MINS_PLAYED, htmlCell(row, FIELD_MINS_PLAYED));
         builder.mergeHtmlCell(FIELD_GOAL_TOTAL, htmlCell(row, FIELD_GOAL_TOTAL));
         builder.mergeHtmlCell(FIELD_ASSIST, htmlCell(row, FIELD_ASSIST));
         builder.mergeHtmlCell(FIELD_YELLOW_CARD, htmlCell(row, FIELD_YELLOW_CARD));
         builder.mergeHtmlCell(FIELD_RED_CARD, htmlCell(row, FIELD_RED_CARD));
         builder.mergeHtmlCell(FIELD_SHOTS_TOTAL, htmlCell(row, FIELD_SHOTS_TOTAL));
         builder.mergeHtmlCell(FIELD_PASS_SUCCESS, htmlCell(row, FIELD_PASS_SUCCESS));
-        builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
+        builder.mergeHtmlCell(FIELD_DUEL_AERIAL_WON, htmlCell(row, FIELD_DUEL_AERIAL_WON));
         builder.mergeHtmlCell(FIELD_RATING, htmlCell(row, FIELD_RATING));
-        builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
+        builder.mergeHtmlCell(FIELD_OPPONENT, htmlCell(row, "grid-abs"));
     }
 
     private PageData load(String path, String fase) {
@@ -645,7 +668,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             }
             switch (key) {
                 case "date" -> fecha = firstDate(fecha, parseDate(value));
-                case "minsPlayed" -> minutos = first(minutos, parseInteger(value));
+                case FIELD_MINS_PLAYED -> minutos = first(minutos, parseInteger(value));
                 case FIELD_GOAL_TOTAL -> putIfPresent("goals", parseIntegerOrNull(value));
                 case FIELD_ASSIST -> putIfPresent("assists", parseIntegerOrNull(value));
                 case FIELD_YELLOW_CARD -> putIfPresent("yellowCards", parseIntegerOrNull(value));
@@ -653,7 +676,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 case FIELD_SHOTS_TOTAL -> putIfPresent("shots", parseIntegerOrNull(value));
                 case FIELD_PASS_SUCCESS -> putIfPresent("passSuccess", parseDecimalOrNull(value));
                 case FIELD_RATING -> rating = first(rating, parseDecimal(value));
-                case "opponent" -> {
+                case FIELD_OPPONENT -> {
                     String opponent = removeTrailingVenue(removeTrailingScore(value));
                     rivalNombre = first(rivalNombre, opponent);
                     localVisitante = first(localVisitante, value.contains("(H)") ? "LOCAL" : "VISITANTE");

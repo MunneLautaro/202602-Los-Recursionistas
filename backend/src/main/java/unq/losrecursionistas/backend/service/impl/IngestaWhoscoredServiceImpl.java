@@ -153,38 +153,14 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         ejecucion.setJugadoresProcesados(ejecucion.getJugadoresProcesados() + 1);
         long inicio = System.nanoTime();
         try {
-            List<AparicionWhoscoredDto> apariciones = scraping.obtenerApariciones(jugador.getIdWhoscored());
-            if (apariciones.isEmpty()) {
-                String slug = jugador.getSlug();
-                if (slug == null || slug.isBlank()) {
-                    slug = MatchingWhoscoredService.normalizar(jugador.getNombre()).replace(' ', '-');
-                } else {
-                    slug = slug.replaceFirst("^.*/players/\\d+/(?:show/|matchstatistics/)?", "")
-                            .replaceAll("[?#].*$", "");
-                }
-                apariciones = scraping.obtenerAparicionesTemporada(jugador.getIdWhoscored(), slug);
-            }
+            List<AparicionWhoscoredDto> apariciones = obtenerApariciones(jugador);
             if (apariciones.isEmpty()) {
                 LOGGER.warn("WhoScored no devolvió apariciones para el jugador {} (idWhoscored: {})",
                         jugador.getId(), jugador.getIdWhoscored());
                 ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
                 return;
             }
-            int descartadas = 0;
-            for (AparicionWhoscoredDto aparicion : apariciones) {
-                if (!esPersistible(aparicion)) {
-                    descartadas++;
-                    continue;
-                }
-                if (estadisticas != null) {
-                    EstadisticaPartido estadistica = construirEstadistica(jugador, aparicion, ejecucion);
-                    boolean existente = estadisticas.buscarPorJugadorYPartido(
-                            jugador.getId(), aparicion.partidoWhoscoredId()) != null;
-                    estadisticas.upsert(estadistica);
-                    if (existente) ejecucion.setPartidosActualizados(ejecucion.getPartidosActualizados() + 1);
-                    else ejecucion.setPartidosInsertados(ejecucion.getPartidosInsertados() + 1);
-                }
-            }
+            int descartadas = persistirApariciones(jugador, apariciones, ejecucion);
             if (descartadas > 0) {
                 ejecucion.setAnomalias(ejecucion.getAnomalias() + descartadas);
                 LOGGER.warn("Se descartaron {} apariciones no persistibles del jugador {}",
@@ -197,6 +173,47 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         } finally {
             LOGGER.info("Scraping de estadísticas del jugador {} finalizado en {} ms",
                     jugador.getId(), (System.nanoTime() - inicio) / 1_000_000);
+        }
+    }
+
+    private List<AparicionWhoscoredDto> obtenerApariciones(Jugador jugador) {
+        List<AparicionWhoscoredDto> apariciones = scraping.obtenerApariciones(jugador.getIdWhoscored());
+        if (!apariciones.isEmpty()) {
+            return apariciones;
+        }
+        String slug = jugador.getSlug();
+        if (slug == null || slug.isBlank()) {
+            slug = MatchingWhoscoredService.normalizar(jugador.getNombre()).replace(' ', '-');
+        } else {
+            slug = slug.replaceFirst("^.*/players/\\d+/(?:show/|matchstatistics/)?", "")
+                    .replaceAll("[?#].*$", "");
+        }
+        return scraping.obtenerAparicionesTemporada(jugador.getIdWhoscored(), slug);
+    }
+
+    private int persistirApariciones(Jugador jugador, List<AparicionWhoscoredDto> apariciones,
+                                     EjecucionIngesta ejecucion) {
+        int descartadas = 0;
+        for (AparicionWhoscoredDto aparicion : apariciones) {
+            if (!esPersistible(aparicion)) {
+                descartadas++;
+            } else if (estadisticas != null) {
+                persistirAparicion(jugador, aparicion, ejecucion);
+            }
+        }
+        return descartadas;
+    }
+
+    private void persistirAparicion(Jugador jugador, AparicionWhoscoredDto aparicion,
+                                    EjecucionIngesta ejecucion) {
+        EstadisticaPartido estadistica = construirEstadistica(jugador, aparicion, ejecucion);
+        boolean existente = estadisticas.buscarPorJugadorYPartido(
+                jugador.getId(), aparicion.partidoWhoscoredId()) != null;
+        estadisticas.upsert(estadistica);
+        if (existente) {
+            ejecucion.setPartidosActualizados(ejecucion.getPartidosActualizados() + 1);
+        } else {
+            ejecucion.setPartidosInsertados(ejecucion.getPartidosInsertados() + 1);
         }
     }
 
@@ -309,49 +326,65 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     }
 
     private void vincularCompleta(EjecucionIngesta ejecucion) {
-        List<LigaWhoscoredDto> ligasDescubiertas;
+        List<LigaWhoscoredDto> ligasDescubiertas = descubrirLigas(ejecucion);
+        if (ligas != null && !ligasDescubiertas.isEmpty()) {
+            vincularLigasDescubiertas(ligasDescubiertas, ejecucion);
+        } else {
+            vincularEquiposLocales(ejecucion);
+        }
+    }
+
+    private List<LigaWhoscoredDto> descubrirLigas(EjecucionIngesta ejecucion) {
         try {
-            ligasDescubiertas = scraping.descubrirLigas();
+            return scraping.descubrirLigas();
         } catch (RuntimeException ex) {
             LOGGER.warn("No se pudieron descubrir ligas en WhoScored: {}", ex.getMessage());
-            ejecucion.setErrores(ejecucion.getErrores() + 1);
-            ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-            ligasDescubiertas = List.of();
+            registrarAnomalia(ejecucion);
+            return List.of();
         }
+    }
 
-        if (ligas != null && !ligasDescubiertas.isEmpty()) {
-            List<Liga> ligasLocales = ligas.obtenerLigas();
-            for (LigaWhoscoredDto ligaDto : ligasDescubiertas) {
-                try {
-                    Liga ligaLocal = ligasLocales.stream()
-                            .filter(l -> coincideLiga(l.getNombre(), ligaDto.nombre()))
-                            .findFirst()
-                            .orElse(null);
-
-                    if (ligaLocal != null) {
-                        if (ligaLocal.getIdWhoscored() == null || !ligaLocal.getIdWhoscored().equals(ligaDto.idWhoscored())) {
-                            ligaLocal.setIdWhoscored(ligaDto.idWhoscored());
-                            ligas.guardar(ligaLocal);
-                        }
-                        vincularEquiposDeLiga(ligaLocal, ligaDto.idWhoscored(), ejecucion);
-                    }
-                } catch (Exception ex) {
-                    LOGGER.error("Error al procesar liga {}: {}", ligaDto.nombre(), ex.getMessage());
-                    ejecucion.setErrores(ejecucion.getErrores() + 1);
-                    ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
+    private void vincularLigasDescubiertas(List<LigaWhoscoredDto> descubiertas,
+                                           EjecucionIngesta ejecucion) {
+        List<Liga> ligasLocales = ligas.obtenerLigas();
+        for (LigaWhoscoredDto ligaDto : descubiertas) {
+            try {
+                Liga ligaLocal = ligasLocales.stream()
+                        .filter(l -> coincideLiga(l.getNombre(), ligaDto.nombre()))
+                        .findFirst().orElse(null);
+                if (ligaLocal != null) {
+                    actualizarLigaYVincularEquipos(ligaLocal, ligaDto, ejecucion);
                 }
+            } catch (Exception ex) {
+                LOGGER.error("Error al procesar liga {}: {}", ligaDto.nombre(), ex.getMessage());
+                registrarAnomalia(ejecucion);
             }
-        } else if (equipos != null) {
-            for (Equipo equipo : equipos.obtenerTodos()) {
-                if (equipo.getIdWhoscored() != null) {
-                    try {
-                        vincularJugadores(equipo.getIdWhoscored(), ejecucion);
-                    } catch (Exception ex) {
-                        LOGGER.warn("Error al procesar jugadores de equipo {}: {}", equipo.getNombre(), ex.getMessage());
-                        ejecucion.setErrores(ejecucion.getErrores() + 1);
-                        ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-                    }
-                }
+        }
+    }
+
+    private void actualizarLigaYVincularEquipos(Liga ligaLocal, LigaWhoscoredDto ligaDto,
+                                                EjecucionIngesta ejecucion) {
+        if (ligaLocal.getIdWhoscored() == null
+                || !ligaLocal.getIdWhoscored().equals(ligaDto.idWhoscored())) {
+            ligaLocal.setIdWhoscored(ligaDto.idWhoscored());
+            ligas.guardar(ligaLocal);
+        }
+        vincularEquiposDeLiga(ligaLocal, ligaDto.idWhoscored(), ejecucion);
+    }
+
+    private void vincularEquiposLocales(EjecucionIngesta ejecucion) {
+        if (equipos == null) {
+            return;
+        }
+        for (Equipo equipo : equipos.obtenerTodos()) {
+            if (equipo.getIdWhoscored() == null) {
+                continue;
+            }
+            try {
+                vincularJugadores(equipo.getIdWhoscored(), ejecucion);
+            } catch (Exception ex) {
+                LOGGER.warn("Error al procesar jugadores de equipo {}: {}", equipo.getNombre(), ex.getMessage());
+                registrarAnomalia(ejecucion);
             }
         }
     }
@@ -410,33 +443,48 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
 
         List<Equipo> equiposLocales = equipos.obtenerEquiposDeLiga(ligaLocal.getId());
         for (EquipoWhoscoredDto eqDto : equiposDescubiertos) {
-            try {
-                Equipo eqLocal = equiposLocales.stream()
-                        .filter(e -> coincideEquipo(e.getNombre(), eqDto.nombre()))
-                        .findFirst()
-                        .orElse(null);
-
-                if (eqLocal != null) {
-                    if (eqLocal.getIdWhoscored() == null || !eqLocal.getIdWhoscored().equals(eqDto.idWhoscored())) {
-                        // Chequeo estricto de unicidad antes de persistir
-                        Equipo existente = equipos.buscarPorIdWhoscored(eqDto.idWhoscored());
-                        if (existente != null && !existente.getId().equals(eqLocal.getId())) {
-                            LOGGER.warn("El ID WhoScored {} ya está asignado al equipo '{}' (id: {}). Se omite asignación al equipo '{}' (id: {})",
-                                    eqDto.idWhoscored(), existente.getNombre(), existente.getId(), eqLocal.getNombre(), eqLocal.getId());
-                            ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-                        } else {
-                            eqLocal.setIdWhoscored(eqDto.idWhoscored());
-                            equipos.guardar(eqLocal);
-                        }
-                    }
-                    vincularJugadores(eqDto.idWhoscored(), ejecucion);
-                }
-            } catch (Exception ex) {
-                LOGGER.error("Error al procesar equipo descubierto '{}' (id: {}): {}", eqDto.nombre(), eqDto.idWhoscored(), ex.getMessage());
-                ejecucion.setErrores(ejecucion.getErrores() + 1);
-                ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
-            }
+            procesarEquipoDescubierto(eqDto, equiposLocales, ejecucion);
         }
+    }
+
+    private void procesarEquipoDescubierto(EquipoWhoscoredDto eqDto, List<Equipo> equiposLocales,
+                                           EjecucionIngesta ejecucion) {
+        try {
+            Equipo eqLocal = equiposLocales.stream()
+                    .filter(e -> coincideEquipo(e.getNombre(), eqDto.nombre()))
+                    .findFirst().orElse(null);
+            if (eqLocal == null) {
+                return;
+            }
+            asignarEquipoSiEsUnico(eqLocal, eqDto, ejecucion);
+            vincularJugadores(eqDto.idWhoscored(), ejecucion);
+        } catch (Exception ex) {
+            LOGGER.error("Error al procesar equipo descubierto '{}' (id: {}): {}",
+                    eqDto.nombre(), eqDto.idWhoscored(), ex.getMessage());
+            registrarAnomalia(ejecucion);
+        }
+    }
+
+    private void asignarEquipoSiEsUnico(Equipo equipo, EquipoWhoscoredDto dto,
+                                        EjecucionIngesta ejecucion) {
+        if (equipo.getIdWhoscored() != null && equipo.getIdWhoscored().equals(dto.idWhoscored())) {
+            return;
+        }
+        Equipo existente = equipos.buscarPorIdWhoscored(dto.idWhoscored());
+        if (existente != null && !existente.getId().equals(equipo.getId())) {
+            LOGGER.warn("El ID WhoScored {} ya está asignado al equipo '{}' (id: {}). Se omite asignación al equipo '{}' (id: {})",
+                    dto.idWhoscored(), existente.getNombre(), existente.getId(),
+                    equipo.getNombre(), equipo.getId());
+            ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
+            return;
+        }
+        equipo.setIdWhoscored(dto.idWhoscored());
+        equipos.guardar(equipo);
+    }
+
+    private void registrarAnomalia(EjecucionIngesta ejecucion) {
+        ejecucion.setErrores(ejecucion.getErrores() + 1);
+        ejecucion.setAnomalias(ejecucion.getAnomalias() + 1);
     }
 
     private List<Jugador> seleccionarJugadores(EjecucionIngesta.Alcance alcance, Long alcanceId) {
