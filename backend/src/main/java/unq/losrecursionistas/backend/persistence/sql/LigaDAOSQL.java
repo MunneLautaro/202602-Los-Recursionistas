@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface LigaDAOSQL extends JpaRepository<Liga, Long> {
     Optional<Liga> findByCodigo(String codigo);
     Optional<Liga> findByIdExterno(Long idExterno);
+    Optional<Liga> findByIdWhoscored(Long idWhoscored);
 }

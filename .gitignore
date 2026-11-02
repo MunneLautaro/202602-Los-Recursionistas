@@ -27,7 +27,13 @@ Thumbs.db
 # Environment
 .env
 .env.*
+!.env.example
 
 # Coverage / reports
 coverage/
 htmlReport/
+
+# Node.js / frontend
+node_modules/
+dist/
+*.log

@@ -1,0 +1,180 @@
+openapi: 3.0.3
+info:
+  title: Mercado de Tokens
+  version: 1.0.0
+  description: Contratos HTTP del mercado de tokens al precio vigente.
+paths:
+  /orders/buy:
+    post:
+      operationId: crearOrdenCompra
+      summary: Publica y procesa una orden de compra
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrdenRequest' }
+      responses:
+        '200':
+          description: Orden aceptada y matching procesado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrdenResponse' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+  /orders/sell:
+    post:
+      operationId: crearOrdenVenta
+      summary: Publica y procesa una orden de venta
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/OrdenRequest' }
+      responses:
+        '200':
+          description: Orden aceptada y matching procesado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/OrdenResponse' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '401': { $ref: '#/components/responses/NoAutorizado' }
+  /orders:
+    get:
+      operationId: listarOrdenesActivas
+      summary: Lista paginada de órdenes activas
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - name: jugadorId
+          in: query
+          schema: { type: integer, format: int64, minimum: 1 }
+        - name: tipo
+          in: query
+          schema: { $ref: '#/components/schemas/TipoOrden' }
+      responses:
+        '200':
+          description: Página de órdenes
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaOrdenes' }
+  /users/{id}/credits:
+    post:
+      operationId: recargarCreditos
+      summary: Acredita créditos ficticios
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RecargaCreditosRequest' }
+      responses:
+        '200':
+          description: Saldo actualizado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SaldoResponse' }
+        '400': { $ref: '#/components/responses/Validacion' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+  /users/{id}/transactions:
+    get:
+      operationId: listarTransaccionesUsuario
+      summary: Lista el historial propio de transacciones
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+      responses:
+        '200':
+          description: Página de transacciones
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginaTransacciones' }
+        '403': { $ref: '#/components/responses/Prohibido' }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    Page: { name: page, in: query, schema: { type: integer, minimum: 0, default: 0 } }
+    Size: { name: size, in: query, schema: { type: integer, minimum: 1, default: 12 } }
+    UserId: { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+  responses:
+    Validacion:
+      description: Error de validación o fondos/tokens insuficientes
+    NoAutorizado:
+      description: Autenticación requerida
+    Prohibido:
+      description: El usuario no puede consultar o modificar otra cuenta
+  schemas:
+    OrdenRequest:
+      type: object
+      required: [jugadorId, cantidad]
+      properties:
+        jugadorId: { type: integer, format: int64, minimum: 1 }
+        cantidad: { type: integer, minimum: 1 }
+    TipoOrden:
+      type: string
+      enum: [COMPRA, VENTA]
+    EstadoOrden:
+      type: string
+      enum: [ACTIVA, COMPLETADA]
+    OrdenResponse:
+      type: object
+      required: [id, jugadorId, tipo, cantidadOriginal, cantidadDisponible, precioUnitario, precioTotalRemanente, estado, fechaCreacion]
+      properties:
+        id: { type: integer, format: int64 }
+        jugadorId: { type: integer, format: int64 }
+        tipo: { $ref: '#/components/schemas/TipoOrden' }
+        cantidadOriginal: { type: integer }
+        cantidadDisponible: { type: integer }
+        precioUnitario: { type: number, format: double }
+        precioTotalRemanente: { type: number, format: double }
+        estado: { $ref: '#/components/schemas/EstadoOrden' }
+        fechaCreacion: { type: string, format: date-time }
+    PaginaOrdenes:
+      type: object
+      properties:
+        content: { type: array, items: { $ref: '#/components/schemas/OrdenResponse' } }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }
+    RecargaCreditosRequest:
+      type: object
+      required: [monto]
+      properties:
+        monto: { type: number, format: double, exclusiveMinimum: 0 }
+    SaldoResponse:
+      type: object
+      properties:
+        usuarioId: { type: integer, format: int64 }
+        saldo: { type: number, format: double }
+        saldoReservado: { type: number, format: double }
+        saldoDisponible: { type: number, format: double }
+    TransaccionResponse:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        jugadorId: { type: integer, format: int64 }
+        compradorId: { type: integer, format: int64 }
+        vendedorId: { type: integer, format: int64 }
+        cantidad: { type: integer }
+        precioUnitario: { type: number, format: double }
+        total: { type: number, format: double }
+        ejecutadaEn: { type: string, format: date-time }
+    PaginaTransacciones:
+      type: object
+      properties:
+        content: { type: array, items: { $ref: '#/components/schemas/TransaccionResponse' } }
+        page: { type: integer }
+        size: { type: integer }
+        totalElements: { type: integer, format: int64 }
+        totalPages: { type: integer }

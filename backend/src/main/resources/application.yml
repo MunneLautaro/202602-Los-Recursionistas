@@ -1,0 +1,102 @@
+spring:
+  config:
+    import: optional:file:.env[.properties],optional:file:backend/.env[.properties]
+  application:
+    name: ${SPRING_APPLICATION_NAME:backend}
+  time-zone: ${SPRING_TIME_ZONE:America/Argentina/Buenos_Aires}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/football_market}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}
+  jpa:
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    properties:
+      hibernate:
+        dialect: ${SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT:org.hibernate.dialect.PostgreSQLDialect}
+        format_sql: ${SPRING_JPA_PROPERTIES_HIBERNATE_FORMAT_SQL:true}
+        jdbc:
+          time_zone: ${SPRING_JPA_PROPERTIES_HIBERNATE_JDBC_TIME_ZONE:America/Argentina/Buenos_Aires}
+
+mercado:
+  zona-horaria: ${MERCADO_ZONA_HORARIA:America/Argentina/Buenos_Aires}
+  pagina-defecto: ${MERCADO_PAGINA_DEFECTO:12}
+  aislamiento: ${MERCADO_AISLAMIENTO:REPEATABLE_READ}
+
+jwt:
+  secret: ${JWT_SECRET:clave-local-de-desarrollo-de-32-bytes-minimo}
+
+springdoc:
+  show-actuator: ${SPRINGDOC_SHOW_ACTUATOR:true}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: ${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:health}
+
+football:
+  api:
+    key: ${FOOTBALL_DATA_API_KEY:}
+    url: ${FOOTBALL_DATA_API_URL:https://api.football-data.org/v4}
+
+scheduler:
+  football-data:
+    cron: ${FOOTBALL_DATA_SCHEDULER_CRON:0 0 0 * * SUN}
+    #Aca se pone si queres que footboall-data se ejecute al iniciar la app, si no queres que se ejecute al iniciar la app, poner false
+    startup-enabled: ${FOOTBALL_DATA_STARTUP_ENABLED:false}
+  whoscored:
+    enabled: ${WHOSCORED_SCHEDULER_ENABLED:true}
+    cron: ${WHOSCORED_SCHEDULER_CRON:0 0 3 * * SUN}
+    zone: ${WHOSCORED_SCHEDULER_ZONE:America/Argentina/Buenos_Aires}
+    delay-after-football-data-minutes: ${WHOSCORED_DELAY_AFTER_FOOTBALL_DATA_MINUTES:180}
+    executor-core-pool-size: ${WHOSCORED_EXECUTOR_CORE_POOL_SIZE:1}
+    executor-max-pool-size: ${WHOSCORED_EXECUTOR_MAX_POOL_SIZE:1}
+    executor-queue-capacity: ${WHOSCORED_EXECUTOR_QUEUE_CAPACITY:1}
+  cotizacion:
+    enabled: ${COTIZACION_SCHEDULER_ENABLED:true}
+    cron: ${COTIZACION_SCHEDULER_CRON:0 0 4 * * SUN}
+    zone: ${COTIZACION_SCHEDULER_ZONE:America/Argentina/Buenos_Aires}
+
+cotizacion:
+  estrategia:
+    activa: ${COTIZACION_ESTRATEGIA_ACTIVA:PERFORMANCE_GENERAL}
+  ventana-dias: ${COTIZACION_VENTANA_DIAS:7}
+  valor-base: ${COTIZACION_VALOR_BASE:100}
+  factor-escala: ${COTIZACION_FACTOR_ESCALA:900}
+  escala-monetaria: ${COTIZACION_ESCALA_MONETARIA:2}
+  pesos:
+    general:
+      goles: ${COTIZACION_PESO_GENERAL_GOLES:0.25}
+      asistencias: ${COTIZACION_PESO_GENERAL_ASISTENCIAS:0.15}
+      tiros: ${COTIZACION_PESO_GENERAL_TIROS:0.10}
+      pases-clave: ${COTIZACION_PESO_GENERAL_PASES_CLAVE:0.10}
+      regates: ${COTIZACION_PESO_GENERAL_REGATES:0.10}
+      tackles: ${COTIZACION_PESO_GENERAL_TACKLES:0.10}
+      rating: ${COTIZACION_PESO_GENERAL_RATING:0.20}
+    posicion:
+      portero: ${COTIZACION_PESOS_PORTERO:}
+      defensor: ${COTIZACION_PESOS_DEFENSOR:}
+      mediocampista: ${COTIZACION_PESOS_MEDIOCAMPISTA:}
+      delantero: ${COTIZACION_PESOS_DELANTERO:}
+
+whoscored:
+  scraping:
+    headless: ${WHOSCORED_SCRAPING_HEADLESS:true}
+    navigation-timeout-ms: ${WHOSCORED_SCRAPING_NAVIGATION_TIMEOUT_MS:30000}
+    request-timeout-ms: ${WHOSCORED_SCRAPING_REQUEST_TIMEOUT_MS:15000}
+    user-agent: ${WHOSCORED_SCRAPING_USER_AGENT:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36}
+    base-url: ${WHOSCORED_SCRAPING_BASE_URL:https://www.whoscored.com}
+    pause-ms: ${WHOSCORED_SCRAPING_PAUSE_MS:1000}
+    rate-limit-per-minute: ${WHOSCORED_SCRAPING_RATE_LIMIT_PER_MINUTE:30}
+    max-retries: ${WHOSCORED_SCRAPING_MAX_RETRIES:2}
+    backoff-ms: ${WHOSCORED_SCRAPING_BACKOFF_MS:2000}
+    temporada-inicio: ${WHOSCORED_SEASON_START:2025-08-01}
+    temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
+    ligas-permitidas: ${WHOSCORED_ALLOWED_LEAGUES:}
+    #Aca se pone si queres que whoscored se ejecute al iniciar la app, si no queres que se ejecute al iniciar la app, poner false
+    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:false}
+    linking-cron: ${WHOSCORED_LINKING_CRON:0 0 2 * * SUN}
+    stats-cron: ${WHOSCORED_STATS_CRON:0 0 3 * * SUN}

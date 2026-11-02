@@ -20,6 +20,8 @@ public class Equipo {
     private Long id;
 
     private Long idExterno;
+    @Column(name = "id_whoscored", unique = true)
+    private Long idWhoscored;
     private String nombre;
     private String nombreCorto;
     private String sigla;

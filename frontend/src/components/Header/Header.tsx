@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({
     <header className={headerStyles.header}>
       <div className={headerStyles.container}>
         <Link to="/" className={headerStyles.brandContainer}>
-          <div className={headerStyles.logo}>LR</div>
+          <img src="/logo2.png" alt="Logo" className={headerStyles.logo} />
           <span className={headerStyles.title}>{title}</span>
         </Link>
 

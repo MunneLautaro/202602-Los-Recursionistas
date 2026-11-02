@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface EquipoDAOSQL extends JpaRepository<Equipo, Long> {
     Optional<Equipo> findByIdExterno(Long idExterno);
+    Optional<Equipo> findByIdWhoscored(Long idWhoscored);
 
     List<Equipo> findByLigaId(Long ligaId);
 }

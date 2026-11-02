@@ -23,6 +23,9 @@ public class Jugador {
 	private String nombre;
 	private String posicion;
     private Long idExterno;
+    @Column(name = "id_whoscored", unique = true)
+    private Long idWhoscored;
+    private String slug;
     private String nacionalidad;
     private LocalDate fechaNacimiento;
 

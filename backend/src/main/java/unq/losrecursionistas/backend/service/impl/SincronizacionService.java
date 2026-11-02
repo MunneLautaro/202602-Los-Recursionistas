@@ -2,16 +2,18 @@ package unq.losrecursionistas.backend.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import unq.losrecursionistas.backend.client.footballdata.FootballDataApiClient;
-import unq.losrecursionistas.backend.client.footballdata.FootballDataMapper;
-import unq.losrecursionistas.backend.client.footballdata.dto.FootballCompetitionTeamsResponse;
-import unq.losrecursionistas.backend.client.footballdata.dto.FootballTeamResponse;
+import unq.losrecursionistas.backend.adapter.footballdata.FootballDataApiClient;
+import unq.losrecursionistas.backend.adapter.footballdata.FootballDataMapper;
+import unq.losrecursionistas.backend.adapter.footballdata.dto.FootballCompetitionTeamsResponse;
+import unq.losrecursionistas.backend.adapter.footballdata.dto.FootballTeamResponse;
 import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
+import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
 
@@ -28,7 +30,7 @@ public class SincronizacionService {
     private final JugadorService jugadorService;
     private final EquipoService equipoService;
     private final RepositorioLiga repositorioLiga;
-
+    @Autowired
     public SincronizacionService(FootballDataApiClient apiClient,
                                  FootballDataMapper mapper,
                                  JugadorService jugadorService,

@@ -2,14 +2,20 @@ package unq.losrecursionistas.backend.persistence.sql;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.stereotype.Repository;
 import unq.losrecursionistas.backend.model.Jugador;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface JugadorDAOSQL extends JpaRepository<Jugador, Long>, JpaSpecificationExecutor<Jugador> {
+    @Override
+    @EntityGraph(attributePaths = "equipo")
+    Optional<Jugador> findById(Long id);
+
     Optional<Jugador> findByIdExterno(Long idExterno);
+    Optional<Jugador> findByIdWhoscored(Long idWhoscored);
+    List<Jugador> findByActivoTrue();
 }
-
-

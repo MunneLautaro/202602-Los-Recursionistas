@@ -35,3 +35,10 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# Runtime and local configuration
+*.log
+.env
+.env.*
+!.env.example
+coverage/
