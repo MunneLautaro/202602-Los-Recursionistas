@@ -47,3 +47,55 @@ export interface PaginatedJugadores {
   size: number;
   totalElements: number;
 }
+
+export interface SeasonStats {
+  id: number;
+  jugadorId: number;
+  jugadorNombre: string;
+  posicion: string;
+  equipoNombre: string | null;
+  torneo: string;
+  torneoWhoscoredId: number | null;
+  temporadaInicio: string | null;
+  temporadaFin: string | null;
+  ultimaActualizacion: string | null;
+  apps: number | null;
+  minutosTotales: number | null;
+  goles: number | null;
+  asistencias: number | null;
+  tirosAlArco: number | null;
+  pasesClave: number | null;
+  regates: number | null;
+  tackles: number | null;
+  intercepciones: number | null;
+  amarillas: number | null;
+  rojas: number | null;
+  ratingPromedio: number | null;
+  precisionPasesPromedio: number | null;
+}
+
+export interface GlobalStats {
+  apps: number;
+  goles: number;
+  asistencias: number;
+  ratingPromedio: number | null;
+}
+
+export interface PlayerStats {
+  jugadorId: number;
+  nombre: string;
+  posicion: string;
+  equipo: string | null;
+  estadisticasPorTorneo: SeasonStats[];
+  totalesGlobal: GlobalStats;
+}
+
+export interface Quote {
+  id: number;
+  jugadorId: number;
+  valor: number;
+  timestampCalculo: string;
+  estrategiaUsada: string;
+  ventanaInicio: string;
+  ventanaFin: string;
+}
