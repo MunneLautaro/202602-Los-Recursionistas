@@ -393,7 +393,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
     String normalizedBaseUrl() {
         String baseUrl = configuration.getBaseUrl();
-        return baseUrl == null ? "" : baseUrl.replaceFirst("/+$", "");
+        return baseUrl == null ? "" : baseUrl.replaceFirst("/++$", "");
     }
 
     static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId) {
@@ -628,10 +628,10 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 case "passSuccess" -> putIfPresent("passSuccess", parseDecimalOrNull(value));
                 case "rating" -> rating = first(rating, parseDecimal(value));
                 case "opponent" -> {
-                    String opponent = value.replaceAll("\\s+\\d+\\s*-\\s*\\d+\\s*$", "")
-                            .replaceAll("\\s*\\([HA]\\)\\s*$", "").trim();
+                    String opponent = value.replaceAll("\\s++\\d++\\s*+-\\s*+\\d++\\s*+$", "")
+                            .replaceAll("\\s*+\\([HA]\\)\\s*+$", "").trim();
                     rivalNombre = first(rivalNombre, opponent);
-                    localVisitante = first(localVisitante, value.matches(".*\\(H\\).*") ? "LOCAL" : "VISITANTE");
+                    localVisitante = first(localVisitante, value.contains("(H)") ? "LOCAL" : "VISITANTE");
                 }
                 default -> {
                 }
