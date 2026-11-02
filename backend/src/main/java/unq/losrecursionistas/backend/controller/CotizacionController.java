@@ -2,7 +2,6 @@ package unq.losrecursionistas.backend.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.data.domain.Page;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -34,11 +33,9 @@ public class CotizacionController {
 
     @GetMapping("/players/{id}/quotes")
     @Operation(summary = "Historial de cotizaciones de un jugador")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Historial paginado"),
-            @ApiResponse(responseCode = "400", description = "Parametros invalidos"),
-            @ApiResponse(responseCode = "404", description = "Jugador inexistente")
-    })
+    @ApiResponse(responseCode = "200", description = "Historial paginado")
+    @ApiResponse(responseCode = "400", description = "Parametros invalidos")
+    @ApiResponse(responseCode = "404", description = "Jugador inexistente")
     public Page<CotizacionResponse> historial(@PathVariable Long id,
                              @RequestParam(required = false) LocalDate desde,
                              @RequestParam(required = false) LocalDate hasta,
@@ -59,11 +56,9 @@ public class CotizacionController {
 
     @PostMapping("/quotes/recalculate")
     @Operation(summary = "Acepta un recálculo asincrónico de cotizaciones")
-    @ApiResponses({
-            @ApiResponse(responseCode = "202", description = "Recálculo aceptado"),
-            @ApiResponse(responseCode = "409", description = "Ya existe un recálculo activo"),
-            @ApiResponse(responseCode = "500", description = "Configuración u operación invalida")
-    })
+    @ApiResponse(responseCode = "202", description = "Recálculo aceptado")
+    @ApiResponse(responseCode = "409", description = "Ya existe un recálculo activo")
+    @ApiResponse(responseCode = "500", description = "Configuración u operación invalida")
     public ResponseEntity<Map<String, String>> recalcular() {
         if (!servicio.reservarRecalculo()) {
             throw new ExcepcionCotizacionActiva();

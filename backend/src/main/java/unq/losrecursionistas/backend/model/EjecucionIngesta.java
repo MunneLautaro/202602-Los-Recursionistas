@@ -56,6 +56,7 @@ public class EjecucionIngesta {
             case EQUIPO -> equipoId;
             case JUGADOR -> jugadorId;
             case COMPLETA -> null;
+            default -> throw new IllegalStateException("Alcance de ingesta no soportado: " + alcance);
         };
     }
 
@@ -70,6 +71,8 @@ public class EjecucionIngesta {
             case LIGA -> ligaId = idAlcance;
             case EQUIPO -> equipoId = idAlcance;
             case JUGADOR -> jugadorId = idAlcance;
+            case COMPLETA -> ligaId = null;
+            default -> throw new IllegalStateException("Alcance de ingesta no soportado: " + alcance);
         }
     }
 }

@@ -325,6 +325,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
             case LIGA -> vincularPorLiga(alcanceId, ejecucion);
             case EQUIPO -> vincularPorEquipo(alcanceId, ejecucion);
             case JUGADOR -> vincularPorJugador(alcanceId, ejecucion);
+            default -> throw new IllegalArgumentException("Alcance de ingesta no soportado: " + alcance);
         }
     }
 
@@ -503,6 +504,7 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
                     && jugador.getEquipo().getLiga() != null
                     && alcanceId.equals(jugador.getEquipo().getLiga().getId());
             case COMPLETA -> jugador -> true;
+            default -> throw new IllegalArgumentException("Alcance de ingesta no soportado: " + alcance);
         };
         return activos.stream().filter(filtro).filter(jugador -> jugador.getIdWhoscored() != null).toList();
     }

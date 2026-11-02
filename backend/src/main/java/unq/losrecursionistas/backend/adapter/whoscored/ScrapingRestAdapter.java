@@ -832,29 +832,29 @@ public class ScrapingRestAdapter implements ScrapingPort {
         private static Object parseDecimalOrNull(String value) {
             return parseDecimal(value);
         }
-    }
 
-    private static BigDecimal decimal(JsonNode node, String... names) {
-        String value = text(node, names);
-        if (value == null || value.isBlank()) {
-            return null;
+        private static BigDecimal decimal(JsonNode node, String... names) {
+            String value = text(node, names);
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+            String normalized = value.replace("%", "")
+                    .replace("'", "")
+                    .replace("\u2019", "")
+                    .replace("\u2018", "");
+            try {
+                return new BigDecimal(normalized);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-        String normalized = value.replace("%", "")
-                .replace("'", "")
-                .replace("\u2019", "")
-                .replace("\u2018", "");
-        try {
-            return new BigDecimal(normalized);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
 
-    private static Object value(JsonNode node) {
-        if (node.isBoolean()) return node.booleanValue();
-        if (node.isIntegralNumber()) return node.longValue();
-        if (node.isFloatingPointNumber()) return node.doubleValue();
-        return node.asText();
+        private static Object value(JsonNode node) {
+            if (node.isBoolean()) return node.booleanValue();
+            if (node.isIntegralNumber()) return node.longValue();
+            if (node.isFloatingPointNumber()) return node.doubleValue();
+            return node.asText();
+        }
     }
 
     private static List<LigaWhoscoredDto> distinctLigas(List<LigaWhoscoredDto> ligas) {

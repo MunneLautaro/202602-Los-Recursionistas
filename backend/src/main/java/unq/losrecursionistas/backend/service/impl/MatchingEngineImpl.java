@@ -35,12 +35,11 @@ public class MatchingEngineImpl implements MatchingEngine {
         for (Orden compatible : ordenes.buscarCompatiblesBloqueadas(
                 orden.getJugador().getId(), opuesto, orden.getPrecioUnitario(),
                 orden.getUsuario().getId())) {
-            if (orden.getEstado() != EstadoOrden.ACTIVA) {
-                break;
+            if (orden.getEstado() == EstadoOrden.ACTIVA) {
+                int cantidad = Math.min(orden.getCantidadDisponible(),
+                        compatible.getCantidadDisponible());
+                liquidar(orden, compatible, cantidad);
             }
-            int cantidad = Math.min(orden.getCantidadDisponible(),
-                    compatible.getCantidadDisponible());
-            liquidar(orden, compatible, cantidad);
         }
     }
 
