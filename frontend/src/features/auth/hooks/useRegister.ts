@@ -73,10 +73,10 @@ export function useRegister() {
       setTimeout(() => {
         navigate("/login")
       }, 2000)
-    } catch (err: any) {
+    } catch (error) {
       setErrors({
         general:
-          err.message ||
+          (error instanceof Error && error.message) ||
           "Error al registrar usuario. Es posible que el nombre de usuario ya exista.",
       })
     } finally {
