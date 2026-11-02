@@ -393,7 +393,14 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
     String normalizedBaseUrl() {
         String baseUrl = configuration.getBaseUrl();
-        return baseUrl == null ? "" : baseUrl.replaceFirst("/++$", "");
+        if (baseUrl == null) {
+            return "";
+        }
+        int end = baseUrl.length();
+        while (end > 0 && baseUrl.charAt(end - 1) == '/') {
+            end--;
+        }
+        return baseUrl.substring(0, end);
     }
 
     static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId) {
@@ -628,14 +635,53 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 case "passSuccess" -> putIfPresent("passSuccess", parseDecimalOrNull(value));
                 case "rating" -> rating = first(rating, parseDecimal(value));
                 case "opponent" -> {
-                    String opponent = value.replaceAll("\\s++\\d++\\s*+-\\s*+\\d++\\s*+$", "")
-                            .replaceAll("\\s*+\\([HA]\\)\\s*+$", "").trim();
+                    String opponent = removeTrailingVenue(removeTrailingScore(value));
                     rivalNombre = first(rivalNombre, opponent);
                     localVisitante = first(localVisitante, value.contains("(H)") ? "LOCAL" : "VISITANTE");
                 }
                 default -> {
                 }
             }
+        }
+
+        private String removeTrailingScore(String value) {
+            int end = value.length();
+            while (end > 0 && Character.isWhitespace(value.charAt(end - 1))) {
+                end--;
+            }
+            int cursor = end - 1;
+            while (cursor >= 0 && Character.isDigit(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor == end - 1) {
+                return value;
+            }
+            while (cursor >= 0 && Character.isWhitespace(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor < 0 || value.charAt(cursor) != '-') {
+                return value;
+            }
+            cursor--;
+            while (cursor >= 0 && Character.isWhitespace(value.charAt(cursor))) {
+                cursor--;
+            }
+            int firstScoreEnd = cursor + 1;
+            while (cursor >= 0 && Character.isDigit(value.charAt(cursor))) {
+                cursor--;
+            }
+            if (cursor == firstScoreEnd - 1) {
+                return value;
+            }
+            return value.substring(0, cursor + 1);
+        }
+
+        private String removeTrailingVenue(String value) {
+            String trimmed = value.trim();
+            if (trimmed.endsWith("(H)") || trimmed.endsWith("(A)")) {
+                return trimmed.substring(0, trimmed.length() - 3).trim();
+            }
+            return trimmed;
         }
 
         private void putIfPresent(String key, Object value) {
