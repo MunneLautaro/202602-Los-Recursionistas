@@ -145,7 +145,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 result.putIfAbsent(id, new EquipoWhoscoredDto(
                         id, nombre, "/teams/" + id + "/show/" + slugPart, ligaWhoscoredId));
             }
-        } catch (NumberFormatException ignored) {
+        } catch (NumberFormatException exception) {
+            LOGGER.debug("No se pudo interpretar un ID de equipo en el HTML de WhoScored", exception);
         }
     }
 
@@ -169,7 +170,6 @@ public class ScrapingRestAdapter implements ScrapingPort {
         PageData data = load("/teams/" + equipoWhoscoredId + "/show", "descubrir jugadores");
         Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
 
-        // 1. Parsear objetos JSON si están presentes
         for (JsonNode node : findObjects(data.json(), FIELD_PLAYER_ID, "playerID", "player_id", "playerName")) {
             Long id = number(node, FIELD_PLAYER_ID, "playerID", "player_id", "id");
             String nombre = text(node, FIELD_NAME, "playerName", "fullName");
@@ -180,7 +180,6 @@ public class ScrapingRestAdapter implements ScrapingPort {
             }
         }
 
-        // 2. Parsear enlaces HTML del DOM (/players/{id}/show/{slug})
         if (data.html() != null) {
             for (JugadorWhoscoredDto jugador : parsePlayerLinks(data.html(), equipoWhoscoredId)) {
                 result.putIfAbsent(jugador.idWhoscored(), jugador);
@@ -218,49 +217,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private List<AparicionWhoscoredDto> obtenerAparicionesDesdeRuta(String ruta, String fase) {
         PageData data = load(ruta, fase);
         Map<Long, AparicionBuilder> apariciones = new LinkedHashMap<>();
-
-        // 1. Desde JSON — campos explícitos de partido
-        for (JsonNode node : findObjects(data.json(), "matchId", "fixtureId", "gameId")) {
-            Long partidoId = number(node, "matchId", "fixtureId", "gameId");
-            if (partidoId == null) {
-                continue;
-            }
-            AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-            builder.merge(node);
-        }
-
-        // 1b. Desde JSON — objetos con "id" genérico que tienen contexto de partido (fecha o minutos)
-        for (JsonNode node : findObjects(data.json(), "id")) {
-            if (!node.has(FIELD_DATE) && !node.has("matchDate") && !node.has("minutes") && !node.has("minutesPlayed")) {
-                continue;
-            }
-            Long partidoId = number(node, "id");
-            if (partidoId == null) {
-                continue;
-            }
-            AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-            builder.merge(node);
-        }
-
-        // 2. Desde HTML si hay enlaces /matches/{id}/
-        if (data.html() != null) {
-            Pattern rowPattern = Pattern.compile("(?is)<tr[^>]*>(.*?)</tr>");
-            Matcher rowMatcher = rowPattern.matcher(data.html());
-            while (rowMatcher.find()) {
-                String row = rowMatcher.group(1);
-                Matcher matchMatcher = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)/[^\"'/?#]+[\"']")
-                        .matcher(row);
-                if (matchMatcher.find()) {
-                    try {
-                        Long partidoId = Long.valueOf(matchMatcher.group(1));
-                        AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
-                        mergeHtmlAppearanceCells(builder, row);
-                    } catch (NumberFormatException ignored) {
-                        LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta);
-                    }
-                }
-            }
-        }
+        mergeExplicitJsonAppearances(data.json(), apariciones);
+        mergeContextualJsonAppearances(data.json(), apariciones);
+        mergeHtmlAppearances(data.html(), ruta, apariciones);
 
         List<AparicionWhoscoredDto> resultado = apariciones.values().stream().map(AparicionBuilder::build).toList();
         if (resultado.isEmpty()) {
@@ -268,6 +227,61 @@ public class ScrapingRestAdapter implements ScrapingPort {
                     ruta, data.json().size(), data.html() != null && !data.html().isBlank());
         }
         return resultado;
+    }
+
+    private void mergeExplicitJsonAppearances(List<JsonNode> roots,
+                                              Map<Long, AparicionBuilder> apariciones) {
+        for (JsonNode node : findObjects(roots, "matchId", "fixtureId", "gameId")) {
+            Long partidoId = number(node, "matchId", "fixtureId", "gameId");
+            if (partidoId != null) {
+                apariciones.computeIfAbsent(partidoId, AparicionBuilder::new).merge(node);
+            }
+        }
+    }
+
+    private void mergeContextualJsonAppearances(List<JsonNode> roots,
+                                                Map<Long, AparicionBuilder> apariciones) {
+        for (JsonNode node : findObjects(roots, "id")) {
+            if (!hasMatchContext(node)) {
+                continue;
+            }
+            Long partidoId = number(node, "id");
+            if (partidoId != null) {
+                apariciones.computeIfAbsent(partidoId, AparicionBuilder::new).merge(node);
+            }
+        }
+    }
+
+    private boolean hasMatchContext(JsonNode node) {
+        return node.has(FIELD_DATE) || node.has("matchDate")
+                || node.has("minutes") || node.has("minutesPlayed");
+    }
+
+    private void mergeHtmlAppearances(String html, String ruta,
+                                      Map<Long, AparicionBuilder> apariciones) {
+        if (html == null) {
+            return;
+        }
+        Pattern rowPattern = Pattern.compile("(?is)<tr[^>]*>(.*?)</tr>");
+        Matcher rowMatcher = rowPattern.matcher(html);
+        while (rowMatcher.find()) {
+            mergeHtmlAppearanceRow(rowMatcher.group(1), ruta, apariciones);
+        }
+    }
+
+    private void mergeHtmlAppearanceRow(String row, String ruta,
+                                        Map<Long, AparicionBuilder> apariciones) {
+        Matcher matchMatcher = Pattern.compile("(?i)href=[\"']/matches/(\\d+)/(?:show|live)/[^\"'/?#]+[\"']")
+                .matcher(row);
+        if (!matchMatcher.find()) {
+            return;
+        }
+        try {
+            Long partidoId = Long.valueOf(matchMatcher.group(1));
+            mergeHtmlAppearanceCells(apariciones.computeIfAbsent(partidoId, AparicionBuilder::new), row);
+        } catch (NumberFormatException exception) {
+            LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta, exception);
+        }
     }
 
     private void mergeHtmlAppearanceCells(AparicionBuilder builder, String row) {
@@ -366,8 +380,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 if (contentType != null && contentType.contains("json")) {
                     jsonResponses.add(response.text());
                 }
-            } catch (RuntimeException ignored) {
-                // A response can be closed by the browser while the page is navigating.
+            } catch (RuntimeException exception) {
+                LOGGER.trace("No se pudo leer una respuesta durante la navegación de {}", url, exception);
             }
         });
         var navigationResponse = page.navigate(url, new Page.NavigateOptions()
@@ -378,7 +392,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
         try {
             page.waitForTimeout(3000);
-        } catch (Exception ignored) {
+        } catch (RuntimeException exception) {
+            LOGGER.debug("No se pudo esperar la carga completa de {}", url, exception);
         }
         String html = page.content();
         if (looksBlocked(html)) {
@@ -394,8 +409,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
         for (String response : responses) {
             try {
                 json.add(objectMapper.readTree(response));
-            } catch (Exception ignored) {
-                // Non-JSON responses are ignored; embedded JSON is tried below.
+            } catch (Exception exception) {
+                LOGGER.trace("Se descartó una respuesta que no contiene JSON válido", exception);
             }
         }
         return json;
@@ -423,7 +438,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
             if (value != null && !value.toString().isBlank() && !"null".equals(value.toString())) {
                 json.add(objectMapper.readTree(value.toString()));
             }
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            LOGGER.debug("No se pudo leer la variable de página {}", variableName, exception);
         }
     }
 
@@ -553,7 +569,8 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
         try {
             target.add(objectMapper.readTree(script.substring(start, end)));
-        } catch (Exception ignored) {
+        } catch (Exception exception) {
+            LOGGER.trace("No se pudo interpretar un candidato JSON embebido", exception);
         }
     }
 
