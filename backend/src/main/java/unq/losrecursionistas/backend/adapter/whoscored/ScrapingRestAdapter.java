@@ -33,6 +33,18 @@ import java.util.regex.Pattern;
 @Component
 public class ScrapingRestAdapter implements ScrapingPort {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScrapingRestAdapter.class);
+    private static final String TEMPORADA_ACTUAL = "2025/2026";
+    private static final String FIELD_GOAL_TOTAL = "goalTotal";
+    private static final String FIELD_ASSIST = "assist";
+    private static final String FIELD_YELLOW_CARD = "yellowCard";
+    private static final String FIELD_RED_CARD = "redCard";
+    private static final String FIELD_SHOTS_TOTAL = "shotsTotal";
+    private static final String FIELD_PASS_SUCCESS = "passSuccess";
+    private static final String FIELD_RATING = "rating";
+    private static final String FIELD_TEAM_ID = "teamId";
+    private static final String FIELD_TEAM_NAME = "teamName";
+    private static final String PLAYER_PATH = "/players/";
+    private static final String NON_NUMERIC_CHARACTERS = "[^0-9-]";
     static final String DEFAULT_BROWSER_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -46,11 +58,11 @@ public class ScrapingRestAdapter implements ScrapingPort {
     );
 
     private static final List<LigaWhoscoredDto> LIGAS_TOP = List.of(
-            new LigaWhoscoredDto(252L, "Premier League", "/Regions/252/Tournaments/2/England-Premier-League", "2025/2026"),
-            new LigaWhoscoredDto(206L, "LaLiga", "/Regions/206/Tournaments/4/Spain-LaLiga", "2025/2026"),
-            new LigaWhoscoredDto(81L, "Bundesliga", "/Regions/81/Tournaments/3/Germany-Bundesliga", "2025/2026"),
-            new LigaWhoscoredDto(108L, "Serie A", "/Regions/108/Tournaments/5/Italy-Serie-A", "2025/2026"),
-            new LigaWhoscoredDto(74L, "Ligue 1", "/Regions/74/Tournaments/22/France-Ligue-1", "2025/2026")
+            new LigaWhoscoredDto(252L, "Premier League", "/Regions/252/Tournaments/2/England-Premier-League", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(206L, "LaLiga", "/Regions/206/Tournaments/4/Spain-LaLiga", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(81L, "Bundesliga", "/Regions/81/Tournaments/3/Germany-Bundesliga", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(108L, "Serie A", "/Regions/108/Tournaments/5/Italy-Serie-A", TEMPORADA_ACTUAL),
+            new LigaWhoscoredDto(74L, "Ligue 1", "/Regions/74/Tournaments/22/France-Ligue-1", TEMPORADA_ACTUAL)
     );
 
     private final ScrapingConfiguration configuration;
@@ -87,9 +99,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
         Map<Long, EquipoWhoscoredDto> result = new LinkedHashMap<>();
 
         // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), "teamId", "team")) {
-            Long id = number(node, "teamId", "id");
-            String nombre = text(node, "name", "teamName");
+        for (JsonNode node : findObjects(data.json(), FIELD_TEAM_ID, "team")) {
+            Long id = number(node, FIELD_TEAM_ID, "id");
+            String nombre = text(node, "name", FIELD_TEAM_NAME);
             if (id != null && nombre != null) {
                 result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, "slug", "url"), ligaWhoscoredId));
             }
@@ -131,7 +143,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             if (id != null && nombre != null) {
                 result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, "slug", "url"),
                         date(node, "dateOfBirth", "birthDate"), text(node, "nationality", "countryName"),
-                        equipoWhoscoredId, text(node, "teamName"), strings(node, "positions", "position")));
+                        equipoWhoscoredId, text(node, FIELD_TEAM_NAME), strings(node, "positions", "position")));
             }
         }
 
@@ -148,10 +160,10 @@ public class ScrapingRestAdapter implements ScrapingPort {
     @Override
     public List<AparicionWhoscoredDto> obtenerApariciones(Long jugadorWhoscoredId) {
         requireId(jugadorWhoscoredId, "jugador");
-        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/show", "obtener apariciones");
+        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta(PLAYER_PATH + jugadorWhoscoredId + "/show", "obtener apariciones");
         if (apariciones.isEmpty()) {
             try {
-                apariciones = obtenerAparicionesDesdeRuta("/players/" + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
+                apariciones = obtenerAparicionesDesdeRuta(PLAYER_PATH + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
             } catch (Exception ex) {
                 LOGGER.debug("No se obtuvieron apariciones desde /matchstatistics para jugador {}: {}", jugadorWhoscoredId, ex.getMessage());
             }
@@ -166,7 +178,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             throw new ScrapingException("El slug del jugador es obligatorio", null, "obtener estadísticas de temporada", null);
         }
         return obtenerAparicionesDesdeRuta(
-                "/players/" + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
+                PLAYER_PATH + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
                 "obtener estadísticas de temporada");
     }
 
@@ -211,14 +223,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
                         AparicionBuilder builder = apariciones.computeIfAbsent(partidoId, AparicionBuilder::new);
                         builder.mergeHtmlCell("date", htmlCell(row, "date"));
                         builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
-                        builder.mergeHtmlCell("goalTotal", htmlCell(row, "goalTotal"));
-                        builder.mergeHtmlCell("assist", htmlCell(row, "assist"));
-                        builder.mergeHtmlCell("yellowCard", htmlCell(row, "yellowCard"));
-                        builder.mergeHtmlCell("redCard", htmlCell(row, "redCard"));
-                        builder.mergeHtmlCell("shotsTotal", htmlCell(row, "shotsTotal"));
-                        builder.mergeHtmlCell("passSuccess", htmlCell(row, "passSuccess"));
+                        mergeHtmlAppearanceCells(builder, row);
                         builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
-                        builder.mergeHtmlCell("rating", htmlCell(row, "rating"));
+                        builder.mergeHtmlCell(FIELD_RATING, htmlCell(row, FIELD_RATING));
                         builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
                     } catch (NumberFormatException ignored) {
                         LOGGER.debug("No se pudo interpretar un partido en el HTML de {}", ruta);
@@ -233,6 +240,20 @@ public class ScrapingRestAdapter implements ScrapingPort {
                     ruta, data.json().size(), data.html() != null && !data.html().isBlank());
         }
         return resultado;
+    }
+
+    private void mergeHtmlAppearanceCells(AparicionBuilder builder, String row) {
+        builder.mergeHtmlCell("date", htmlCell(row, "date"));
+        builder.mergeHtmlCell("minsPlayed", htmlCell(row, "minsPlayed"));
+        builder.mergeHtmlCell(FIELD_GOAL_TOTAL, htmlCell(row, FIELD_GOAL_TOTAL));
+        builder.mergeHtmlCell(FIELD_ASSIST, htmlCell(row, FIELD_ASSIST));
+        builder.mergeHtmlCell(FIELD_YELLOW_CARD, htmlCell(row, FIELD_YELLOW_CARD));
+        builder.mergeHtmlCell(FIELD_RED_CARD, htmlCell(row, FIELD_RED_CARD));
+        builder.mergeHtmlCell(FIELD_SHOTS_TOTAL, htmlCell(row, FIELD_SHOTS_TOTAL));
+        builder.mergeHtmlCell(FIELD_PASS_SUCCESS, htmlCell(row, FIELD_PASS_SUCCESS));
+        builder.mergeHtmlCell("duelAerialWon", htmlCell(row, "duelAerialWon"));
+        builder.mergeHtmlCell(FIELD_RATING, htmlCell(row, FIELD_RATING));
+        builder.mergeHtmlCell("opponent", htmlCell(row, "grid-abs"));
     }
 
     private PageData load(String path, String fase) {
@@ -259,128 +280,122 @@ public class ScrapingRestAdapter implements ScrapingPort {
     }
 
     private PageData executeLoad(String url, String fase) {
-        if (configuration.getPauseMs() > 0) {
-            try {
-                Thread.sleep(configuration.getPauseMs());
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-            }
-        }
-
+        pauseBeforeLoad();
         List<String> jsonResponses = new CopyOnWriteArrayList<>();
         try (Playwright playwright = Playwright.create()) {
-            BrowserType.LaunchOptions launchOptions = new BrowserType.LaunchOptions()
-                    .setHeadless(configuration.isHeadless())
-                    .setArgs(List.of(
-                            "--disable-blink-features=AutomationControlled",
-                            "--no-sandbox",
-                            "--disable-dev-shm-usage",
-                            "--disable-infobars"
-                    ));
-
-            try (Browser browser = playwright.chromium().launch(launchOptions)) {
-                Browser.NewContextOptions contextOptions = new Browser.NewContextOptions()
-                        .setUserAgent(effectiveUserAgent())
-                        .setViewportSize(1920, 1080)
-                        .setLocale("es-ES")
-                        .setTimezoneId("America/Argentina/Buenos_Aires")
-                        .setExtraHTTPHeaders(Map.of(
-                                "Accept-Language", "es-ES,es;q=0.9,en;q=0.8",
-                                "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
-                                "sec-ch-ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
-                                "sec-ch-ua-mobile", "?0",
-                                "sec-ch-ua-platform", "\"Windows\""
-                        ));
-
-                try (BrowserContext context = browser.newContext(contextOptions)) {
-                    context.addInitScript("""
-                        Object.defineProperty(navigator, 'webdriver', {
-                            get: () => undefined
-                        });
-                        window.chrome = {
-                            runtime: {}
-                        };
-                        Object.defineProperty(navigator, 'languages', {
-                            get: () => ['es-ES', 'es', 'en']
-                        });
-                    """);
-
-                    try (Page page = context.newPage()) {
-                        page.setDefaultNavigationTimeout(configuration.getNavigationTimeoutMs());
-                        page.onResponse(response -> {
-                            try {
-                                String contentType = response.headerValue("content-type");
-                                if (contentType != null && contentType.contains("json")) {
-                                    jsonResponses.add(response.text());
-                                }
-                            } catch (RuntimeException ignored) {
-                                // A response can be closed by the browser while the page is navigating.
-                            }
-                        });
-
-                        var navigationResponse = page.navigate(url, new Page.NavigateOptions()
-                                .setTimeout(configuration.getNavigationTimeoutMs())
-                                .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
-                        if (navigationResponse != null && navigationResponse.status() >= 400) {
-                            throw new ScrapingException("WhoScored respondió HTTP " + navigationResponse.status(),
-                                    url, fase);
-                        }
-
-                        try {
-                            page.waitForTimeout(3000);
-                        } catch (Exception ignored) {}
-
-                        String html = page.content();
-                        if (looksBlocked(html)) {
-                            throw new ScrapingException("WhoScored devolvió una página de bloqueo o verificación",
-                                    url, fase);
-                        }
-                        List<JsonNode> json = new ArrayList<>();
-                        for (String response : jsonResponses) {
-                            try {
-                                json.add(objectMapper.readTree(response));
-                            } catch (Exception ignored) {
-                                // Non-JSON responses are ignored; embedded JSON is tried below.
-                            }
-
-                        }
-
-                        try {
-                            Object ds = page.evaluate("() => typeof DataStore !== 'undefined' ? JSON.stringify(DataStore) : null");
-                            if (ds != null && !ds.toString().isBlank() && !"null".equals(ds.toString())) {
-                                json.add(objectMapper.readTree(ds.toString()));
-                            }
-                        } catch (Exception ignored) {}
-
-                        try {
-                            Object mcd = page.evaluate("() => typeof matchCentreData !== 'undefined' ? JSON.stringify(matchCentreData) : null");
-                            if (mcd != null && !mcd.toString().isBlank() && !"null".equals(mcd.toString())) {
-                                json.add(objectMapper.readTree(mcd.toString()));
-                            }
-                        } catch (Exception ignored) {}
-
-                        // Extraer variables globales conocidas de WhoScored con datos de apariciones
-                        for (String varName : List.of("playerMatchStats", "matchStatistics", "playerStats", "statsData")) {
-                            try {
-                                Object varData = page.evaluate("() => typeof " + varName + " !== 'undefined' ? JSON.stringify(" + varName + ") : null");
-                                if (varData != null && !varData.toString().isBlank() && !"null".equals(varData.toString())) {
-                                    json.add(objectMapper.readTree(varData.toString()));
-                                }
-                            } catch (Exception ignored) {}
-                        }
-
-                        for (String script : page.locator("script").allTextContents()) {
-                            if (script.contains("\"playerId\"") || script.contains("\"teamId\"")
-                                    || script.contains("\"leagueId\"") || script.contains("\"matchId\"")
-                                    || script.contains("\"fixtureId\"") || script.contains("\"gameId\"")) {
-                                extractJsonCandidatesFromScript(script, json);
-                            }
-                        }
-                        return new PageData(json, html);
-                    }
-
+            try (Browser browser = playwright.chromium().launch(browserLaunchOptions());
+                 BrowserContext context = createBrowserContext(browser)) {
+                context.addInitScript(browserInitScript());
+                try (Page page = context.newPage()) {
+                    return capturePage(page, url, fase, jsonResponses);
                 }
             }
+        }
+    }
+
+    private void pauseBeforeLoad() {
+        if (configuration.getPauseMs() <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(configuration.getPauseMs());
+        } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    private BrowserType.LaunchOptions browserLaunchOptions() {
+        return new BrowserType.LaunchOptions().setHeadless(configuration.isHeadless()).setArgs(List.of(
+                "--disable-blink-features=AutomationControlled", "--no-sandbox",
+                "--disable-dev-shm-usage", "--disable-infobars"));
+    }
+
+    private BrowserContext createBrowserContext(Browser browser) {
+        Browser.NewContextOptions options = new Browser.NewContextOptions()
+                .setUserAgent(effectiveUserAgent()).setViewportSize(1920, 1080)
+                .setLocale("es-ES").setTimezoneId("America/Argentina/Buenos_Aires")
+                .setExtraHTTPHeaders(Map.of(
+                        "Accept-Language", "es-ES,es;q=0.9,en;q=0.8",
+                        "Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+                        "sec-ch-ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
+                        "sec-ch-ua-mobile", "?0", "sec-ch-ua-platform", "\"Windows\""));
+        return browser.newContext(options);
+    }
+
+    private String browserInitScript() {
+        return """
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                window.chrome = { runtime: {} };
+                Object.defineProperty(navigator, 'languages', { get: () => ['es-ES', 'es', 'en'] });
+                """;
+    }
+
+    private PageData capturePage(Page page, String url, String fase, List<String> jsonResponses) {
+        page.setDefaultNavigationTimeout(configuration.getNavigationTimeoutMs());
+        page.onResponse(response -> {
+            try {
+                String contentType = response.headerValue("content-type");
+                if (contentType != null && contentType.contains("json")) {
+                    jsonResponses.add(response.text());
+                }
+            } catch (RuntimeException ignored) {
+                // A response can be closed by the browser while the page is navigating.
+            }
+        });
+        var navigationResponse = page.navigate(url, new Page.NavigateOptions()
+                .setTimeout(configuration.getNavigationTimeoutMs())
+                .setWaitUntil(WaitUntilState.DOMCONTENTLOADED));
+        if (navigationResponse != null && navigationResponse.status() >= 400) {
+            throw new ScrapingException("WhoScored respondió HTTP " + navigationResponse.status(), url, fase);
+        }
+        try {
+            page.waitForTimeout(3000);
+        } catch (Exception ignored) {
+        }
+        String html = page.content();
+        if (looksBlocked(html)) {
+            throw new ScrapingException("WhoScored devolvió una página de bloqueo o verificación", url, fase);
+        }
+        List<JsonNode> json = parseResponses(jsonResponses);
+        addKnownPageData(page, json);
+        return new PageData(json, html);
+    }
+
+    private List<JsonNode> parseResponses(List<String> responses) {
+        List<JsonNode> json = new ArrayList<>();
+        for (String response : responses) {
+            try {
+                json.add(objectMapper.readTree(response));
+            } catch (Exception ignored) {
+                // Non-JSON responses are ignored; embedded JSON is tried below.
+            }
+        }
+        return json;
+    }
+
+    private void addKnownPageData(Page page, List<JsonNode> json) {
+        addPageVariable(page, "DataStore", json);
+        addPageVariable(page, "matchCentreData", json);
+        for (String varName : List.of("playerMatchStats", "matchStatistics", "playerStats", "statsData")) {
+            addPageVariable(page, varName, json);
+        }
+        for (String script : page.locator("script").allTextContents()) {
+            if (script.contains("\"playerId\"") || script.contains("\"teamId\"")
+                    || script.contains("\"leagueId\"") || script.contains("\"matchId\"")
+                    || script.contains("\"fixtureId\"") || script.contains("\"gameId\"")) {
+                extractJsonCandidatesFromScript(script, json);
+            }
+        }
+    }
+
+    private void addPageVariable(Page page, String variableName, List<JsonNode> json) {
+        try {
+            Object value = page.evaluate("() => typeof " + variableName
+                    + " !== 'undefined' ? JSON.stringify(" + variableName + ") : null");
+            if (value != null && !value.toString().isBlank() && !"null".equals(value.toString())) {
+                json.add(objectMapper.readTree(value.toString()));
+            }
+        } catch (Exception ignored) {
         }
     }
 
@@ -425,7 +440,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 }
                 if (!nombre.isBlank()) {
                     result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre,
-                            "/players/" + id + "/show/" + slugPart,
+                            PLAYER_PATH + id + "/show/" + slugPart,
                             null, null, equipoWhoscoredId, null, List.of()));
                 }
             } catch (NumberFormatException ignored) {
@@ -472,41 +487,45 @@ public class ScrapingRestAdapter implements ScrapingPort {
      * estructuras de apariciones que vengan embebidas en asignaciones de variables.
      */
     private void extractJsonCandidatesFromScript(String script, List<JsonNode> target) {
-        // Intentar extraer arrays o objetos JSON de asignaciones de variable JS:
-        // e.g.: var playerMatchStats = [{...}, ...];
-        java.util.regex.Pattern assignmentPattern = java.util.regex.Pattern.compile(
-                "(?:var|let|const|window\\.)[\\w.]+=\\s*([\\[{])", java.util.regex.Pattern.DOTALL);
-        java.util.regex.Matcher assignmentMatcher = assignmentPattern.matcher(script);
-        while (assignmentMatcher.find()) {
-            int valueStart = assignmentMatcher.start(1);
-            char openChar = script.charAt(valueStart);
-            char closeChar = openChar == '[' ? ']' : '}';
-            int depth = 0;
-            int end = -1;
-            for (int i = valueStart; i < script.length(); i++) {
-                char c = script.charAt(i);
-                if (c == openChar) depth++;
-                else if (c == closeChar) {
-                    depth--;
-                    if (depth == 0) { end = i + 1; break; }
-                }
-            }
-            if (end > valueStart) {
-                String candidate = script.substring(valueStart, end);
-                try {
-                    target.add(objectMapper.readTree(candidate));
-                } catch (Exception ignored) {}
-            }
-        }
-
-        // Fallback: extraer el bloque objeto más grande del script (comportamiento anterior)
+        addAssignedJsonCandidates(script, target);
         int start = script.indexOf('{');
         int end = script.lastIndexOf('}');
-        if (start >= 0 && end > start) {
-            String candidate = script.substring(start, end + 1);
-            try {
-                target.add(objectMapper.readTree(candidate));
-            } catch (Exception ignored) {}
+        addJsonCandidate(script, start, end + 1, target);
+    }
+
+    private void addAssignedJsonCandidates(String script, List<JsonNode> target) {
+        Pattern assignmentPattern = Pattern.compile(
+                "(?:var|let|const|window\\.)[\\w.]+=\\s*([\\[{])", Pattern.DOTALL);
+        Matcher assignmentMatcher = assignmentPattern.matcher(script);
+        while (assignmentMatcher.find()) {
+            int valueStart = assignmentMatcher.start(1);
+            int end = findJsonBlockEnd(script, valueStart);
+            addJsonCandidate(script, valueStart, end, target);
+        }
+    }
+
+    private int findJsonBlockEnd(String script, int valueStart) {
+        char openChar = script.charAt(valueStart);
+        char closeChar = openChar == '[' ? ']' : '}';
+        int depth = 0;
+        for (int index = valueStart; index < script.length(); index++) {
+            char current = script.charAt(index);
+            if (current == openChar) {
+                depth++;
+            } else if (current == closeChar && --depth == 0) {
+                return index + 1;
+            }
+        }
+        return -1;
+    }
+
+    private void addJsonCandidate(String script, int start, int end, List<JsonNode> target) {
+        if (start < 0 || end <= start) {
+            return;
+        }
+        try {
+            target.add(objectMapper.readTree(script.substring(start, end)));
+        } catch (Exception ignored) {
         }
     }
 
@@ -550,7 +569,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
         String normalized = value.replace(".", "")
                 .replace(",", "")
-                .replaceAll("[^0-9-]", "");
+                .replaceAll(NON_NUMERIC_CHARACTERS, "");
         if (normalized.isEmpty() || "-".equals(normalized)) {
             return null;
         }
@@ -604,13 +623,13 @@ public class ScrapingRestAdapter implements ScrapingPort {
             fecha = firstDate(fecha, date(node, "date", "matchDate", "gameDate"));
             torneo = first(torneo, text(node, "tournamentName", "competitionName", "tournament", "competition"));
             torneoId = first(torneoId, number(node, "tournamentId", "competitionId"));
-            equipoId = first(equipoId, number(node, "teamId", "playerTeamId"));
-            equipoNombre = first(equipoNombre, text(node, "teamName", "playerTeam"));
+            equipoId = first(equipoId, number(node, FIELD_TEAM_ID, "playerTeamId"));
+            equipoNombre = first(equipoNombre, text(node, FIELD_TEAM_NAME, "playerTeam"));
             rivalId = first(rivalId, number(node, "opponentId", "rivalId"));
             rivalNombre = first(rivalNombre, text(node, "opponentName", "rivalName"));
             localVisitante = first(localVisitante, text(node, "venue", "homeAway", "location"));
             minutos = first(minutos, integer(node, "minutes", "minutesPlayed", "mins"));
-            rating = first(rating, decimal(node, "rating", "playerRating"));
+            rating = first(rating, decimal(node, FIELD_RATING, "playerRating"));
             node.properties().forEach(entry -> {
                 if (entry.getValue().isValueNode()) {
                     crudas.putIfAbsent(entry.getKey(), value(entry.getValue()));
@@ -627,13 +646,13 @@ public class ScrapingRestAdapter implements ScrapingPort {
             switch (key) {
                 case "date" -> fecha = firstDate(fecha, parseDate(value));
                 case "minsPlayed" -> minutos = first(minutos, parseInteger(value));
-                case "goalTotal" -> putIfPresent("goals", parseIntegerOrNull(value));
-                case "assist" -> putIfPresent("assists", parseIntegerOrNull(value));
-                case "yellowCard" -> putIfPresent("yellowCards", parseIntegerOrNull(value));
-                case "redCard" -> putIfPresent("redCards", parseIntegerOrNull(value));
-                case "shotsTotal" -> putIfPresent("shots", parseIntegerOrNull(value));
-                case "passSuccess" -> putIfPresent("passSuccess", parseDecimalOrNull(value));
-                case "rating" -> rating = first(rating, parseDecimal(value));
+                case FIELD_GOAL_TOTAL -> putIfPresent("goals", parseIntegerOrNull(value));
+                case FIELD_ASSIST -> putIfPresent("assists", parseIntegerOrNull(value));
+                case FIELD_YELLOW_CARD -> putIfPresent("yellowCards", parseIntegerOrNull(value));
+                case FIELD_RED_CARD -> putIfPresent("redCards", parseIntegerOrNull(value));
+                case FIELD_SHOTS_TOTAL -> putIfPresent("shots", parseIntegerOrNull(value));
+                case FIELD_PASS_SUCCESS -> putIfPresent("passSuccess", parseDecimalOrNull(value));
+                case FIELD_RATING -> rating = first(rating, parseDecimal(value));
                 case "opponent" -> {
                     String opponent = removeTrailingVenue(removeTrailingScore(value));
                     rivalNombre = first(rivalNombre, opponent);
@@ -710,7 +729,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
         String normalized = value.replace(".", "")
                 .replace(",", "")
-                .replaceAll("[^0-9-]", "");
+                .replaceAll(NON_NUMERIC_CHARACTERS, "");
         if (normalized.isEmpty() || "-".equals(normalized)) {
             return null;
         }
@@ -724,7 +743,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private static Integer parseInteger(String value) {
         if (value == null || value.isBlank() || "-".equals(value)) return null;
         try {
-            return Integer.valueOf(value.replaceAll("[^0-9-]", ""));
+            return Integer.valueOf(value.replaceAll(NON_NUMERIC_CHARACTERS, ""));
         } catch (NumberFormatException exception) {
             return null;
         }
