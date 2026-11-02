@@ -6,8 +6,6 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.LiquidezInicialServiceImpl;
 
 import java.math.BigDecimal;
-import java.util.concurrent.atomic.AtomicInteger;
-
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -24,8 +22,9 @@ class LiquidezInicialConcurrencyTest {
         jugador.setId(2L);
         when(usuarios.buscarCustodio()).thenReturn(custodio);
         when(cotizaciones.vigente(2L)).thenReturn(Cotizacion.crear(jugador,
-                new BigDecimal("5.00"), java.time.LocalDateTime.now(), "test",
-                java.time.LocalDate.now(), java.time.LocalDate.now()));
+                new BigDecimal("5.00"), java.time.LocalDateTime.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")), "test",
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires")),
+                java.time.LocalDate.now(java.time.ZoneId.of("America/Argentina/Buenos_Aires"))));
         when(ordenes.buscarLiquidezInicialBloqueada(1L, 2L)).thenReturn(null);
         when(tenencias.buscarBloqueada(1L, 2L)).thenReturn(null);
         when(ordenes.guardar(any(Orden.class))).thenAnswer(invocation -> invocation.getArgument(0));

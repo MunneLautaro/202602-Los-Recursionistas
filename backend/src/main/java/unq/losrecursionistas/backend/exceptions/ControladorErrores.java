@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.Instant;
+import java.time.Clock;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
@@ -72,7 +73,7 @@ public class ControladorErrores {
 	}
 
 	private ResponseEntity<RespuestaError> respuesta(HttpStatus estado, String mensaje, String detalle) {
-		RespuestaError cuerpo = new RespuestaError(estado.value(), mensaje, detalle, Instant.now());
+		RespuestaError cuerpo = new RespuestaError(estado.value(), mensaje, detalle, Instant.now(Clock.systemUTC()));
 		return ResponseEntity.status(estado).body(cuerpo);
 	}
 }

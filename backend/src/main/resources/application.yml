@@ -89,6 +89,7 @@ whoscored:
     request-timeout-ms: ${WHOSCORED_SCRAPING_REQUEST_TIMEOUT_MS:15000}
     user-agent: ${WHOSCORED_SCRAPING_USER_AGENT:Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36}
     base-url: ${WHOSCORED_SCRAPING_BASE_URL:https://www.whoscored.com}
+    player-path: ${WHOSCORED_SCRAPING_PLAYER_PATH:/players/}
     pause-ms: ${WHOSCORED_SCRAPING_PAUSE_MS:1000}
     rate-limit-per-minute: ${WHOSCORED_SCRAPING_RATE_LIMIT_PER_MINUTE:30}
     max-retries: ${WHOSCORED_SCRAPING_MAX_RETRIES:2}

@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -13,7 +14,7 @@ class CotizacionTest {
     void redondeaValorYConservaVentana() {
         Jugador jugador = Jugador.builder().id(1L).activo(true).build();
         Cotizacion cotizacion = Cotizacion.crear(jugador, new BigDecimal("10.126"),
-                LocalDateTime.now(), "PERFORMANCE_GENERAL",
+                LocalDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")), "PERFORMANCE_GENERAL",
                 LocalDate.of(2026, 10, 14), LocalDate.of(2026, 10, 21));
 
         assertThat(cotizacion.getValor()).isEqualByComparingTo("10.13");
@@ -25,7 +26,7 @@ class CotizacionTest {
     void rechazaVentanaInvertida() {
         Jugador jugador = Jugador.builder().id(1L).build();
         assertThatIllegalArgumentException().isThrownBy(() -> Cotizacion.crear(
-                jugador, BigDecimal.TEN, LocalDateTime.now(), "GENERAL",
+                jugador, BigDecimal.TEN, LocalDateTime.now(ZoneId.of("America/Argentina/Buenos_Aires")), "GENERAL",
                 LocalDate.of(2026, 10, 22), LocalDate.of(2026, 10, 21)));
     }
 }

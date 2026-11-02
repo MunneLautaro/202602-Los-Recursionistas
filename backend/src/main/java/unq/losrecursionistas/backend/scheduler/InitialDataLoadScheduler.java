@@ -52,8 +52,14 @@ public class InitialDataLoadScheduler {
     @EventListener(ApplicationReadyEvent.class)
     public void cargarDatosIniciales() {
         LOGGER.info("========== Iniciando proceso de carga inicial y preparación del sistema ==========");
+        sincronizarFootballData();
+        cargarWhoScored();
+        recalcularCotizaciones();
+        inicializarLiquidez();
+        LOGGER.info("========== Proceso de inicialización de la aplicación completado ==========");
+    }
 
-        // 1. Sincronización de Football Data
+    private void sincronizarFootballData() {
         if (!footballDataStartupEnabled) {
             LOGGER.info("[Football Data] Carga inicial deshabilitada por configuración (FOOTBALL_DATA_STARTUP_ENABLED=false).");
         } else if (!esTokenValido()) {
@@ -67,8 +73,9 @@ public class InitialDataLoadScheduler {
                 LOGGER.error("[Football Data] Ocurrió un error durante la sincronización: {}", e.getMessage(), e);
             }
         }
+    }
 
-        // 2. Carga inicial de WhoScored (Scraping)
+    private void cargarWhoScored() {
         if (!scrapingConfiguration.isStartupEnabled()) {
             LOGGER.info("[WhoScored] Carga inicial deshabilitada por configuración (WHOSCORED_STARTUP_ENABLED=false).");
         } else {
@@ -81,8 +88,9 @@ public class InitialDataLoadScheduler {
                         exception.getMessage(), exception);
             }
         }
+    }
 
-        // 3. Recálculo de cotizaciones de rendimiento
+    private void recalcularCotizaciones() {
         if (cotizacionService != null) {
             try {
                 LOGGER.info("[Cotizaciones] Recalculando cotizaciones por rendimiento...");
@@ -92,30 +100,37 @@ public class InitialDataLoadScheduler {
                 LOGGER.warn("[Cotizaciones] No se pudieron recalcular cotizaciones de rendimiento: {}", e.getMessage());
             }
         }
+    }
 
-        // 4. Inicialización de liquidez de mercado (Tokens y Órdenes iniciales)
+    private void inicializarLiquidez() {
         LOGGER.info("[Mercado] Inicializando liquidez (emisión de tokens y órdenes de venta iniciales)...");
-        if (jugadores != null && liquidezInicial != null) {
-            List<Jugador> jugadoresActivos = jugadores.obtenerJugadoresActivos();
-            LOGGER.info("[Mercado] Se encontraron {} jugadores activos para verificar liquidez inicial.", jugadoresActivos.size());
-
-            int procesados = 0;
-            int errores = 0;
-            for (Jugador jugador : jugadoresActivos) {
-                try {
-                    liquidezInicial.inicializar(jugador);
-                    procesados++;
-                } catch (RuntimeException exception) {
-                    LOGGER.warn("[Mercado] No se pudo inicializar liquidez para el jugador '{}' (ID: {}): {}",
-                            jugador.getNombre(), jugador.getId(), exception.getMessage());
-                    errores++;
-                }
-            }
-            LOGGER.info("[Mercado] Proceso de liquidez inicial finalizado. Jugadores procesados: {}, Errores: {}.",
-                    procesados, errores);
+        if (jugadores == null || liquidezInicial == null) {
+            return;
         }
+        List<Jugador> jugadoresActivos = jugadores.obtenerJugadoresActivos();
+        LOGGER.info("[Mercado] Se encontraron {} jugadores activos para verificar liquidez inicial.", jugadoresActivos.size());
+        int procesados = 0;
+        int errores = 0;
+        for (Jugador jugador : jugadoresActivos) {
+            if (inicializarLiquidez(jugador)) {
+                procesados++;
+            } else {
+                errores++;
+            }
+        }
+        LOGGER.info("[Mercado] Proceso de liquidez inicial finalizado. Jugadores procesados: {}, Errores: {}.",
+                procesados, errores);
+    }
 
-        LOGGER.info("========== Proceso de inicialización de la aplicación completado ==========");
+    private boolean inicializarLiquidez(Jugador jugador) {
+        try {
+            liquidezInicial.inicializar(jugador);
+            return true;
+        } catch (RuntimeException exception) {
+            LOGGER.warn("[Mercado] No se pudo inicializar liquidez para el jugador '{}' (ID: {}): {}",
+                    jugador.getNombre(), jugador.getId(), exception.getMessage());
+            return false;
+        }
     }
 
     private boolean esTokenValido() {

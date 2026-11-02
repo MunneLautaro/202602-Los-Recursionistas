@@ -30,12 +30,21 @@ export const Header: React.FC<HeaderProps> = ({
           <Link to="/jugadores" className={headerStyles.navLink}>
             Jugadores
           </Link>
+          <Link to="/ranking" className={headerStyles.navLink}>
+            Ranking
+          </Link>
+          <Link to="/mercado" className={headerStyles.navLink}>
+            Mercado
+          </Link>
         </nav>
 
         <div className={headerStyles.actionsContainer}>
           {isAuthenticated ? (
             <>
               <span className={headerStyles.userName}>{nombreUsuario}</span>
+              <Link to="/cuenta" className={headerStyles.navLink}>
+                Cuenta
+              </Link>
               <button
                 type="button"
                 onClick={logout}
