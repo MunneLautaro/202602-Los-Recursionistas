@@ -36,6 +36,11 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private static final String TEMPORADA_ACTUAL = "2025/2026";
     private static final String FIELD_GOAL_TOTAL = "goalTotal";
     private static final String FIELD_ASSIST = "assist";
+    private static final String FIELD_DATE = "date";
+    private static final String FIELD_NAME = "name";
+    private static final String FIELD_PLAYER_ID = "playerId";
+    private static final String FIELD_SLUG = "slug";
+    private static final String FIELD_URL = "url";
     private static final String FIELD_YELLOW_CARD = "yellowCard";
     private static final String FIELD_RED_CARD = "redCard";
     private static final String FIELD_SHOTS_TOTAL = "shotsTotal";
@@ -83,9 +88,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
             PageData data = load("/Regions", "descubrir ligas");
             for (JsonNode node : findObjects(data.json(), "leagueId", "id")) {
                 Long id = number(node, "leagueId", "id");
-                String nombre = text(node, "name", "leagueName");
+                String nombre = text(node, FIELD_NAME, "leagueName");
                 if (id != null && nombre != null) {
-                    result.add(new LigaWhoscoredDto(id, nombre, text(node, "slug", "url"), text(node, "season")));
+                    result.add(new LigaWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL), text(node, "season")));
                 }
             }
         } catch (Exception ex) {
@@ -109,9 +114,9 @@ public class ScrapingRestAdapter implements ScrapingPort {
                                   Map<Long, EquipoWhoscoredDto> result) {
         for (JsonNode node : findObjects(roots, FIELD_TEAM_ID, "team")) {
             Long id = number(node, FIELD_TEAM_ID, "id");
-            String nombre = text(node, "name", FIELD_TEAM_NAME);
+            String nombre = text(node, FIELD_NAME, FIELD_TEAM_NAME);
             if (id != null && nombre != null) {
-                result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, "slug", "url"), ligaWhoscoredId));
+                result.put(id, new EquipoWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL), ligaWhoscoredId));
             }
         }
     }
@@ -165,11 +170,11 @@ public class ScrapingRestAdapter implements ScrapingPort {
         Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
 
         // 1. Parsear objetos JSON si están presentes
-        for (JsonNode node : findObjects(data.json(), "playerId", "playerID", "player_id", "playerName")) {
-            Long id = number(node, "playerId", "playerID", "player_id", "id");
-            String nombre = text(node, "name", "playerName", "fullName");
+        for (JsonNode node : findObjects(data.json(), FIELD_PLAYER_ID, "playerID", "player_id", "playerName")) {
+            Long id = number(node, FIELD_PLAYER_ID, "playerID", "player_id", "id");
+            String nombre = text(node, FIELD_NAME, "playerName", "fullName");
             if (id != null && nombre != null) {
-                result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, "slug", "url"),
+                result.put(id, new JugadorWhoscoredDto(id, nombre, text(node, FIELD_SLUG, FIELD_URL),
                         date(node, "dateOfBirth", "birthDate"), text(node, "nationality", "countryName"),
                         equipoWhoscoredId, text(node, FIELD_TEAM_NAME), strings(node, "positions", "position")));
             }
@@ -226,7 +231,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
 
         // 1b. Desde JSON — objetos con "id" genérico que tienen contexto de partido (fecha o minutos)
         for (JsonNode node : findObjects(data.json(), "id")) {
-            if (!node.has("date") && !node.has("matchDate") && !node.has("minutes") && !node.has("minutesPlayed")) {
+            if (!node.has(FIELD_DATE) && !node.has("matchDate") && !node.has("minutes") && !node.has("minutesPlayed")) {
                 continue;
             }
             Long partidoId = number(node, "id");
@@ -266,7 +271,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
     }
 
     private void mergeHtmlAppearanceCells(AparicionBuilder builder, String row) {
-        builder.mergeHtmlCell("date", htmlCell(row, "date"));
+        builder.mergeHtmlCell(FIELD_DATE, htmlCell(row, FIELD_DATE));
         builder.mergeHtmlCell(FIELD_MINS_PLAYED, htmlCell(row, FIELD_MINS_PLAYED));
         builder.mergeHtmlCell(FIELD_GOAL_TOTAL, htmlCell(row, FIELD_GOAL_TOTAL));
         builder.mergeHtmlCell(FIELD_ASSIST, htmlCell(row, FIELD_ASSIST));
@@ -617,7 +622,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             JsonNode value = node.get(name);
             if (value != null && value.isArray()) {
                 List<String> result = new ArrayList<>();
-                value.forEach(item -> result.add(item.isValueNode() ? item.asText() : text(item, "name")));
+                value.forEach(item -> result.add(item.isValueNode() ? item.asText() : text(item, FIELD_NAME)));
                 return result;
             }
         }
@@ -643,7 +648,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
 
         private void merge(JsonNode node) {
-            fecha = firstDate(fecha, date(node, "date", "matchDate", "gameDate"));
+            fecha = firstDate(fecha, date(node, FIELD_DATE, "matchDate", "gameDate"));
             torneo = first(torneo, text(node, "tournamentName", "competitionName", "tournament", "competition"));
             torneoId = first(torneoId, number(node, "tournamentId", "competitionId"));
             equipoId = first(equipoId, number(node, FIELD_TEAM_ID, "playerTeamId"));
@@ -667,14 +672,14 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 crudas.putIfAbsent(key, value);
             }
             switch (key) {
-                case "date" -> fecha = firstDate(fecha, parseDate(value));
+                case FIELD_DATE -> fecha = firstDate(fecha, parseDate(value));
                 case FIELD_MINS_PLAYED -> minutos = first(minutos, parseInteger(value));
                 case FIELD_GOAL_TOTAL -> putIfPresent("goals", parseIntegerOrNull(value));
                 case FIELD_ASSIST -> putIfPresent("assists", parseIntegerOrNull(value));
                 case FIELD_YELLOW_CARD -> putIfPresent("yellowCards", parseIntegerOrNull(value));
                 case FIELD_RED_CARD -> putIfPresent("redCards", parseIntegerOrNull(value));
                 case FIELD_SHOTS_TOTAL -> putIfPresent("shots", parseIntegerOrNull(value));
-                case FIELD_PASS_SUCCESS -> putIfPresent("passSuccess", parseDecimalOrNull(value));
+                case FIELD_PASS_SUCCESS -> putIfPresent(FIELD_PASS_SUCCESS, parseDecimalOrNull(value));
                 case FIELD_RATING -> rating = first(rating, parseDecimal(value));
                 case FIELD_OPPONENT -> {
                     String opponent = removeTrailingVenue(removeTrailingScore(value));

@@ -42,6 +42,9 @@ import java.util.function.Predicate;
 public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
     private static final Logger LOGGER = LoggerFactory.getLogger(IngestaWhoscoredServiceImpl.class);
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    private static final String ATLETICO = "atletico";
+    private static final String INTER = "inter";
+    private static final String MILAN = "milan";
 
     private final RepositorioEjecucionIngesta ejecuciones;
     private final RepositorioJugador jugadores;
@@ -692,10 +695,10 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
 
     private static boolean sonEquiposEnConflicto(String a, String b) {
         // "inter" / "internazionale" vs "milan" / "ac milan"
-        boolean aEsInter = a.contains("inter");
-        boolean bEsInter = b.contains("inter");
-        boolean aEsMilan = a.contains("milan") && !aEsInter;
-        boolean bEsMilan = b.contains("milan") && !bEsInter;
+        boolean aEsInter = a.contains(INTER);
+        boolean bEsInter = b.contains(INTER);
+        boolean aEsMilan = a.contains(MILAN) && !aEsInter;
+        boolean bEsMilan = b.contains(MILAN) && !bEsInter;
         if ((aEsInter && bEsMilan) || (bEsInter && aEsMilan)) return true;
 
         // "manchester city" vs "manchester united"
@@ -706,8 +709,8 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
         if ((aCity && bUnited) || (bCity && aUnited)) return true;
 
         // "atletico" vs "real madrid"
-        boolean aAtletico = a.contains("atletico");
-        boolean bAtletico = b.contains("atletico");
+        boolean aAtletico = a.contains(ATLETICO);
+        boolean bAtletico = b.contains(ATLETICO);
         boolean aReal = a.contains("real");
         boolean bReal = b.contains("real");
         if ((aAtletico && bReal) || (bAtletico && aReal)) return true;
