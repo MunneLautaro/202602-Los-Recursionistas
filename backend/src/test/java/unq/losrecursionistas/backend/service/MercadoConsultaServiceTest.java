@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -39,8 +40,10 @@ class MercadoConsultaServiceTest {
 
         service.listarTransacciones(7L, PageRequest.of(0, 12));
         verify(transacciones).buscarPorUsuario(eq(7L), argThat(page -> page.getPageSize() == 12));
-        org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                service.listarTransacciones(7L, PageRequest.of(-1, 12)))
+        Pageable invalidPage = mock(Pageable.class);
+        when(invalidPage.getPageNumber()).thenReturn(-1);
+        when(invalidPage.getPageSize()).thenReturn(12);
+        assertThatThrownBy(() -> service.listarTransacciones(7L, invalidPage))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 

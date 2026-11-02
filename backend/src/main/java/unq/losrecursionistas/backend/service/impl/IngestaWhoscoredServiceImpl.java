@@ -679,10 +679,9 @@ public class IngestaWhoscoredServiceImpl implements IngestaWhoscoredService {
             return false;
         }
 
-        if (cleanLocal.length() >= 5 && cleanDesc.length() >= 5) {
-            if (cleanLocal.startsWith(cleanDesc) || cleanDesc.startsWith(cleanLocal)) {
-                return true;
-            }
+        if (cleanLocal.length() >= 5 && cleanDesc.length() >= 5
+                && (cleanLocal.startsWith(cleanDesc) || cleanDesc.startsWith(cleanLocal))) {
+            return true;
         }
         return false;
     }

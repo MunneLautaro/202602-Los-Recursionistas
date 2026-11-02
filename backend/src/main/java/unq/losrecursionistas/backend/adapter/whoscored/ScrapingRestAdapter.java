@@ -51,9 +51,13 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private static final String FIELD_OPPONENT = "opponent";
     private static final String FIELD_TEAM_ID = "teamId";
     private static final String FIELD_TEAM_NAME = "teamName";
-    private static final String PLAYER_PATH = "/players/";
     private static final String NON_NUMERIC_CHARACTERS = "[^0-9-]";
     private static final int PAGE_SETTLE_DELAY_MS = 3_000;
+    private static final String BROWSER_INIT_SCRIPT = """
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'languages', { get: () => ['es-ES', 'es', 'en'] });
+            """;
     static final String DEFAULT_BROWSER_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -182,7 +186,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
 
         if (data.html() != null) {
-            for (JugadorWhoscoredDto jugador : parsePlayerLinks(data.html(), equipoWhoscoredId)) {
+            for (JugadorWhoscoredDto jugador : parsePlayerLinks(data.html(), equipoWhoscoredId, playerPath())) {
                 result.putIfAbsent(jugador.idWhoscored(), jugador);
             }
         }
@@ -193,10 +197,10 @@ public class ScrapingRestAdapter implements ScrapingPort {
     @Override
     public List<AparicionWhoscoredDto> obtenerApariciones(Long jugadorWhoscoredId) {
         requireId(jugadorWhoscoredId, "jugador");
-        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta(PLAYER_PATH + jugadorWhoscoredId + "/show", "obtener apariciones");
+        List<AparicionWhoscoredDto> apariciones = obtenerAparicionesDesdeRuta(playerPath() + jugadorWhoscoredId + "/show", "obtener apariciones");
         if (apariciones.isEmpty()) {
             try {
-                apariciones = obtenerAparicionesDesdeRuta(PLAYER_PATH + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
+                apariciones = obtenerAparicionesDesdeRuta(playerPath() + jugadorWhoscoredId + "/matchstatistics", "obtener apariciones matchstatistics");
             } catch (Exception ex) {
                 LOGGER.debug("No se obtuvieron apariciones desde /matchstatistics para jugador {}: {}", jugadorWhoscoredId, ex.getMessage());
             }
@@ -211,7 +215,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             throw new ScrapingException("El slug del jugador es obligatorio", null, "obtener estadísticas de temporada", null);
         }
         return obtenerAparicionesDesdeRuta(
-                PLAYER_PATH + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
+                playerPath() + jugadorWhoscoredId + "/matchstatistics/" + encodePathSegment(slug),
                 "obtener estadísticas de temporada");
     }
 
@@ -328,7 +332,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         try (Playwright playwright = Playwright.create()) {
             try (Browser browser = playwright.chromium().launch(browserLaunchOptions());
                  BrowserContext context = createBrowserContext(browser)) {
-                context.addInitScript(browserInitScript());
+                context.addInitScript(BROWSER_INIT_SCRIPT);
                 try (Page page = context.newPage()) {
                     return capturePage(page, url, fase, jsonResponses);
                 }
@@ -363,14 +367,6 @@ public class ScrapingRestAdapter implements ScrapingPort {
                         "sec-ch-ua", "\"Chromium\";v=\"124\", \"Google Chrome\";v=\"124\", \"Not-A.Brand\";v=\"99\"",
                         "sec-ch-ua-mobile", "?0", "sec-ch-ua-platform", "\"Windows\""));
         return browser.newContext(options);
-    }
-
-    private String browserInitScript() {
-        return """
-                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-                window.chrome = { runtime: {} };
-                Object.defineProperty(navigator, 'languages', { get: () => ['es-ES', 'es', 'en'] });
-                """;
     }
 
     private PageData capturePage(Page page, String url, String fase, List<String> jsonResponses) {
@@ -463,20 +459,34 @@ public class ScrapingRestAdapter implements ScrapingPort {
         return baseUrl.substring(0, end);
     }
 
+    private String playerPath() {
+        String path = configuration.getPlayerPath();
+        if (path == null || path.isBlank()) {
+            throw new ScrapingException("La ruta de jugadores de WhoScored es obligatoria", null, "configuración");
+        }
+        return path.endsWith("/") ? path : path + "/";
+    }
+
     static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId) {
+        return parsePlayerLinks(html, equipoWhoscoredId, null);
+    }
+
+    private static List<JugadorWhoscoredDto> parsePlayerLinks(String html, Long equipoWhoscoredId,
+                                                               String playerPath) {
         if (html == null || html.isBlank()) {
             return List.of();
         }
         Map<Long, JugadorWhoscoredDto> result = new LinkedHashMap<>();
         Pattern pattern = Pattern.compile(
-                "(?is)href=[\"'](?:https?://[^/]+)?/players?/(\\d+)"
+                "(?is)href=[\"'](?:https?://[^/]+)?(\\/players?\\/)(\\d+)"
                         + "(?:/(?:show|profile))?/([^\"'/?#]+)[\"'][^>]*>(.*?)</a>");
         Matcher matcher = pattern.matcher(html);
         while (matcher.find()) {
             try {
-                Long id = Long.valueOf(matcher.group(1));
-                String slugPart = matcher.group(2);
-                String rawText = decodeHtml(matcher.group(3)
+                String matchedPlayerPath = matcher.group(1);
+                Long id = Long.valueOf(matcher.group(2));
+                String slugPart = matcher.group(3);
+                String rawText = decodeHtml(matcher.group(4)
                         .replaceAll("<[^>]*>", " ")
                         .replaceAll("\\s+", " ").trim());
                 String nombre = rawText.replaceAll("^\\d+\\s*", "").trim();
@@ -485,7 +495,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                 }
                 if (!nombre.isBlank()) {
                     result.putIfAbsent(id, new JugadorWhoscoredDto(id, nombre,
-                            PLAYER_PATH + id + "/show/" + slugPart,
+                            (playerPath == null ? matchedPlayerPath : playerPath) + id + "/show/" + slugPart,
                             null, null, equipoWhoscoredId, null, List.of()));
                 }
             } catch (NumberFormatException ignored) {
@@ -764,67 +774,63 @@ public class ScrapingRestAdapter implements ScrapingPort {
         private static LocalDate firstDate(LocalDate current, LocalDate candidate) {
             return current != null ? current : candidate;
         }
-    }
 
-    private static Integer integer(JsonNode node, String... names) {
-        String value = text(node, names);
-        if (value == null || value.isBlank()) {
-            return null;
+        private static Integer integer(JsonNode node, String... names) {
+            String value = text(node, names);
+            if (value == null || value.isBlank()) {
+                return null;
+            }
+
+            String normalized = value.replace(".", "")
+                    .replace(",", "")
+                    .replaceAll(NON_NUMERIC_CHARACTERS, "");
+            if (normalized.isEmpty() || "-".equals(normalized)) {
+                return null;
+            }
+            try {
+                return Integer.valueOf(normalized);
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
 
-        String normalized = value.replace(".", "")
-                .replace(",", "")
-                .replaceAll(NON_NUMERIC_CHARACTERS, "");
-        if (normalized.isEmpty() || "-".equals(normalized)) {
-            return null;
+        private static Integer parseInteger(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return Integer.valueOf(value.replaceAll(NON_NUMERIC_CHARACTERS, ""));
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-        try {
-            return Integer.valueOf(normalized);
-        } catch (NumberFormatException exception) {
-            return null;
+
+        private static BigDecimal parseDecimal(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return new BigDecimal(value.replace("%", "").trim());
+            } catch (NumberFormatException exception) {
+                return null;
+            }
         }
-    }
 
-    private static Integer parseInteger(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return Integer.valueOf(value.replaceAll(NON_NUMERIC_CHARACTERS, ""));
-        } catch (NumberFormatException exception) {
-            return null;
+        private static LocalDate parseDate(String value) {
+            if (value == null || value.isBlank() || "-".equals(value)) return null;
+            try {
+                return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
+            } catch (RuntimeException exception) {
+                try {
+                    return LocalDate.parse(value.substring(0, 10));
+                } catch (RuntimeException ignored) {
+                    return null;
+                }
+            }
         }
-    }
 
-    private static Object parseIntegerOrNull(String value) {
-        return parseInteger(value);
-    }
-
-    private static BigDecimal parseDecimal(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return new BigDecimal(value.replace("%", "").trim());
-        } catch (NumberFormatException exception) {
-            return null;
+        private static Object parseIntegerOrNull(String value) {
+            return parseInteger(value);
         }
-    }
 
-    private static Object parseDecimalOrNull(String value) {
-        return parseDecimal(value);
-    }
-
-    private static LocalDate parseDate(String value) {
-        if (value == null || value.isBlank() || "-".equals(value)) return null;
-        try {
-            return LocalDate.parse(value, DateTimeFormatter.ofPattern("dd-MM-yyyy"));
-        } catch (RuntimeException exception) {
-            return dateFromIso(value);
-        }
-    }
-
-    private static LocalDate dateFromIso(String value) {
-        try {
-            return LocalDate.parse(value.substring(0, 10));
-        } catch (RuntimeException exception) {
-            return null;
+        private static Object parseDecimalOrNull(String value) {
+            return parseDecimal(value);
         }
     }
 

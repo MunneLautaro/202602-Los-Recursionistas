@@ -70,7 +70,6 @@ public class EjecucionIngesta {
             case LIGA -> ligaId = idAlcance;
             case EQUIPO -> equipoId = idAlcance;
             case JUGADOR -> jugadorId = idAlcance;
-            case COMPLETA -> { }
         }
     }
 }
