@@ -8,7 +8,7 @@ import java.math.RoundingMode;
 import java.text.Normalizer;
 import java.util.Map;
 
-@Component("PERFORMANCE_POR_POSICION")
+@Component("performancePorPosicionEstrategia")
 public class PerformancePorPosicionEstrategia implements EstrategiaCotizacion {
     private static final String PORTERO = "portero";
     private static final String DEFENSOR = "defensor";

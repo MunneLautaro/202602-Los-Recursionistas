@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.Map;
 
-@Component("PERFORMANCE_GENERAL")
+@Component("performanceGeneralEstrategia")
 public class PerformanceGeneralEstrategia implements EstrategiaCotizacion {
     private static final String GOLES = "goles";
     private static final String ASISTENCIAS = "asistencias";

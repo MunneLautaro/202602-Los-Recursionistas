@@ -72,7 +72,7 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     public void recalcular(List<Jugador> jugadoresElegibles, LocalDate inicio, LocalDate fin) {
-        EstrategiaCotizacion estrategia = estrategias.get(estrategiaActiva);
+        EstrategiaCotizacion estrategia = obtenerEstrategiaActiva();
         if (estrategia == null || valorBase == null || factorEscala == null || inicio == null
                 || fin == null || inicio.isAfter(fin)) {
             throw new IllegalStateException("La estrategia o ventana de cotizacion es invalida");
@@ -98,6 +98,20 @@ public class CotizacionServiceImpl implements CotizacionService {
                 log.error("No se pudo calcular la cotizacion del jugador {}", item.jugador.getId(), ex);
             }
         }
+
+    }
+
+    private EstrategiaCotizacion obtenerEstrategiaActiva() {
+        EstrategiaCotizacion estrategia = estrategias.get(estrategiaActiva);
+        if (estrategia != null) {
+            return estrategia;
+        }
+        return estrategias.entrySet().stream()
+                .filter(entry -> entry.getKey().equalsIgnoreCase(estrategiaActiva))
+                .map(Map.Entry::getValue)
+                .findFirst()
+                .orElseThrow(() -> new ExcepcionValidacion(
+                        "Estrategia de cotización no encontrada: " + estrategiaActiva));
     }
 
     @Override

@@ -53,6 +53,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
     private static final String FIELD_TEAM_NAME = "teamName";
     private static final String PLAYER_PATH = "/players/";
     private static final String NON_NUMERIC_CHARACTERS = "[^0-9-]";
+    private static final int PAGE_SETTLE_DELAY_MS = 3_000;
     static final String DEFAULT_BROWSER_USER_AGENT =
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                     + "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
@@ -391,7 +392,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
             throw new ScrapingException("WhoScored respondió HTTP " + navigationResponse.status(), url, fase);
         }
         try {
-            page.waitForTimeout(3000);
+            page.waitForTimeout(PAGE_SETTLE_DELAY_MS);
         } catch (RuntimeException exception) {
             LOGGER.debug("No se pudo esperar la carga completa de {}", url, exception);
         }
@@ -703,8 +704,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
                     rivalNombre = first(rivalNombre, opponent);
                     localVisitante = first(localVisitante, value.contains("(H)") ? "LOCAL" : "VISITANTE");
                 }
-                default -> {
-                }
+                default -> LOGGER.trace("Se ignoró la celda HTML no soportada '{}'", key);
             }
         }
 

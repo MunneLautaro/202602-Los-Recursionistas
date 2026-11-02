@@ -19,6 +19,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import unq.losrecursionistas.backend.security.handlers.JwtAccessDeniedHandler;
 import unq.losrecursionistas.backend.security.handlers.JwtAuthenticationEntryPoint;
 import unq.losrecursionistas.backend.security.jwt.impl.JwtAuthFilter;
+import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 import java.util.List;
@@ -29,24 +30,28 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
-			UserDetailsService userDetailsService) throws Exception {
-		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-			.csrf(csrf -> csrf.disable())
-			.sessionManagement(sesiones -> sesiones.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-			.exceptionHandling(errores -> errores
-					.authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-					.accessDeniedHandler(new JwtAccessDeniedHandler()))
-			.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
-			.authorizeHttpRequests(autorizacion -> autorizacion
-				.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
-						"/v3/api-docs/**", "/v3/api-docs", "/actuator/health")
-				.permitAll()
-				.requestMatchers(HttpMethod.GET, "/players/**", "/leagues/**", "/teams/**", "/orders")
-				.permitAll()
-				.requestMatchers("/api/admin/whoscored/**", "/admin/sync/**", "/ingesta/**", "/quotes/recalculate")
-				.hasAuthority("ROLE_ADMIN")
-				.anyRequest().authenticated());
-		return http.build();
+			UserDetailsService userDetailsService) {
+		try {
+			http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+				.csrf(csrf -> csrf.disable())
+				.sessionManagement(sesiones -> sesiones.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(errores -> errores
+						.authenticationEntryPoint(new JwtAuthenticationEntryPoint())
+						.accessDeniedHandler(new JwtAccessDeniedHandler()))
+				.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
+				.authorizeHttpRequests(autorizacion -> autorizacion
+					.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
+							"/v3/api-docs/**", "/v3/api-docs", "/actuator/health")
+					.permitAll()
+					.requestMatchers(HttpMethod.GET, "/players/**", "/leagues/**", "/teams/**", "/orders")
+					.permitAll()
+					.requestMatchers("/api/admin/whoscored/**", "/admin/sync/**", "/ingesta/**", "/quotes/recalculate")
+					.hasAuthority("ROLE_ADMIN")
+					.anyRequest().authenticated());
+			return http.build();
+		} catch (Exception exception) {
+			throw new ExcepcionValidacion("No se pudo construir la configuración de seguridad", exception);
+		}
 	}
 
 	@Bean
@@ -67,7 +72,11 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	AuthenticationManager authenticationManager(AuthenticationConfiguration configuracion) throws Exception {
-		return configuracion.getAuthenticationManager();
+	AuthenticationManager authenticationManager(AuthenticationConfiguration configuracion) {
+		try {
+			return configuracion.getAuthenticationManager();
+		} catch (Exception exception) {
+			throw new ExcepcionValidacion("No se pudo crear el AuthenticationManager", exception);
+		}
 	}
 }
