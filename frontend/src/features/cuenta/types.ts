@@ -18,6 +18,9 @@ export interface Transaction {
   precioUnitario: number;
   total: number;
   ejecutadaEn: string;
+  jugadorNombre?: string;
+  compradorNombre?: string;
+  vendedorNombre?: string;
 }
 
 export interface CreditReloadRequest {

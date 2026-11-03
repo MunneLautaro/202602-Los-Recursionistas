@@ -31,10 +31,14 @@ export interface Order {
   precioTotalRemanente: number;
   estado: OrderStatus;
   fechaCreacion: string;
+  jugadorNombre?: string;
+  equipoNombre?: string;
+  posicion?: string;
 }
 
 export interface OrderFilters {
   jugadorId?: number;
+  jugadorNombre?: string;
   tipo?: OrderType;
 }
 

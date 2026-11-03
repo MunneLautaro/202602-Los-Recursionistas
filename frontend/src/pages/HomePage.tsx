@@ -22,7 +22,7 @@ export const HomePage: React.FC = () => {
             Registrarse
           </Link>
         )}
-        <button className={appStyles.btnSecondary}>Ver Equipos</button>
+        <Link to="/equipos" className={appStyles.btnSecondary}>Ver Equipos</Link>
       </div>
     </div>
   )

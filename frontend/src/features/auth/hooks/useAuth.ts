@@ -15,6 +15,7 @@ export function useAuth() {
   const invalidate = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem("usuario");
     setToken("");
     setStatus("invalidated");
     setNombreUsuario("");
