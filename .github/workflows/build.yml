@@ -38,4 +38,4 @@ jobs:
         working-directory: ./backend
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: ./gradlew build sonar --info
+        run: ./gradlew clean test jacocoTestReport sonar --info
