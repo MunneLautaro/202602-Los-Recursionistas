@@ -13,6 +13,8 @@ import { JugadorCard } from "../features/jugadores/components/JugadorCard"
 import { JugadorDetailModal } from "../features/jugadores/components/JugadorDetailModal"
 import { JugadoresFilters } from "../features/jugadores/components/JugadoresFilters"
 import { PaginationControls } from "../features/jugadores/components/PaginationControls"
+import { EstadoConsulta } from "../components/EstadoConsulta"
+import { X } from "lucide-react"
 
 export const JugadoresPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -29,6 +31,11 @@ export const JugadoresPage: React.FC = () => {
     () => ({ ...filters, equipoId }),
     [equipoId, filters],
   )
+  const updateFilters: React.Dispatch<React.SetStateAction<JugadorFiltroRequestDTO>> =
+    (update) => {
+      setPage(0)
+      setFilters(update)
+    }
 
   const [selectedJugador, setSelectedJugador] =
     useState<JugadorResponseDTO | null>(null)
@@ -41,6 +48,10 @@ export const JugadoresPage: React.FC = () => {
     setError(null)
     try {
       const data = await fetchJugadores(effectiveFilters, page, size)
+      if (data.totalPages > 0 && page >= data.totalPages) {
+        setPage(data.totalPages - 1)
+        return
+      }
       setJugadores(data)
     } catch (error) {
       setError(error instanceof Error ? error.message : "Error al cargar jugadores")
@@ -81,19 +92,43 @@ export const JugadoresPage: React.FC = () => {
         Lista de Jugadores
       </h1>
 
-      <JugadoresFilters filters={filters} setFilters={setFilters} />
+      <JugadoresFilters filters={filters} setFilters={updateFilters} />
       {equipoId !== undefined && (
-        <div className="mb-3 flex items-center justify-between rounded border border-[var(--accent-border)] bg-[var(--accent-bg)] p-2">
-          <span>Jugadores filtrados por equipo #{equipoId}</span>
-          <button type="button" onClick={() => setSearchParams({})}>Limpiar filtro</button>
+        <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-[var(--accent-border)] bg-[var(--accent-bg)] p-2">
+          <span className="text-sm">Filtro de equipo: #{equipoId}</span>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            onClick={() => {
+              setSearchParams({})
+              setPage(0)
+            }}
+          >
+            Quitar <X size={14} aria-hidden="true" />
+          </button>
         </div>
       )}
 
-      {loading && <p>Cargando jugadores...</p>}
-      {error && <p className="text-red-500">{error}</p>}
-
-      {!loading && jugadores && (
+      {loading && <EstadoConsulta estado="cargando" mensaje="Buscando jugadores..." />}
+      {!loading && error && (
+        <EstadoConsulta
+          estado="error"
+          mensaje={error}
+          accion={{ etiqueta: "Reintentar", ejecutar: () => void loadJugadores() }}
+        />
+      )}
+      {!loading && !error && jugadores?.content.length === 0 && (
+        <EstadoConsulta
+          estado="vacio"
+          mensaje="No encontramos jugadores con los filtros seleccionados."
+          accion={{ etiqueta: "Limpiar filtros", ejecutar: () => updateFilters({}) }}
+        />
+      )}
+      {!loading && !error && jugadores && jugadores.content.length > 0 && (
         <>
+          <p className="mt-4 text-sm text-[var(--text)]">
+            {jugadores.totalElements} jugadores encontrados
+          </p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             {jugadores.content.map((j) => (
               <JugadorCard key={j.id} jugador={j} onClick={openDetalle} />
@@ -113,8 +148,8 @@ export const JugadoresPage: React.FC = () => {
           onClose={() => setModalOpen(false)}
         />
       )}
-      {detailLoading && <p>Cargando detalle...</p>}
-      {detailError && <p className="text-red-500">{detailError}</p>}
+      {detailLoading && <p aria-live="polite">Cargando detalle...</p>}
+      {detailError && <p role="alert" className="text-[var(--secondary)]">{detailError}</p>}
     </div>
   )
 }
