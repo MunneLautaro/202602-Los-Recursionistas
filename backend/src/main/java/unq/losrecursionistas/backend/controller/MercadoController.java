@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import unq.losrecursionistas.backend.controller.dto.orden.OrdenRequest;
 import unq.losrecursionistas.backend.controller.dto.orden.OrdenResponse;
 import unq.losrecursionistas.backend.controller.dto.orden.TransaccionResponse;
+import unq.losrecursionistas.backend.controller.dto.orden.TenenciaTokenResponse;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.interfaces.MercadoService;
@@ -45,10 +46,12 @@ public class MercadoController {
     @GetMapping("/orders")
     public Page<OrdenResponse> listar(@RequestParam(required = false) Long jugadorId,
                                       @RequestParam(required = false) TipoOrden tipo,
+                                      @RequestParam(required = false) String jugadorNombre,
                                       @RequestParam(defaultValue = "0") int page,
                                       @RequestParam(defaultValue = "12") int size) {
         Pageable pageable = PageRequest.of(page, size > 0 ? size : PAGE_SIZE_DEFAULT);
-        return mercado.listarOrdenes(jugadorId, tipo, pageable).map(OrdenResponse::desde);
+        return mercado.listarOrdenes(jugadorId, tipo, jugadorNombre, pageable)
+                .map(OrdenResponse::desde);
     }
 
     @GetMapping("/users/{id}/transactions")
@@ -66,10 +69,40 @@ public class MercadoController {
         return mercado.listarTransacciones(id, pageable).map(TransaccionResponse::desde);
     }
 
+    @GetMapping("/users/{id}/orders")
+    public Page<OrdenResponse> ordenesDelUsuario(@PathVariable Long id,
+                                                 @RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "12") int size,
+                                                 @AuthenticationPrincipal UserDetails principal) {
+        Usuario solicitante = usuario(principal);
+        validarCuenta(solicitante, id);
+        Pageable pageable = PageRequest.of(page, size > 0 ? size : PAGE_SIZE_DEFAULT);
+        return mercado.listarOrdenesDeUsuario(id, pageable).map(OrdenResponse::desde);
+    }
+
+    @GetMapping("/users/{id}/tokens")
+    public Page<TenenciaTokenResponse> tenencias(@PathVariable Long id,
+                                                 @RequestParam(defaultValue = "0") int page,
+                                                 @RequestParam(defaultValue = "12") int size,
+                                                 @AuthenticationPrincipal UserDetails principal) {
+        Usuario solicitante = usuario(principal);
+        validarCuenta(solicitante, id);
+        Pageable pageable = PageRequest.of(page, size > 0 ? size : PAGE_SIZE_DEFAULT);
+        return mercado.listarTenencias(id, pageable).map(TenenciaTokenResponse::desde);
+    }
+
     private Usuario usuario(UserDetails principal) {
         if (principal == null) {
             throw new org.springframework.security.access.AccessDeniedException("Autenticacion requerida");
         }
         return usuarios.buscarPorNombreUsuario(principal.getUsername());
+    }
+
+    private void validarCuenta(Usuario solicitante, Long id) {
+        if (!solicitante.getId().equals(id)
+                && !solicitante.getAutoridades().contains("ROLE_ADMIN")) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "No puede consultar otra cuenta");
+        }
     }
 }

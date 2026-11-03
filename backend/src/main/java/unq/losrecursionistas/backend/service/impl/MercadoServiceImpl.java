@@ -107,8 +107,27 @@ public class MercadoServiceImpl implements MercadoService {
 
     @Override
     @Transactional(readOnly = true)
+    public Page<Orden> listarOrdenes(Long jugadorId, TipoOrden tipo, String jugadorNombre,
+                                     Pageable pageable) {
+        return ordenes.buscarActivas(jugadorId, tipo, jugadorNombre, normalizarPagina(pageable));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<Orden> listarOrdenesDeUsuario(Long usuarioId, Pageable pageable) {
+        return ordenes.buscarPorUsuario(usuarioId, normalizarPagina(pageable));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<TransaccionMercado> listarTransacciones(Long usuarioId, Pageable pageable) {
         return transacciones.buscarPorUsuario(usuarioId, normalizarPagina(pageable));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<TenenciaToken> listarTenencias(Long usuarioId, Pageable pageable) {
+        return tenencias.buscarPorUsuario(usuarioId, normalizarPagina(pageable));
     }
 
     @Override

@@ -25,7 +25,13 @@ public class UsuarioServiceImpl implements UsuarioService {
         if (existeUsuarioConMismoNombreDeUsuario(usuario)) {
             throw new ExcepcionNombreDeUsuarioExistente(usuario);
         }
+
         return repositorioUsuario.crearUsuario(usuario);
+    }
+
+    @Override
+    public Usuario buscarPorNombreUsuario(String nombreUsuario) {
+        return repositorioUsuario.buscarPorNombreUsuario(nombreUsuario);
     }
 
     private boolean existeUsuarioConMismoNombreDeUsuario(Usuario usuario) {
