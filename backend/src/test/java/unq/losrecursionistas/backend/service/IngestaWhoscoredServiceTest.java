@@ -20,6 +20,7 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.Repositor
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEjecucionIngesta;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEquipo;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaPartido;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaTemporada;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.impl.IngestaWhoscoredServiceImpl;
@@ -45,6 +46,7 @@ class IngestaWhoscoredServiceTest {
     @Mock ScrapingPort scraping;
     @Mock RepositorioLiga ligas;
     @Mock RepositorioEquipo equipos;
+    @Mock RepositorioEstadisticaTemporada estadisticasTemporada;
 
     private ScrapingConfiguration configuracion;
     private IngestaWhoscoredServiceImpl servicio;
@@ -55,7 +57,7 @@ class IngestaWhoscoredServiceTest {
         configuracion.setTemporadaInicio(LocalDate.of(2025, 8, 1));
         configuracion.setTemporadaFin(LocalDate.of(2026, 6, 30));
         servicio = new IngestaWhoscoredServiceImpl(ejecuciones, jugadores, casos, estadisticas,
-                matching, scraping, configuracion, ligas, equipos);
+                matching, scraping, configuracion, ligas, equipos, estadisticasTemporada);
         lenient().when(ejecuciones.existeActiva()).thenReturn(false);
         lenient().when(ejecuciones.guardar(any())).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -244,5 +246,92 @@ class IngestaWhoscoredServiceTest {
         assertThat(resultado.partidosActualizados()).isEqualTo(1);
         assertThat(resultado.partidosInsertados()).isZero();
         verify(estadisticas).upsert(any(EstadisticaPartido.class));
+    }
+
+    @Test
+    void procesaAlcancesEspecificosYDescartaJugadoresFueraDelAlcance() {
+        Liga liga = new Liga("Liga", "L");
+        liga.setId(3L);
+        Equipo equipo = Equipo.builder().nombre("Equipo").liga(liga).build();
+        equipo.setId(4L);
+        Jugador jugador = Jugador.builder().id(7L).idWhoscored(99L).activo(true).equipo(equipo).build();
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of(jugador));
+        when(scraping.obtenerApariciones(99L)).thenReturn(List.of());
+        when(scraping.obtenerAparicionesTemporada(eq(99L), anyString())).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.JUGADOR, 7L);
+
+        assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.FINALIZADA);
+        assertThat(resultado.getJugadoresProcesados()).isEqualTo(1);
+        verify(jugadores).obtenerJugadoresActivos();
+    }
+
+    @Test
+    void registraErroresDeLasDosFasesYFinalizaLaEjecucion() {
+        Jugador jugador = Jugador.builder().id(7L).idWhoscored(99L).activo(true).build();
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of(jugador));
+        when(scraping.descubrirLigas()).thenThrow(new IllegalStateException("sin indice"));
+        when(scraping.obtenerApariciones(99L)).thenThrow(new IllegalStateException("sin datos"));
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.COMPLETA, null);
+
+        assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.FINALIZADA);
+        assertThat(resultado.getErrores()).isGreaterThanOrEqualTo(1);
+        assertThat(resultado.getAnomalias()).isGreaterThanOrEqualTo(1);
+    }
+
+    @Test
+    void vinculaCasosNoEncontradosYAumentaContadoresAnteErrores() {
+        EjecucionIngesta ejecucion = EjecucionIngesta.builder()
+                .estado(EjecucionIngesta.Estado.ACTIVA)
+                .alcance(EjecucionIngesta.Alcance.EQUIPO)
+                .inicio(java.time.OffsetDateTime.now())
+                .build();
+        JugadorWhoscoredDto descubierto = new JugadorWhoscoredDto(300L, "Jugador", "/jugador",
+                null, "AR", 200L, "Equipo", List.of());
+        when(scraping.descubrirJugadores(200L)).thenReturn(List.of(descubierto));
+        when(matching.vincular(descubierto)).thenReturn(
+                MatchingWhoscoredService.ResultadoMatching.noEncontrado());
+
+        servicio.vincularJugadores(200L, ejecucion);
+
+        assertThat(ejecucion.getJugadoresNoVinculados()).isEqualTo(1);
+        verify(casos).guardar(any());
+    }
+
+    @Test
+    void rechazaJugadorSinVinculacionWhoscored() {
+        Jugador jugador = Jugador.builder().id(7L).activo(true).build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> servicio.ingestarEstadisticasJugador(7L))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    void ejecutaFlujosDirectosYRecalculaResumenDeTemporada() {
+        Jugador jugador = Jugador.builder().id(7L).idWhoscored(99L).activo(true).build();
+        EstadisticaPartido primero = EstadisticaPartido.builder().jugador(jugador)
+                .partidoWhoscoredId(1L).fechaPartido(LocalDate.of(2025, 9, 1))
+                .torneo("Liga").torneoWhoscoredId(1L).minutos(90).goles(2)
+                .rating(new BigDecimal("8.0")).precisionPases(new BigDecimal("80")).build();
+        EstadisticaPartido segundo = EstadisticaPartido.builder().jugador(jugador)
+                .partidoWhoscoredId(2L).fechaPartido(LocalDate.of(2025, 9, 2))
+                .torneo("Liga").torneoWhoscoredId(1L).minutos(45).goles(1)
+                .rating(new BigDecimal("6.0")).precisionPases(new BigDecimal("70")).build();
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of(jugador));
+        when(scraping.descubrirLigas()).thenReturn(List.of());
+        when(equipos.obtenerTodos()).thenReturn(List.of());
+        when(scraping.obtenerApariciones(99L)).thenReturn(List.of(
+                new AparicionWhoscoredDto(10L, LocalDate.of(2025, 9, 1), "Liga", 1L,
+                        2L, "Equipo", 3L, "Rival", "LOCAL", 90, BigDecimal.TEN, Map.of())));
+        when(estadisticas.buscarPorJugadorYPartido(7L, 10L)).thenReturn(null);
+        when(estadisticas.buscarPorJugadorYTemporada(7L, configuracion.getTemporadaInicio()))
+                .thenReturn(List.of(primero, segundo));
+
+        assertThat(servicio.ejecutarLinking().jugadoresProcesados()).isZero();
+        assertThat(servicio.ejecutarIngesta().jugadoresProcesados()).isEqualTo(1);
+        verify(estadisticasTemporada).reemplazarPorJugadorYTemporada(eq(7L),
+                eq(configuracion.getTemporadaInicio()), anyList());
     }
 }

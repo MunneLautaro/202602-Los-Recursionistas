@@ -303,7 +303,7 @@ public class ScrapingRestAdapter implements ScrapingPort {
         builder.mergeHtmlCell(FIELD_OPPONENT, htmlCell(row, "grid-abs"));
     }
 
-    private PageData load(String path, String fase) {
+    PageData load(String path, String fase) {
         String url = normalizedBaseUrl() + path;
         int maxRetries = Math.max(1, configuration.getMaxRetries() + 1);
         Exception lastException = null;
@@ -867,6 +867,6 @@ public class ScrapingRestAdapter implements ScrapingPort {
         }
     }
 
-    private record PageData(List<JsonNode> json, String html) {
+    record PageData(List<JsonNode> json, String html) {
     }
 }
