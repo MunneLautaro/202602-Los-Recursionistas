@@ -16,10 +16,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.security.handlers.JwtAccessDeniedHandler;
 import unq.losrecursionistas.backend.security.handlers.JwtAuthenticationEntryPoint;
 import unq.losrecursionistas.backend.security.jwt.impl.JwtAuthFilter;
-import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
 
 import java.util.List;

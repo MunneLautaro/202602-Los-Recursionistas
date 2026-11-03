@@ -1,17 +1,13 @@
 package unq.losrecursionistas.backend.persistence;
 
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Predicate;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.JugadorFiltro;
 import unq.losrecursionistas.backend.persistence.sql.JugadorSpecs;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class JugadorSpecsTest {

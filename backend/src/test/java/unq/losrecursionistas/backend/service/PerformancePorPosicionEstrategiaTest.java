@@ -2,7 +2,8 @@ package unq.losrecursionistas.backend.service;
 
 import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.service.impl.estrategia.PerformancePorPosicionEstrategia;
-import unq.losrecursionistas.backend.service.interfaces.*;
+import unq.losrecursionistas.backend.service.interfaces.ParametrosCotizacion;
+import unq.losrecursionistas.backend.service.interfaces.ResumenRendimiento;
 
 import java.math.BigDecimal;
 import java.util.Map;

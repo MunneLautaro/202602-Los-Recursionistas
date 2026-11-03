@@ -1,12 +1,14 @@
 package unq.losrecursionistas.backend.service;
 
+import jakarta.persistence.LockModeType;
 import org.junit.jupiter.api.Test;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
-import unq.losrecursionistas.backend.model.*;
-import unq.losrecursionistas.backend.persistence.sql.*;
-
-import jakarta.persistence.LockModeType;
+import unq.losrecursionistas.backend.model.EstadoOrden;
+import unq.losrecursionistas.backend.model.TenenciaToken;
+import unq.losrecursionistas.backend.model.TipoOrden;
+import unq.losrecursionistas.backend.persistence.sql.OrdenDAOSQL;
+import unq.losrecursionistas.backend.persistence.sql.TransaccionMercadoDAOSQL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

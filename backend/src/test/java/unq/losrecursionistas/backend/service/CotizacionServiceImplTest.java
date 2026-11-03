@@ -2,21 +2,25 @@ package unq.losrecursionistas.backend.service;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import unq.losrecursionistas.backend.model.*;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
+import org.springframework.data.domain.PageImpl;
+import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
+import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
+import unq.losrecursionistas.backend.model.Cotizacion;
+import unq.losrecursionistas.backend.model.EstadisticaPartido;
+import unq.losrecursionistas.backend.model.Jugador;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCotizacion;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaPartido;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
+import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
 import unq.losrecursionistas.backend.service.impl.CotizacionServiceImpl;
-import unq.losrecursionistas.backend.service.interfaces.*;
+import unq.losrecursionistas.backend.service.interfaces.EstrategiaCotizacion;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
-import org.springframework.data.domain.PageImpl;
-import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
-import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
-import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

@@ -1,10 +1,14 @@
 package unq.losrecursionistas.backend.persistence.repository.impl;
 
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
-import unq.losrecursionistas.backend.model.*;
+import unq.losrecursionistas.backend.model.EstadoOrden;
+import unq.losrecursionistas.backend.model.Orden;
+import unq.losrecursionistas.backend.model.TipoOrden;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioOrden;
 import unq.losrecursionistas.backend.persistence.sql.OrdenDAOSQL;
+
 import java.math.BigDecimal;
 import java.util.List;
 

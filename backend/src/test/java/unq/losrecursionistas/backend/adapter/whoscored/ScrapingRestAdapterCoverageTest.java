@@ -1,14 +1,12 @@
 package unq.losrecursionistas.backend.adapter.whoscored;
 
 import com.microsoft.playwright.Browser;
-import com.microsoft.playwright.Page;
 import com.microsoft.playwright.Locator;
+import com.microsoft.playwright.Page;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 import unq.losrecursionistas.backend.adapter.whoscored.dto.AparicionWhoscoredDto;
-import unq.losrecursionistas.backend.adapter.whoscored.dto.EquipoWhoscoredDto;
-import unq.losrecursionistas.backend.adapter.whoscored.dto.JugadorWhoscoredDto;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -20,6 +18,8 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 class ScrapingRestAdapterCoverageTest {

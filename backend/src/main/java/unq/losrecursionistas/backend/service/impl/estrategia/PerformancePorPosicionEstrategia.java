@@ -1,7 +1,9 @@
 package unq.losrecursionistas.backend.service.impl.estrategia;
 
 import org.springframework.stereotype.Component;
-import unq.losrecursionistas.backend.service.interfaces.*;
+import unq.losrecursionistas.backend.service.interfaces.EstrategiaCotizacion;
+import unq.losrecursionistas.backend.service.interfaces.ParametrosCotizacion;
+import unq.losrecursionistas.backend.service.interfaces.ResumenRendimiento;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;

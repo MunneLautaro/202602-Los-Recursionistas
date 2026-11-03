@@ -13,7 +13,6 @@ import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
-import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
 

@@ -4,19 +4,20 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.userdetails.User;
-import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
 import unq.losrecursionistas.backend.controller.dto.orden.OrdenRequest;
 import unq.losrecursionistas.backend.controller.dto.whoscored.IniciarIngestaRequest;
 import unq.losrecursionistas.backend.model.*;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
-import unq.losrecursionistas.backend.service.impl.WhoscoredBootstrapService;
-import unq.losrecursionistas.backend.service.interfaces.*;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
+import unq.losrecursionistas.backend.service.interfaces.EjecucionIngestaService;
+import unq.losrecursionistas.backend.service.interfaces.IngestaWhoscoredService;
+import unq.losrecursionistas.backend.service.interfaces.MercadoService;
+import unq.losrecursionistas.backend.service.interfaces.ResultadoIngesta;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 

@@ -2,11 +2,11 @@ package unq.losrecursionistas.backend.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -18,7 +18,6 @@ import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;
 import unq.losrecursionistas.backend.service.interfaces.MercadoService;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioAuditoriaTransaccional;
 
 import java.math.BigDecimal;
 

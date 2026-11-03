@@ -1,6 +1,9 @@
 package unq.losrecursionistas.backend.controller;
 
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import unq.losrecursionistas.backend.service.interfaces.IngestaWhoscoredService;
 import unq.losrecursionistas.backend.service.interfaces.ResultadoIngesta;
 

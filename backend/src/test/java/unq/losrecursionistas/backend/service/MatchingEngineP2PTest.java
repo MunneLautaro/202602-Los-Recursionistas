@@ -2,7 +2,10 @@ package unq.losrecursionistas.backend.service;
 
 import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.model.*;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioAuditoriaTransaccional;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioOrden;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioTenenciaToken;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioTransaccionMercado;
 import unq.losrecursionistas.backend.service.impl.MatchingEngineImpl;
 
 import java.math.BigDecimal;
@@ -10,7 +13,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 class MatchingEngineP2PTest {
     @Test

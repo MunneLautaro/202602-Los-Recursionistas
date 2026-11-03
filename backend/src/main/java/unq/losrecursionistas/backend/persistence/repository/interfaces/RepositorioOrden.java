@@ -2,7 +2,9 @@ package unq.losrecursionistas.backend.persistence.repository.interfaces;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import unq.losrecursionistas.backend.model.*;
+import unq.losrecursionistas.backend.model.Orden;
+import unq.losrecursionistas.backend.model.TipoOrden;
+
 import java.math.BigDecimal;
 import java.util.List;
 

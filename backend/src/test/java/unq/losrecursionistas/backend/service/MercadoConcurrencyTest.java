@@ -2,7 +2,9 @@ package unq.losrecursionistas.backend.service;
 
 import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.exceptions.ExcepcionRecursosInsuficientes;
-import unq.losrecursionistas.backend.model.*;
+import unq.losrecursionistas.backend.model.Jugador;
+import unq.losrecursionistas.backend.model.TenenciaToken;
+import unq.losrecursionistas.backend.model.Usuario;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

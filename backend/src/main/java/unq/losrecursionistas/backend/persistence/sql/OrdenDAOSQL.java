@@ -8,7 +8,9 @@ import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import unq.losrecursionistas.backend.model.*;
+import unq.losrecursionistas.backend.model.EstadoOrden;
+import unq.losrecursionistas.backend.model.Orden;
+import unq.losrecursionistas.backend.model.TipoOrden;
 
 import java.math.BigDecimal;
 import java.util.List;
