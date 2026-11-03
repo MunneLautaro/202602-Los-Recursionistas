@@ -9,6 +9,7 @@ public interface RepositorioUsuario{
 	Page<Usuario> buscarTodos(Pageable pageable);
 
 	Usuario buscarPorNombreUsuario(String nombreUsuario);
+	Usuario buscarPorId(Long id);
 	Usuario buscarPorIdBloqueado(Long id);
 	Usuario buscarCustodio();
 

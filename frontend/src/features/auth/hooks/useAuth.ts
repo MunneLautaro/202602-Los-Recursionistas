@@ -11,10 +11,21 @@ export function useAuth() {
   const [status, setStatus] = useState<SessionStatus>(() =>
     token ? "authenticated" : "unauthenticated",
   );
+  const [isAdmin] = useState(() => {
+    const storedUser = localStorage.getItem("usuario");
+    if (!storedUser) return false;
+    try {
+      const user = JSON.parse(storedUser) as { autoridades?: string[] };
+      return user.autoridades?.includes("ROLE_ADMIN") === true;
+    } catch {
+      return false;
+    }
+  });
 
   const invalidate = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");
+    localStorage.removeItem("usuario");
     setToken("");
     setStatus("invalidated");
     setNombreUsuario("");
@@ -39,6 +50,7 @@ export function useAuth() {
     isAuthenticated: status === "authenticated",
     status,
     nombreUsuario,
+    isAdmin,
     logout,
     invalidate,
   };

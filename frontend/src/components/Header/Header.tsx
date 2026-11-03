@@ -10,7 +10,7 @@ interface HeaderProps {
 export const Header: React.FC<HeaderProps> = ({
   title = "Los Recursionistas",
 }) => {
-  const { isAuthenticated, nombreUsuario, logout } = useAuth();
+  const { isAuthenticated, isAdmin, nombreUsuario, logout } = useAuth();
 
   return (
     <header className={headerStyles.header}>
@@ -45,6 +45,11 @@ export const Header: React.FC<HeaderProps> = ({
               <Link to="/cuenta" className={headerStyles.navLink}>
                 Cuenta
               </Link>
+              {isAdmin && (
+                <Link to="/admin" className={headerStyles.adminLink}>
+                  Administración
+                </Link>
+              )}
               <button
                 type="button"
                 onClick={logout}

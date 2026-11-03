@@ -29,7 +29,7 @@ export interface JugadorResponseDTO {
   id: number;
   nombre: string;
   posicion: string;
-  edad: number;
+  fechaNacimiento: string | null;
   equipo?: {
     id: number;
     nombre: string;

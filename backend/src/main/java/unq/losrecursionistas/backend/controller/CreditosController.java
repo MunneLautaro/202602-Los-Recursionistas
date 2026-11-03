@@ -33,4 +33,20 @@ public class CreditosController {
         return ResponseEntity.ok(SaldoResponse.desde(
                 mercado.recargarCreditos(solicitante, id, request.monto())));
     }
+
+    @GetMapping("/users/{id}/credits")
+    public ResponseEntity<SaldoResponse> saldo(@PathVariable Long id,
+                                               @AuthenticationPrincipal UserDetails principal) {
+        if (principal == null) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "Autenticacion requerida");
+        }
+        Usuario solicitante = usuarios.buscarPorNombreUsuario(principal.getUsername());
+        if (!solicitante.getId().equals(id)
+                && !solicitante.getAutoridades().contains("ROLE_ADMIN")) {
+            throw new org.springframework.security.access.AccessDeniedException(
+                    "No puede consultar otra cuenta");
+        }
+        return ResponseEntity.ok(SaldoResponse.desde(usuarios.buscarPorId(id)));
+    }
 }

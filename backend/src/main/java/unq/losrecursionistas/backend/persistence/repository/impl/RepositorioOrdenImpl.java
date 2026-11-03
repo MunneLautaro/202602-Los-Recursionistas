@@ -23,6 +23,13 @@ public class RepositorioOrdenImpl implements RepositorioOrden {
         if (tipo != null) return dao.findByTipoAndEstado(tipo, EstadoOrden.ACTIVA, pageable);
         return dao.findByEstado(EstadoOrden.ACTIVA, pageable);
     }
+    public Page<Orden> buscarActivas(Long jugadorId, TipoOrden tipo, String jugadorNombre,
+                                     Pageable pageable) {
+        return dao.buscarActivasConNombre(jugadorId, tipo, jugadorNombre, EstadoOrden.ACTIVA, pageable);
+    }
+    public Page<Orden> buscarPorUsuario(Long usuarioId, Pageable pageable) {
+        return dao.findByUsuarioId(usuarioId, pageable);
+    }
     public Orden buscarLiquidezInicialBloqueada(Long usuarioId, Long jugadorId) {
         return dao.findFirstByUsuarioIdAndJugadorIdAndEsLiquidezInicialTrue(
                 usuarioId, jugadorId).orElse(null);

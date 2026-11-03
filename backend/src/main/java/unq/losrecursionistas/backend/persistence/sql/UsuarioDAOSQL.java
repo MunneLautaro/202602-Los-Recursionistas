@@ -14,6 +14,8 @@ public interface UsuarioDAOSQL extends JpaRepository<Usuario, Long> {
 
 	Optional<Usuario> findByNombreUsuario(String nombreUsuario);
 
+	Optional<Usuario> findById(Long id);
+
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
 	Optional<Usuario> findLockedById(Long id);
 

@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { authApi } from "../api/authApi"
+import type { LoginResponse } from "../types"
 import type { LoginFormData, LoginFormErrors } from "../types"
 
 export function useLogin() {
@@ -54,15 +55,14 @@ export function useLogin() {
         contrasena: formData.contrasena,
       })
 
-      localStorage.setItem("token", response.token)
-      localStorage.setItem(
-        "nombreUsuario",
-        response.nombreUsuario ?? formData.nombreUsuario.trim(),
-      )
-      if (response.userId !== undefined) {
-        localStorage.setItem("userId", String(response.userId))
+      const loginResponse = response as LoginResponse
+      localStorage.setItem("token", loginResponse.token)
+      if (loginResponse.usuario?.id !== undefined) {
+        localStorage.setItem("nombreUsuario", loginResponse.usuario.nombreUsuario)
+        localStorage.setItem("userId", String(loginResponse.usuario.id))
+        localStorage.setItem("usuario", JSON.stringify(loginResponse.usuario))
       } else {
-        localStorage.removeItem("userId")
+        localStorage.setItem("nombreUsuario", formData.nombreUsuario.trim())
       }
 
       navigate("/")
