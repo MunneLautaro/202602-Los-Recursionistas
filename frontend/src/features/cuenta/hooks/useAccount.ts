@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { fetchTransactions, reloadCredits } from "../api/accountApi";
+import { fetchBalance, fetchTransactions, reloadCredits } from "../api/accountApi";
 import type { Balance, Transaction } from "../types";
 
 export function useAccount(userId?: number) {
@@ -41,6 +41,9 @@ export function useAccount(userId?: number) {
 
   useEffect(() => {
     if (userId !== undefined) {
+      void fetchBalance(userId).then(setBalance).catch((reason: unknown) => {
+        setError(reason instanceof Error ? reason.message : "No se pudo cargar el saldo.");
+      });
       const timer = window.setTimeout(() => void loadTransactions(0), 0);
       return () => window.clearTimeout(timer);
     }
