@@ -1,14 +1,14 @@
-import React from "react";
-import { useRegister } from "../hooks/useRegister";
-import { registerFormStyles } from "./RegisterForm.styles";
+import React from "react"
+import { useRegister } from "../hooks/useRegister"
+import { registerFormStyles } from "./RegisterForm.styles"
 
 interface RegisterFormProps {
-  onSuccess?: () => void;
+  onSuccess?: () => void
 }
 
 export const RegisterForm: React.FC<RegisterFormProps> = () => {
-  const { formData, errors, isLoading, isSuccess, handleChange, handleSubmit } =
-    useRegister();
+  const { register, errors, generalError, isLoading, isSuccess, handleSubmit } =
+    useRegister()
 
   return (
     <div className={registerFormStyles.container}>
@@ -19,8 +19,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         </p>
       </div>
 
-      {errors.general && (
-        <div className={registerFormStyles.alertError}>{errors.general}</div>
+      {generalError && (
+        <div className={registerFormStyles.alertError}>{generalError}</div>
       )}
 
       {isSuccess && (
@@ -40,19 +40,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           </label>
           <input
             id="nombreUsuario"
-            name="nombreUsuario"
+            {...register("nombreUsuario")}
             type="text"
             placeholder="Ej: recursionista10"
-            value={formData.nombreUsuario}
-            onChange={handleChange}
             disabled={isLoading || isSuccess}
+            aria-invalid={Boolean(errors.nombreUsuario)}
+            aria-describedby={
+              errors.nombreUsuario ? "register-usuario-error" : undefined
+            }
             className={`${registerFormStyles.input} ${
               errors.nombreUsuario ? registerFormStyles.inputError : ""
             }`}
           />
           {errors.nombreUsuario && (
             <span className={registerFormStyles.errorText}>
-              {errors.nombreUsuario}
+              <span id="register-usuario-error">
+                {errors.nombreUsuario.message}
+              </span>
             </span>
           )}
         </div>
@@ -63,19 +67,23 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           </label>
           <input
             id="contrasena"
-            name="contrasena"
+            {...register("contrasena")}
             type="password"
             placeholder="••••••••"
-            value={formData.contrasena}
-            onChange={handleChange}
             disabled={isLoading || isSuccess}
+            aria-invalid={Boolean(errors.contrasena)}
+            aria-describedby={
+              errors.contrasena ? "register-contrasena-error" : undefined
+            }
             className={`${registerFormStyles.input} ${
               errors.contrasena ? registerFormStyles.inputError : ""
             }`}
           />
           {errors.contrasena && (
             <span className={registerFormStyles.errorText}>
-              {errors.contrasena}
+              <span id="register-contrasena-error">
+                {errors.contrasena.message}
+              </span>
             </span>
           )}
         </div>
@@ -89,19 +97,25 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
           </label>
           <input
             id="confirmarContrasena"
-            name="confirmarContrasena"
+            {...register("confirmarContrasena")}
             type="password"
             placeholder="••••••••"
-            value={formData.confirmarContrasena}
-            onChange={handleChange}
             disabled={isLoading || isSuccess}
+            aria-invalid={Boolean(errors.confirmarContrasena)}
+            aria-describedby={
+              errors.confirmarContrasena
+                ? "register-confirmar-error"
+                : undefined
+            }
             className={`${registerFormStyles.input} ${
               errors.confirmarContrasena ? registerFormStyles.inputError : ""
             }`}
           />
           {errors.confirmarContrasena && (
             <span className={registerFormStyles.errorText}>
-              {errors.confirmarContrasena}
+              <span id="register-confirmar-error">
+                {errors.confirmarContrasena.message}
+              </span>
             </span>
           )}
         </div>
@@ -122,5 +136,5 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
         </a>
       </div>
     </div>
-  );
-};
+  )
+}

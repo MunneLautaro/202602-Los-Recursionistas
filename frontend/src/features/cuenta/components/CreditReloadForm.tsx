@@ -1,6 +1,7 @@
-import { useState } from "react";
-import type { FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { creditReloadFormStyles } from "./CreditReloadForm.styles";
+import { creditReloadSchema, type CreditReloadValues } from "../schemas";
 
 interface CreditReloadFormProps {
   disabled: boolean;
@@ -8,24 +9,14 @@ interface CreditReloadFormProps {
 }
 
 export function CreditReloadForm({ disabled, onSubmit }: CreditReloadFormProps) {
-  const [amount, setAmount] = useState("");
-  const [validationError, setValidationError] = useState<string | null>(null);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const parsedAmount = Number(amount);
-    if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setValidationError("El monto debe ser un número positivo.");
-      return;
-    }
-
-    setValidationError(null);
-    await onSubmit(parsedAmount);
-    setAmount("");
-  };
+  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<CreditReloadValues>({
+    resolver: zodResolver(creditReloadSchema),
+    defaultValues: { monto: 0 },
+  });
+  const submit = async ({ monto }: CreditReloadValues) => onSubmit(monto);
 
   return (
-    <form className={creditReloadFormStyles.form} onSubmit={handleSubmit}>
+    <form className={creditReloadFormStyles.form} onSubmit={(event) => void handleSubmit(submit)(event)}>
       <label className={creditReloadFormStyles.label}>
         Recargar créditos ficticios
         <input
@@ -33,15 +24,15 @@ export function CreditReloadForm({ disabled, onSubmit }: CreditReloadFormProps) 
           type="number"
           min="0.01"
           step="0.01"
-          value={amount}
-          onChange={(event) => setAmount(event.target.value)}
+          {...register("monto", { valueAsNumber: true })}
           disabled={disabled}
           required
+          aria-invalid={Boolean(errors.monto)}
         />
       </label>
-      {validationError && <p role="alert" className="text-[var(--secondary)]">{validationError}</p>}
-      <button className={creditReloadFormStyles.button} type="submit" disabled={disabled}>
-        {disabled ? "Procesando..." : "Recargar"}
+      {errors.monto && <p role="alert" className="text-[var(--secondary)]">{errors.monto.message}</p>}
+      <button className={creditReloadFormStyles.button} type="submit" disabled={disabled || isSubmitting}>
+        {disabled || isSubmitting ? "Procesando..." : "Recargar"}
       </button>
     </form>
   );

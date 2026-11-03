@@ -22,13 +22,13 @@ export function MercadoPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <OrderFilters filters={filters} onChange={(next) => setFilters(next)} />
           {isAuthenticated && (
-            <button type="button" className="rounded bg-[var(--primary)] px-4 py-2 text-[var(--pantone-darkest-hour)]" onClick={() => setOrderModalOpen(true)}>
+            <button type="button" className="rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-[var(--pantone-darkest-hour)] transition hover:brightness-95" onClick={() => setOrderModalOpen(true)}>
               Crear orden
             </button>
           )}
         </div>
         {loading && <p>Cargando órdenes...</p>}
-        {error && <div className="text-[var(--secondary)]"><p>{error}</p><button onClick={reload}>Reintentar</button></div>}
+        {error && <div className="text-[var(--secondary)]"><p>{error}</p><button className="rounded-lg border border-[var(--secondary)] px-3 py-2 font-semibold text-[var(--secondary)] hover:bg-[var(--accent-bg)]" onClick={reload}>Reintentar</button></div>}
         {!loading && !error && orders.length === 0 && <p>No hay órdenes disponibles.</p>}
         {!loading && !error && orders.length > 0 && <OrderList orders={orders} />}
         <PaginationControls page={page} totalPages={totalPages} onPageChange={goToPage} />

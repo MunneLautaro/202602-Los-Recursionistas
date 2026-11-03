@@ -1,5 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, NavLink } from "react-router-dom";
+import { LogIn, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "../../features/auth";
 import { headerStyles } from "./Header.styles";
 
@@ -11,6 +12,15 @@ export const Header: React.FC<HeaderProps> = ({
   title = "Los Recursionistas",
 }) => {
   const { isAuthenticated, isAdmin, nombreUsuario, logout } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const links = [
+    { to: "/", label: "Inicio" },
+    { to: "/equipos", label: "Equipos" },
+    { to: "/jugadores", label: "Jugadores" },
+    { to: "/ranking", label: "Ranking" },
+    { to: "/mercado", label: "Mercado" },
+  ];
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className={headerStyles.header}>
@@ -20,29 +30,22 @@ export const Header: React.FC<HeaderProps> = ({
           <span className={headerStyles.title}>{title}</span>
         </Link>
 
-        <nav className={headerStyles.nav}>
-          <Link to="/" className={headerStyles.navLink}>
-            Inicio
-          </Link>
-          <Link to="/equipos" className={headerStyles.navLink}>
-            Equipos
-          </Link>
-          <Link to="/jugadores" className={headerStyles.navLink}>
-            Jugadores
-          </Link>
-          <Link to="/ranking" className={headerStyles.navLink}>
-            Ranking
-          </Link>
-          <Link to="/mercado" className={headerStyles.navLink}>
-            Mercado
-          </Link>
+        <nav className={`${headerStyles.nav} ${menuOpen ? headerStyles.mobileNav : ""}`} aria-label="Navegación principal">
+          {links.map((link) => (
+            <NavLink key={link.to} to={link.to} onClick={closeMenu} className={({ isActive }) => `${headerStyles.navLink} ${isActive ? headerStyles.activeLink : ""}`}>
+              {link.label}
+            </NavLink>
+          ))}
         </nav>
+        <button type="button" className={headerStyles.menuButton} aria-label={menuOpen ? "Cerrar menú" : "Abrir menú"} aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>
+          {menuOpen ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
+        </button>
 
         <div className={headerStyles.actionsContainer}>
           {isAuthenticated ? (
             <>
               <span className={headerStyles.userName}>{nombreUsuario}</span>
-              <Link to="/cuenta" className={headerStyles.navLink}>
+              <Link to="/cuenta" onClick={closeMenu} className={headerStyles.navLink}>
                 Cuenta
               </Link>
               {isAdmin && (
@@ -55,15 +58,16 @@ export const Header: React.FC<HeaderProps> = ({
                 onClick={logout}
                 className={headerStyles.btnLogout}
               >
-                Cerrar sesión
+                <LogOut aria-hidden="true" size={16} /> Cerrar sesión
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className={headerStyles.btnLogin}>
+              <Link to="/login" onClick={closeMenu} className={headerStyles.btnLogin}>
+                <LogIn aria-hidden="true" size={16} />
                 Ingresar
               </Link>
-              <Link to="/register" className={headerStyles.btnRegister}>
+              <Link to="/register" onClick={closeMenu} className={headerStyles.btnRegister}>
                 Registrarse
               </Link>
             </>

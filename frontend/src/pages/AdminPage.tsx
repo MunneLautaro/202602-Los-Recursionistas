@@ -158,7 +158,7 @@ export function AdminPage() {
                 "El recálculo fue aceptado.",
               )
             }
-            className="rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-[var(--text)] disabled:opacity-50"
+            className="rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-[var(--pantone-darkest-hour)] disabled:opacity-50"
           >
             Recalcular
           </button>
@@ -194,7 +194,7 @@ export function AdminPage() {
                   "La sincronización fue aceptada.",
                 );
               }}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-white"
+              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
             >
               Sincronizar
             </button>
@@ -216,7 +216,7 @@ export function AdminPage() {
                 "El linking fue ejecutado.",
               )
             }
-            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-white"
+            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
           >
             Ejecutar linking
           </button>
@@ -237,7 +237,7 @@ export function AdminPage() {
                 "La ingesta de estadísticas fue ejecutada.",
               )
             }
-            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-white"
+            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
           >
             Ejecutar ingesta
           </button>
@@ -276,7 +276,7 @@ export function AdminPage() {
                   "Las estadísticas del jugador fueron ingestas.",
                 );
               }}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-white"
+              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
             >
               Ingestar
             </button>
@@ -310,7 +310,7 @@ export function AdminPage() {
           <button
             type="button"
             onClick={startIngesta}
-            className="rounded-xl bg-[var(--secondary)] px-4 py-2 font-bold text-white"
+            className="rounded-xl bg-[var(--secondary)] px-4 py-2 font-bold text-[var(--pantone-darkest-hour)]"
           >
             Iniciar ingesta
           </button>
