@@ -334,4 +334,124 @@ class IngestaWhoscoredServiceTest {
         verify(estadisticasTemporada).reemplazarPorJugadorYTemporada(eq(7L),
                 eq(configuracion.getTemporadaInicio()), anyList());
     }
+
+    @Test
+    void vinculaEquiposDeLigaCuandoElAlcanceEsUnaLiga() {
+        Liga liga = new Liga("Liga", "L");
+        liga.setId(3L);
+        liga.setIdWhoscored(30L);
+        when(ligas.obtenerLigas()).thenReturn(List.of(liga));
+        when(scraping.descubrirEquipos(30L)).thenReturn(List.of());
+        when(equipos.obtenerEquiposDeLiga(3L)).thenReturn(List.of());
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.LIGA, 3L);
+
+        assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.FINALIZADA);
+        verify(scraping).descubrirEquipos(30L);
+        verify(equipos).obtenerEquiposDeLiga(3L);
+    }
+
+    @Test
+    void registraErrorCuandoNoPuedeDescubrirEquiposDeUnaLiga() {
+        Liga liga = new Liga("Liga", "L");
+        liga.setId(3L);
+        liga.setIdWhoscored(30L);
+        when(ligas.obtenerLigas()).thenReturn(List.of(liga));
+        when(scraping.descubrirEquipos(30L)).thenThrow(new IllegalStateException("sin equipos"));
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.LIGA, 3L);
+
+        assertThat(resultado.getErrores()).isEqualTo(1);
+        assertThat(resultado.getAnomalias()).isEqualTo(1);
+    }
+
+    @Test
+    void registraErrorCuandoFallaLaVinculacionDeUnEquipo() {
+        Equipo equipo = Equipo.builder().nombre("Equipo").build();
+        equipo.setId(4L);
+        equipo.setIdWhoscored(40L);
+        when(equipos.obtenerTodos()).thenReturn(List.of(equipo));
+        when(scraping.descubrirJugadores(40L)).thenThrow(new IllegalStateException("sin jugadores"));
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.EQUIPO, 4L);
+
+        assertThat(resultado.getErrores()).isEqualTo(1);
+        assertThat(resultado.getAnomalias()).isEqualTo(1);
+    }
+
+    @Test
+    void vinculaJugadoresCuandoElEquipoTieneIdWhoscored() {
+        Equipo equipo = Equipo.builder().nombre("Equipo").build();
+        equipo.setId(4L);
+        equipo.setIdWhoscored(40L);
+        when(equipos.obtenerTodos()).thenReturn(List.of(equipo));
+        when(scraping.descubrirJugadores(40L)).thenReturn(List.of());
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.EQUIPO, 4L);
+
+        assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.FINALIZADA);
+        verify(scraping).descubrirJugadores(40L);
+    }
+
+    @Test
+    void registraErrorCuandoFallaLaVinculacionPorJugador() {
+        Equipo equipo = Equipo.builder().nombre("Equipo").build();
+        equipo.setIdWhoscored(40L);
+        Jugador jugador = Jugador.builder().id(7L).equipo(equipo).build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+        when(scraping.descubrirJugadores(40L)).thenThrow(new IllegalStateException("sin jugadores"));
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.JUGADOR, 7L);
+
+        assertThat(resultado.getErrores()).isEqualTo(1);
+        assertThat(resultado.getAnomalias()).isEqualTo(1);
+    }
+
+    @Test
+    void vinculaJugadoresCuandoElJugadorTieneEquipoWhoscored() {
+        Equipo equipo = Equipo.builder().nombre("Equipo").build();
+        equipo.setIdWhoscored(40L);
+        Jugador jugador = Jugador.builder().id(7L).equipo(equipo).build();
+        when(jugadores.obtenerJugadorPorId(7L)).thenReturn(jugador);
+        when(scraping.descubrirJugadores(40L)).thenReturn(List.of());
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of());
+
+        EjecucionIngesta resultado = servicio.iniciar(EjecucionIngesta.Alcance.JUGADOR, 7L);
+
+        assertThat(resultado.getEstado()).isEqualTo(EjecucionIngesta.Estado.FINALIZADA);
+        verify(scraping).descubrirJugadores(40L);
+    }
+
+    @Test
+    void usaEquiposLocalesCuandoNoDescubreLigasYProcesaSoloEquiposVinculados() {
+        Equipo sinVincular = Equipo.builder().nombre("Sin vincular").build();
+        Equipo vinculado = Equipo.builder().nombre("Vinculado").build();
+        vinculado.setIdWhoscored(40L);
+        when(scraping.descubrirLigas()).thenReturn(List.of());
+        when(equipos.obtenerTodos()).thenReturn(List.of(sinVincular, vinculado));
+        when(scraping.descubrirJugadores(40L)).thenReturn(List.of());
+
+        ResultadoIngesta resultado = servicio.ejecutarLinking();
+
+        assertThat(resultado.errores()).isZero();
+        verify(scraping).descubrirJugadores(40L);
+    }
+
+    @Test
+    void registraAnomaliaAlFallarElFallbackDeEquiposLocales() {
+        Equipo equipo = Equipo.builder().nombre("Vinculado").build();
+        equipo.setIdWhoscored(40L);
+        when(scraping.descubrirLigas()).thenReturn(List.of());
+        when(equipos.obtenerTodos()).thenReturn(List.of(equipo));
+        when(scraping.descubrirJugadores(40L)).thenThrow(new IllegalStateException("sin jugadores"));
+
+        ResultadoIngesta resultado = servicio.ejecutarLinking();
+
+        assertThat(resultado.errores()).isEqualTo(1);
+    }
 }
