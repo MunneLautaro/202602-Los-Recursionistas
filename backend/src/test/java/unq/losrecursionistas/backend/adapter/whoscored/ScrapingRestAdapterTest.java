@@ -2,8 +2,10 @@ package unq.losrecursionistas.backend.adapter.whoscored;
 
 import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.adapter.whoscored.dto.JugadorWhoscoredDto;
+import unq.losrecursionistas.backend.adapter.whoscored.dto.LigaWhoscoredDto;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class ScrapingRestAdapterTest {
 
@@ -60,5 +62,24 @@ class ScrapingRestAdapterTest {
         assertThat(ScrapingRestAdapter.looksBlocked(
                 "<html><body><a href=\"/players/123/show/test-player\">Test Player</a></body></html>"))
                 .isFalse();
+    }
+
+    @Test
+    void devuelveLigasConfiguradasCuandoNoPuedeCargarIndice() {
+        ScrapingRestAdapter adapter = new ScrapingRestAdapter(new ScrapingConfiguration(), null);
+
+        assertThat(adapter.descubrirLigas()).extracting(LigaWhoscoredDto::idWhoscored)
+                .contains(252L, 206L, 81L, 108L, 74L);
+    }
+
+    @Test
+    void validaIdsAntesDeAccederAlSitio() {
+        ScrapingRestAdapter adapter = new ScrapingRestAdapter(new ScrapingConfiguration(), null);
+
+        assertThatThrownBy(() -> adapter.descubrirEquipos(null)).isInstanceOf(ScrapingException.class);
+        assertThatThrownBy(() -> adapter.descubrirJugadores(null)).isInstanceOf(ScrapingException.class);
+        assertThatThrownBy(() -> adapter.obtenerApariciones(null)).isInstanceOf(ScrapingException.class);
+        assertThatThrownBy(() -> adapter.obtenerAparicionesTemporada(null, "slug"))
+                .isInstanceOf(ScrapingException.class);
     }
 }
