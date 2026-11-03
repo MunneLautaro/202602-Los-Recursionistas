@@ -98,6 +98,6 @@ whoscored:
     temporada-fin: ${WHOSCORED_SEASON_END:2026-06-30}
     ligas-permitidas: ${WHOSCORED_ALLOWED_LEAGUES:}
     #Aca se pone si queres que whoscored se ejecute al iniciar la app, si no queres que se ejecute al iniciar la app, poner false
-    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:false}
+    startup-enabled: ${WHOSCORED_STARTUP_ENABLED:true}
     linking-cron: ${WHOSCORED_LINKING_CRON:0 0 2 * * SUN}
     stats-cron: ${WHOSCORED_STATS_CRON:0 0 3 * * SUN}
