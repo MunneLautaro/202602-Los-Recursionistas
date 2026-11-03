@@ -14,6 +14,7 @@
   --border: #d1cdc4;
   --code-bg: #e4e0d7;
   --accent: #6952d1;
+  --accent-foreground: #f2efe9;
   --accent-bg: rgba(105, 82, 209, 0.12);
   --accent-border: rgba(105, 82, 209, 0.5);
   --primary: #dfff00;
@@ -27,7 +28,7 @@
   --heading: system-ui, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
 
-  font: 18px/145% var(--sans);
+  font: 16px/145% var(--sans);
   letter-spacing: 0.18px;
   color-scheme: light dark;
   color: var(--text);
@@ -50,6 +51,7 @@
     --border: #3d393b;
     --code-bg: #1b1a1b;
     --accent: #dfff00;
+    --accent-foreground: #262425;
     --accent-bg: rgba(223, 255, 0, 0.15);
     --accent-border: rgba(223, 255, 0, 0.5);
     --primary: #dfff00;
@@ -65,7 +67,7 @@
 }
 
 #root {
-  width: 1126px;
+  width: 100%;
   max-width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -78,6 +80,77 @@
 
 body {
   margin: 0;
+  min-width: 320px;
+  background: var(--bg);
+}
+
+button,
+a,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease,
+    box-shadow 160ms ease;
+}
+
+@media (hover: hover) {
+  button:not(:disabled):hover {
+    filter: brightness(1.08);
+    transform: translateY(-1px);
+  }
+}
+
+button:not(:disabled):active {
+  filter: brightness(0.96);
+  transform: translateY(0);
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+select {
+  color: var(--text);
+  background-color: var(--bg);
+  border-color: var(--border);
+  color-scheme: light;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+select option {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+select:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+  border-color: var(--accent);
+}
+
+@media (prefers-color-scheme: dark) {
+  select {
+    color-scheme: dark;
+  }
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
 }
 
 h1,

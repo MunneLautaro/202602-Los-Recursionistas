@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react"
 import { fetchEquiposPorLiga, fetchLigas } from "../api/catalogosApi";
 import type {
   EquipoResponseDTO,
@@ -6,6 +6,7 @@ import type {
   LigaResponseDTO,
 } from "../types";
 import { jugadoresFiltersStyles } from "./JugadoresFilters.styles";
+import { useDebounce } from "../../../hooks/useDebounce"
 
 interface JugadoresFiltersProps {
   filters: JugadorFiltroRequestDTO;
@@ -22,6 +23,17 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
   const [loadingLigas, setLoadingLigas] = useState(true);
   const [loadingEquipos, setLoadingEquipos] = useState(false);
   const [catalogError, setCatalogError] = useState<string | null>(null);
+  const debouncedNombre = useDebounce(local.nombre ?? "")
+
+  useEffect(() => {
+    if (debouncedNombre === (filters.nombre ?? "")) {
+      return
+    }
+    setFilters((previous) => ({
+      ...previous,
+      nombre: debouncedNombre || undefined,
+    }))
+  }, [debouncedNombre, filters.nombre, setFilters])
 
   useEffect(() => {
     let active = true;
@@ -56,12 +68,13 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
     if (!local.ligaId) {
       return;
     }
+    const ligaId = local.ligaId;
 
     let active = true;
 
     const loadEquipos = async () => {
       try {
-        const data = await fetchEquiposPorLiga(local.ligaId!);
+        const data = await fetchEquiposPorLiga(ligaId);
         if (active) {
           setEquipos(data);
         }
@@ -93,7 +106,7 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
   ) => {
     const { name, value } = e.target;
     const parsedValue = value
-      ? isNaN(Number(value))
+      ? Number.isNaN(Number(value))
         ? value
         : Number(value)
       : undefined;
@@ -118,55 +131,48 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
 
   return (
     <form className={jugadoresFiltersStyles.form} onSubmit={applyFilters}>
-      <input
+      <label className={jugadoresFiltersStyles.field}>
+        <span className={jugadoresFiltersStyles.label}>Nombre</span>
+        <input
         name="nombre"
-        placeholder="Nombre"
+        placeholder="Buscar por nombre"
         value={local.nombre || ""}
         onChange={handleChange}
         className={jugadoresFiltersStyles.input}
-      />
-      <select
-        name="posicion"
-        className={jugadoresFiltersStyles.input}
-        onChange={handleChange}
-        value={local.posicion || ""}
-      >
-        <option value="">Todas</option>
-        <option value="Defence">Defence</option>
-        <option value="Goalkeeper">Goalkeeper</option>
-        <option value="Midfield">Midfield</option>
-        <option value="Offence">Offence</option>
-      </select>
-      <select
-        name="ligaId"
-        value={local.ligaId ?? ""}
-        onChange={handleChange}
-        className={jugadoresFiltersStyles.input}
-        disabled={loadingLigas}
-      >
-        <option value="">Todas las ligas</option>
-        {ligas.map((liga) => (
-          <option key={liga.id} value={liga.id}>
-            {liga.nombre}
-          </option>
-        ))}
-      </select>
-      <select
-        name="equipoId"
-        value={local.equipoId ?? ""}
-        onChange={handleChange}
-        className={jugadoresFiltersStyles.input}
-        disabled={!local.ligaId || loadingEquipos}
-      >
-        <option value="">
-          {loadingEquipos ? "Cargando equipos..." : "Todos los equipos"}
-        </option>
-        {equipos.map((equipo) => (
-          <option key={equipo.id} value={equipo.id}>
-            {equipo.nombre}
-          </option>
-        ))}
-      </select>
+        />
+      </label>
+      <label className={jugadoresFiltersStyles.field}>
+        <span className={jugadoresFiltersStyles.label}>Posición</span>
+        <select name="posicion" className={jugadoresFiltersStyles.input} onChange={handleChange} value={local.posicion || ""}>
+          <option value="">Todas</option>
+          <option value="Defence">Defensa</option>
+          <option value="Goalkeeper">Arquero</option>
+          <option value="Midfield">Mediocampo</option>
+          <option value="Offence">Ataque</option>
+        </select>
+      </label>
+      <label className={jugadoresFiltersStyles.field}>
+        <span className={jugadoresFiltersStyles.label}>Liga</span>
+        <select name="ligaId" value={local.ligaId ?? ""} onChange={handleChange} className={jugadoresFiltersStyles.input} disabled={loadingLigas}>
+          <option value="">Todas las ligas</option>
+          {ligas.map((liga) => <option key={liga.id} value={liga.id}>{liga.nombre}</option>)}
+        </select>
+      </label>
+      <label className={jugadoresFiltersStyles.field}>
+        <span className={jugadoresFiltersStyles.label}>Equipo</span>
+        <select name="equipoId" value={local.equipoId ?? ""} onChange={handleChange} className={jugadoresFiltersStyles.input} disabled={!local.ligaId || loadingEquipos}>
+          <option value="">{loadingEquipos ? "Cargando equipos..." : "Todos los equipos"}</option>
+          {equipos.map((equipo) => <option key={equipo.id} value={equipo.id}>{equipo.nombre}</option>)}
+        </select>
+      </label>
+      <label className={jugadoresFiltersStyles.field}>
+        <span className={jugadoresFiltersStyles.label}>Ordenar</span>
+        <select name="orden" value={local.orden ?? ""} onChange={handleChange} className={jugadoresFiltersStyles.input}>
+          <option value="">Predeterminado</option>
+          <option value="nombre,asc">Nombre A-Z</option>
+          <option value="nombre,desc">Nombre Z-A</option>
+        </select>
+      </label>
       <button type="submit" className={jugadoresFiltersStyles.button}>
         Aplicar
       </button>
@@ -174,5 +180,5 @@ export const JugadoresFilters: React.FC<JugadoresFiltersProps> = ({
         <p className={jugadoresFiltersStyles.error}>{catalogError}</p>
       )}
     </form>
-  );
-};
+  )
+}

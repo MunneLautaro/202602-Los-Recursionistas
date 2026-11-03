@@ -52,7 +52,7 @@ export function PlayerSearch({ selected, onSelect }: PlayerSearchProps) {
             <button
               type="button"
               key={player.id}
-              className="p-2 text-left hover:bg-[var(--accent-bg)]"
+              className="rounded p-2 text-left text-[var(--text)] hover:bg-[var(--accent-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
               onClick={() => {
                 setQuery(player.nombre);
                 setResults([]);

@@ -13,8 +13,8 @@ export const HomePage: React.FC = () => {
         <span className={appStyles.brandHighlight}>Los Recursionistas</span>!
       </h1>
       <p className={appStyles.description}>
-        Plataforma de gestión de fútbol y sincronización de datos en tiempo
-        real.
+        Descubrí jugadores, seguí el ranking y participá del mercado de tokens
+        de fantasy football.
       </p>
       <div className={appStyles.buttonContainer}>
         {!isAuthenticated && (
@@ -23,6 +23,9 @@ export const HomePage: React.FC = () => {
           </Link>
         )}
         <Link to="/equipos" className={appStyles.btnSecondary}>Ver Equipos</Link>
+        <Link to="/jugadores" className={appStyles.btnSecondary}>Explorar jugadores</Link>
+        <Link to="/ranking" className={appStyles.btnSecondary}>Ver ranking</Link>
+        <Link to="/mercado" className={appStyles.btnSecondary}>Ir al mercado</Link>
       </div>
     </div>
   )

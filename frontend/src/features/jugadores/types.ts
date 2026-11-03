@@ -3,6 +3,7 @@ export interface JugadorFiltroRequestDTO {
   posicion?: string;
   ligaId?: number;
   equipoId?: number;
+  orden?: string;
 }
 
 export interface LigaResponseDTO {
