@@ -25,13 +25,15 @@ class JugadorSpecsTest {
         Path<Object> posicion = mock(Path.class);
         Path<Object> equipo = mock(Path.class);
         Path<Object> liga = mock(Path.class);
+        Path<Object> equipoId = mock(Path.class);
+        Path<Object> ligaId = mock(Path.class);
         Predicate predicate = mock(Predicate.class);
         doReturn(nombre).when(root).get("nombre");
         when(root.get("posicion")).thenReturn(posicion);
         when(root.get("equipo")).thenReturn(equipo);
-        when(equipo.get("id")).thenReturn(mock(Path.class));
+        when(equipo.get("id")).thenReturn(equipoId);
         when(equipo.get("liga")).thenReturn(liga);
-        when(liga.get("id")).thenReturn(mock(Path.class));
+        when(liga.get("id")).thenReturn(ligaId);
         Expression<String> lowerNombre = mock(Expression.class);
         when(builder.lower(nombre)).thenReturn(lowerNombre);
         when(builder.like(any(), anyString())).thenReturn(predicate);

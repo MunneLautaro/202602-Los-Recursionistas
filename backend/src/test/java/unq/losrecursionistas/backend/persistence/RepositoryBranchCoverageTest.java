@@ -1,7 +1,6 @@
 package unq.losrecursionistas.backend.persistence;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.impl.*;

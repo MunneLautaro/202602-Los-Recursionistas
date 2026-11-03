@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.model.EjecucionIngesta;
-import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.impl.LigaServiceImpl;
