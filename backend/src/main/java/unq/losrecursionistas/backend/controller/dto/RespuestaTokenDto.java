@@ -1,4 +1,4 @@
 package unq.losrecursionistas.backend.controller.dto;
 
-public record RespuestaTokenDto(String token) implements RespuestaDto {
+public record RespuestaTokenDto(String token, LoginUsuarioResponse usuario) implements RespuestaDto {
 }

@@ -13,6 +13,7 @@ import unq.losrecursionistas.backend.model.*;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.repository.query.Param;
 
 @Repository
 public interface OrdenDAOSQL extends JpaRepository<Orden, Long> {
@@ -38,6 +39,21 @@ public interface OrdenDAOSQL extends JpaRepository<Orden, Long> {
 
     Page<Orden> findByJugadorIdAndTipoAndEstado(Long jugadorId, TipoOrden tipo,
                                                 EstadoOrden estado, Pageable pageable);
+
+    Page<Orden> findByUsuarioId(Long usuarioId, Pageable pageable);
+
+    @Query("""
+            select o from Orden o
+            where o.estado = :estado
+              and (:jugadorId is null or o.jugador.id = :jugadorId)
+              and (:tipo is null or o.tipo = :tipo)
+              and (:jugadorNombre is null or lower(o.jugador.nombre) like lower(concat('%', :jugadorNombre, '%')))
+            """)
+    Page<Orden> buscarActivasConNombre(@Param("jugadorId") Long jugadorId,
+                                       @Param("tipo") TipoOrden tipo,
+                                       @Param("jugadorNombre") String jugadorNombre,
+                                       @Param("estado") EstadoOrden estado,
+                                       Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Orden> findFirstByUsuarioIdAndJugadorIdAndEsLiquidezInicialTrue(

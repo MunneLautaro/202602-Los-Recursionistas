@@ -7,12 +7,14 @@ import java.time.OffsetDateTime;
 public record OrdenResponse(Long id, Long jugadorId, String tipo, Integer cantidadOriginal,
                             Integer cantidadDisponible, BigDecimal precioUnitario,
                             BigDecimal precioTotalRemanente, String estado,
-                            OffsetDateTime fechaCreacion) {
+                            OffsetDateTime fechaCreacion, String jugadorNombre,
+                            String equipoNombre, String posicion) {
     public static OrdenResponse desde(Orden orden) {
         return new OrdenResponse(orden.getId(), orden.getJugador().getId(),
                 orden.getTipo().name(), orden.getCantidadOriginal(),
                 orden.getCantidadDisponible(), orden.getPrecioUnitario(),
                 orden.precioTotalRemanente(), orden.getEstado().name(),
-                orden.getFechaCreacion());
+                orden.getFechaCreacion(), orden.getJugador().getNombre(),
+                orden.getJugador().getEquipo().getNombre(), orden.getJugador().getPosicion());
     }
 }
