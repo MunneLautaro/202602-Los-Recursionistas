@@ -25,6 +25,12 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 	}
 
 	@Override
+	public Usuario buscarPorId(Long id) {
+		return usuarioDAOSQL.findById(id)
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
+	}
+
+	@Override
 	public Usuario buscarPorIdBloqueado(Long id) {
 		return usuarioDAOSQL.findLockedById(id)
 				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));

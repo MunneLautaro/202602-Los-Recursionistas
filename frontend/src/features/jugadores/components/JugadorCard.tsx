@@ -1,5 +1,6 @@
 import React from "react";
 import type { JugadorResponseDTO } from "../types";
+import { calcularEdad } from "../utils";
 import { jugadorCardStyles } from "./JugadorCard.styles";
 
 export interface JugadorCardProps {
@@ -26,7 +27,9 @@ export const JugadorCard: React.FC<JugadorCardProps> = ({
         <span className={jugadorCardStyles.position}>{jugador.posicion}</span>
       </div>
       <div className={jugadorCardStyles.body}>
-        <p className={jugadorCardStyles.age}>Edad: {jugador.edad}</p>
+        <p className={jugadorCardStyles.age}>
+          Edad: {calcularEdad(jugador.fechaNacimiento) ?? "No disponible"}
+        </p>
         {jugador.equipo && (
           <p className={jugadorCardStyles.team}>
             Equipo: {jugador.equipo.nombre}

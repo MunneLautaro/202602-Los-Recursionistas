@@ -44,6 +44,7 @@ export interface LoginUser {
   saldoDisponible?: number
   habilitado: boolean
   fechaCreacion: string
+  autoridades?: string[]
 }
 
 export type SessionStatus = "unauthenticated" | "authenticated" | "invalidated"

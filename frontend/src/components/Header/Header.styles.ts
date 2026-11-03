@@ -9,6 +9,8 @@ export const headerStyles = {
   nav: "hidden items-center gap-6 md:flex",
   navLink:
     "text-sm font-medium text-[var(--text)] transition-colors hover:text-[var(--pantone-blue-violet)]",
+  adminLink:
+    "rounded-full bg-[var(--pantone-blue-violet)] px-3 py-1.5 text-xs font-bold text-white transition-transform hover:scale-105",
   actionsContainer: "flex items-center gap-3",
   userName: "text-sm font-semibold text-[var(--text-h)] truncate max-w-[150px]",
   btnLogin:

@@ -5,6 +5,7 @@ import {
   type QuoteFilters,
 } from "../api/jugadoresApi";
 import type { JugadorResponseDTO, PlayerStats, Quote } from "../types";
+import { calcularEdad } from "../utils";
 import { jugadorDetailModalStyles } from "./JugadorDetailModal.styles";
 
 interface JugadorDetailModalProps {
@@ -101,7 +102,9 @@ export const JugadorDetailModal: React.FC<JugadorDetailModalProps> = ({
         <p className={jugadorDetailModalStyles.field}>
           Posición: {jugador.posicion}
         </p>
-        <p className={jugadorDetailModalStyles.field}>Edad: {jugador.edad}</p>
+        <p className={jugadorDetailModalStyles.field}>
+          Edad: {calcularEdad(jugador.fechaNacimiento) ?? "No disponible"}
+        </p>
         {jugador.equipo && (
           <p className={jugadorDetailModalStyles.field}>
             Equipo: {jugador.equipo.nombre}

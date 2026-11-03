@@ -47,6 +47,6 @@ public class CreditosController {
             throw new org.springframework.security.access.AccessDeniedException(
                     "No puede consultar otra cuenta");
         }
-        return ResponseEntity.ok(SaldoResponse.desde(usuarios.buscarPorIdBloqueado(id)));
+        return ResponseEntity.ok(SaldoResponse.desde(usuarios.buscarPorId(id)));
     }
 }

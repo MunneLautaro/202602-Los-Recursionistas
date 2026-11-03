@@ -7,6 +7,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import java.util.Set;
 import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
 import unq.losrecursionistas.backend.controller.dto.LoginUsuarioResponse;
 import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
@@ -44,7 +45,7 @@ public class AuthServiceImpl implements AuthService {
 		String token = jwtService.generarToken(usuario);
 		Usuario usuarioModelo = usuarioService.buscarPorNombreUsuario(usuario.getUsername());
 		LoginUsuarioResponse datosUsuario = usuarioModelo == null
-				? new LoginUsuarioResponse(null, usuario.getUsername(), null, null, null)
+				? new LoginUsuarioResponse(null, usuario.getUsername(), null, null, null, Set.of())
 				: LoginUsuarioResponse.desde(usuarioModelo);
 		return new RespuestaTokenDto(token, datosUsuario);
 	}
