@@ -101,18 +101,18 @@ export function CuentaPage() {
       {account.error && (
         <div role="alert" className="grid gap-2 text-[var(--secondary)]">
           <p>{account.errorStatus === 403 ? "No tenés permisos para consultar esta cuenta." : account.error}</p>
-          <button type="button" onClick={account.reloadTransactions}>Reintentar historial</button>
+          <button type="button" className="rounded-lg border border-[var(--accent)] px-3 py-2 font-semibold text-[var(--accent)] hover:bg-[var(--accent-bg)]" onClick={account.reloadTransactions}>Reintentar historial</button>
         </div>
       )}
       <BalanceCard balance={account.balance} loading={account.loading && account.balance === null} />
-      <button type="button" className="w-fit rounded bg-[var(--primary)] px-4 py-2 text-[var(--pantone-darkest-hour)]" onClick={() => setReloadOpen(true)}>
+      <button type="button" className="w-fit rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-[var(--pantone-darkest-hour)] transition hover:brightness-95" onClick={() => setReloadOpen(true)}>
         Cargar saldo
       </button>
       {reloadOpen && (
         <div className="fixed inset-0 z-20 grid place-items-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-lg bg-[var(--bg)] p-5">
             <CreditReloadForm disabled={account.reloadingCredits} onSubmit={async (amount) => { await account.reload(amount); setReloadOpen(false); }} />
-            <button type="button" onClick={() => setReloadOpen(false)}>Cancelar</button>
+            <button type="button" className="rounded-lg border border-[var(--border)] px-4 py-2 font-semibold text-[var(--text)] hover:bg-[var(--accent-bg)]" onClick={() => setReloadOpen(false)}>Cancelar</button>
           </div>
         </div>
       )}

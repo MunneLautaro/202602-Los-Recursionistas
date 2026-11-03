@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
+import { ArrowDown, ArrowUp, Minus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { EstadoConsulta } from "../components";
 import { fetchLigas } from "../features/jugadores/api/catalogosApi";
 import type { LigaResponseDTO } from "../features/jugadores/types";
 import { PaginationControls } from "../features/jugadores/components/PaginationControls";
@@ -7,6 +10,7 @@ import { RankingFilters } from "../features/mercado/components/RankingFilters";
 import type { RankingFilters as RankingFiltersValue, RankingPlayer } from "../features/mercado/types";
 
 export function RankingPage() {
+  const navigate = useNavigate();
   const [filters, setFilters] = useState<RankingFiltersValue>({});
   const [leagues, setLeagues] = useState<LigaResponseDTO[]>([]);
   const [players, setPlayers] = useState<RankingPlayer[]>([]);
@@ -45,18 +49,24 @@ export function RankingPage() {
         setFilters(next);
         setPage(0);
       }} />
-      {loading && <p>Cargando ranking...</p>}
-      {error && <div className="text-[var(--secondary)]"><p>{error}</p><button onClick={() => load(page)}>Reintentar</button></div>}
-      {!loading && !error && players.length === 0 && <p>No hay jugadores para los filtros seleccionados.</p>}
+      <EstadoConsulta
+        estado={loading ? "cargando" : error ? "error" : players.length === 0 ? "vacio" : "exito"}
+        mensaje={error ?? (players.length === 0 ? "No hay jugadores para los filtros seleccionados." : undefined)}
+        accion={error ? { etiqueta: "Reintentar", ejecutar: () => void load(page) } : undefined}
+      />
       {!loading && !error && players.length > 0 && (
         <>
           <div className="grid gap-3">
             {players.map((player) => (
-              <button className="rounded border border-[var(--border)] p-4 text-left hover:border-[var(--accent)]"
-                key={player.jugadorId} onClick={() => window.location.assign(`/jugadores?jugadorId=${player.jugadorId}`)}>
+              <button className="rounded border border-[var(--border)] p-4 text-left hover:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+                key={player.jugadorId} onClick={() => navigate(`/jugadores?jugadorId=${player.jugadorId}`)}>
                 <strong>{player.nombre}</strong>
                 <span className="block text-sm">{player.posicion} · {player.equipo ?? "Sin equipo"} · {player.liga ?? "Sin liga"}</span>
-                <span className="block">Actual: {player.valorActual} · Anterior: {player.valorAnterior ?? "N/D"} · Variación: {player.variacion ?? "N/D"}</span>
+                <span className="block">Actual: {player.valorActual} · Anterior: {player.valorAnterior ?? "N/D"}</span>
+                <span className={`mt-2 inline-flex items-center gap-1 text-sm ${player.variacion === null ? "text-[var(--text)]" : player.variacion > 0 ? "text-green-700" : "text-[var(--secondary)]"}`}>
+                  {player.variacion === null || player.variacion === 0 ? <Minus aria-hidden="true" size={16} /> : player.variacion > 0 ? <ArrowUp aria-hidden="true" size={16} /> : <ArrowDown aria-hidden="true" size={16} />}
+                  {player.variacion === null ? "N/D (neutra)" : `${player.variacion > 0 ? "+" : ""}${player.variacion} (${player.variacion > 0 ? "positiva" : "negativa"})`}
+                </span>
               </button>
             ))}
           </div>

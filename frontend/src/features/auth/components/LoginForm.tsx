@@ -3,7 +3,7 @@ import { useLogin } from "../hooks/useLogin"
 import { loginFormStyles } from "./LoginForm.styles"
 
 export const LoginForm: React.FC = () => {
-  const { formData, errors, isLoading, handleChange, handleSubmit } = useLogin()
+  const { register, errors, generalError, isLoading, handleSubmit } = useLogin()
 
   return (
     <div className={loginFormStyles.container}>
@@ -14,8 +14,8 @@ export const LoginForm: React.FC = () => {
         </p>
       </div>
 
-      {errors.general && (
-        <div className={loginFormStyles.alertError}>{errors.general}</div>
+      {generalError && (
+        <div className={loginFormStyles.alertError}>{generalError}</div>
       )}
 
       <form onSubmit={handleSubmit} className={loginFormStyles.form} noValidate>
@@ -25,19 +25,19 @@ export const LoginForm: React.FC = () => {
           </label>
           <input
             id="nombreUsuario"
-            name="nombreUsuario"
+            {...register("nombreUsuario")}
             type="text"
             placeholder="Ej: recursionista10"
-            value={formData.nombreUsuario}
-            onChange={handleChange}
             disabled={isLoading}
+            aria-invalid={Boolean(errors.nombreUsuario)}
+            aria-describedby={errors.nombreUsuario ? "login-usuario-error" : undefined}
             className={`${loginFormStyles.input} ${
               errors.nombreUsuario ? loginFormStyles.inputError : ""
             }`}
           />
           {errors.nombreUsuario && (
             <span className={loginFormStyles.errorText}>
-              {errors.nombreUsuario}
+              <span id="login-usuario-error">{errors.nombreUsuario.message}</span>
             </span>
           )}
         </div>
@@ -48,19 +48,19 @@ export const LoginForm: React.FC = () => {
           </label>
           <input
             id="contrasena"
-            name="contrasena"
+            {...register("contrasena")}
             type="password"
             placeholder="••••••••"
-            value={formData.contrasena}
-            onChange={handleChange}
             disabled={isLoading}
+            aria-invalid={Boolean(errors.contrasena)}
+            aria-describedby={errors.contrasena ? "login-contrasena-error" : undefined}
             className={`${loginFormStyles.input} ${
               errors.contrasena ? loginFormStyles.inputError : ""
             }`}
           />
           {errors.contrasena && (
             <span className={loginFormStyles.errorText}>
-              {errors.contrasena}
+              <span id="login-contrasena-error">{errors.contrasena.message}</span>
             </span>
           )}
         </div>
