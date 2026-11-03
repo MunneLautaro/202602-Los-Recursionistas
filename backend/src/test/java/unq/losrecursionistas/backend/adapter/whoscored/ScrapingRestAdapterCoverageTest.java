@@ -137,7 +137,8 @@ class ScrapingRestAdapterCoverageTest {
                 .asList().hasSize(1);
 
         Browser browser = mock(Browser.class);
-        when(browser.newContext(any())).thenReturn(mock(com.microsoft.playwright.BrowserContext.class));
+        com.microsoft.playwright.BrowserContext browserContext = mock(com.microsoft.playwright.BrowserContext.class);
+        when(browser.newContext(any())).thenReturn(browserContext);
         assertThat(invoke(adapter, "createBrowserContext", browser)).isNotNull();
         assertThatThrownBy(() -> adapter.descubrirEquipos(10L)).isInstanceOf(ScrapingException.class);
     }

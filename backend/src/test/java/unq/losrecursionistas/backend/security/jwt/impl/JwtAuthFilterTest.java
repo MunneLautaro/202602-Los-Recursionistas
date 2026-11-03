@@ -23,7 +23,9 @@ class JwtAuthFilterTest {
 
     @Test
     void continuaSinBearer() throws Exception {
-        JwtAuthFilter filter = new JwtAuthFilter(mock(JwtService.class), mock(UserDetailsService.class));
+        JwtService jwt = mock(JwtService.class);
+        UserDetailsService users = mock(UserDetailsService.class);
+        JwtAuthFilter filter = new JwtAuthFilter(jwt, users);
         FilterChain chain = mock(FilterChain.class);
 
         filter.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), chain);
@@ -43,7 +45,8 @@ class JwtAuthFilterTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer token");
 
-        filter.doFilter(request, new MockHttpServletResponse(), mock(FilterChain.class));
+        FilterChain chain = mock(FilterChain.class);
+        filter.doFilter(request, new MockHttpServletResponse(), chain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication().getName()).isEqualTo("ana");
     }
@@ -72,11 +75,13 @@ class JwtAuthFilterTest {
     void limpiaContextoCuandoElServicioFalla() throws Exception {
         JwtService jwt = mock(JwtService.class);
         when(jwt.extraerUsername("bad")).thenThrow(new IllegalStateException("bad"));
-        JwtAuthFilter filter = new JwtAuthFilter(jwt, mock(UserDetailsService.class));
+        UserDetailsService users = mock(UserDetailsService.class);
+        JwtAuthFilter filter = new JwtAuthFilter(jwt, users);
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.addHeader("Authorization", "Bearer bad");
 
-        filter.doFilter(request, new MockHttpServletResponse(), mock(FilterChain.class));
+        FilterChain chain = mock(FilterChain.class);
+        filter.doFilter(request, new MockHttpServletResponse(), chain);
 
         assertThat(SecurityContextHolder.getContext().getAuthentication()).isNull();
     }

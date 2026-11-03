@@ -9,6 +9,7 @@ import unq.losrecursionistas.backend.persistence.sql.*;
 
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -22,6 +23,7 @@ class RepositoryBranchCoverageTest {
         new RepositorioEjecucionIngestaImpl(ejecuciones).reservar(ejecucion);
         when(ejecuciones.findFirstByEstadoOrderByInicioDesc(any())).thenReturn(Optional.empty());
         new RepositorioEjecucionIngestaImpl(ejecuciones).reservar(ejecucion);
+        assertThat(ejecuciones.findFirstByEstadoOrderByInicioDesc(any())).isEmpty();
 
         LigaDAOSQL ligas = mock(LigaDAOSQL.class);
         Liga liga = new Liga(1L, "Liga", "L");
@@ -64,5 +66,6 @@ class RepositoryBranchCoverageTest {
         estadisticaRepo.upsert(nueva);
         when(estadisticas.findByJugadorIdAndPartidoWhoscoredId(1L, 2L)).thenReturn(Optional.of(nueva));
         estadisticaRepo.upsert(nueva);
+        assertThat(estadisticas.findByJugadorIdAndPartidoWhoscoredId(1L, 2L)).contains(nueva);
     }
 }

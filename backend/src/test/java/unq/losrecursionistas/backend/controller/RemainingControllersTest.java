@@ -91,7 +91,8 @@ class RemainingControllersTest {
         assertThat(controller.obtenerPerfil(User.withUsername("ana").password("x").build()).getBody().id())
                 .isEqualTo(1L);
         assertThatThrownBy(() -> controller.obtenerPerfil(null)).isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> controller.obtenerPerfil(User.withUsername(" ").password("x").build()))
+        var invalidPrincipal = User.withUsername(" ").password("x").build();
+        assertThatThrownBy(() -> controller.obtenerPerfil(invalidPrincipal))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

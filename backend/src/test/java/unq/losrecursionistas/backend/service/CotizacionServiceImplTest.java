@@ -78,12 +78,16 @@ class CotizacionServiceImplTest {
     @Test
     void rechazaConfiguracionInvalidaDeRecalculo() {
         var service = crearServicio(Map.of(), "INEXISTENTE", BigDecimal.TEN, BigDecimal.ONE);
+        var inicioInvalido = LocalDate.of(2026, 1, 2);
+        var finInvalido = LocalDate.of(2026, 1, 1);
+        List<Jugador> jugadoresVacios = List.of();
 
-        assertThatThrownBy(() -> service.recalcular(List.of(), LocalDate.of(2026, 1, 2),
-                LocalDate.of(2026, 1, 1))).isInstanceOf(ExcepcionValidacion.class);
+        assertThatThrownBy(() -> service.recalcular(jugadoresVacios, inicioInvalido, finInvalido))
+                .isInstanceOf(ExcepcionValidacion.class);
         var servicioConEstrategia = crearServicio(Map.of("PERFORMANCE_GENERAL", estrategia),
                 "PERFORMANCE_GENERAL", BigDecimal.TEN, BigDecimal.ONE);
-        assertThatThrownBy(() -> servicioConEstrategia.recalcular(List.of(), null, LocalDate.of(2026, 1, 1)))
+        var fechaFin = LocalDate.of(2026, 1, 1);
+        assertThatThrownBy(() -> servicioConEstrategia.recalcular(jugadoresVacios, null, fechaFin))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -137,8 +141,10 @@ class CotizacionServiceImplTest {
         var service = crearServicio(Map.of(), "PERFORMANCE_GENERAL", BigDecimal.TEN, BigDecimal.ONE);
 
         assertThat(service.historial(1L, null, null, 0, 10)).hasSize(1);
-        assertThatThrownBy(() -> service.historial(1L, LocalDate.of(2026, 2, 1),
-                LocalDate.of(2026, 1, 1), 0, 10)).isInstanceOf(ExcepcionValidacion.class);
+        var fechaInicioInvalida = LocalDate.of(2026, 2, 1);
+        var fechaFinInvalida = LocalDate.of(2026, 1, 1);
+        assertThatThrownBy(() -> service.historial(1L, fechaInicioInvalida,
+                fechaFinInvalida, 0, 10)).isInstanceOf(ExcepcionValidacion.class);
         assertThatThrownBy(() -> service.historial(1L, null, null, -1, 10))
                 .isInstanceOf(ExcepcionValidacion.class);
         when(jugadores.existe(99L)).thenReturn(false);

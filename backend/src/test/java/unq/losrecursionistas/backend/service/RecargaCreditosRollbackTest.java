@@ -21,10 +21,14 @@ class RecargaCreditosRollbackTest {
         usuario.setId(1L);
         when(usuarios.buscarPorIdBloqueado(1L)).thenReturn(usuario);
         doThrow(new IllegalStateException("fallo")).when(usuarios).crearUsuario(usuario);
-        MercadoServiceImpl service = new MercadoServiceImpl(usuarios, mock(RepositorioJugador.class),
-                mock(RepositorioCotizacion.class), mock(RepositorioTenenciaToken.class),
-                mock(RepositorioOrden.class), mock(RepositorioTransaccionMercado.class),
-                mock(MatchingEngine.class), auditorias);
+        RepositorioJugador jugadores = mock(RepositorioJugador.class);
+        RepositorioCotizacion cotizaciones = mock(RepositorioCotizacion.class);
+        RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
+        RepositorioOrden ordenes = mock(RepositorioOrden.class);
+        RepositorioTransaccionMercado transacciones = mock(RepositorioTransaccionMercado.class);
+        MatchingEngine matchingEngine = mock(MatchingEngine.class);
+        MercadoServiceImpl service = new MercadoServiceImpl(usuarios, jugadores, cotizaciones,
+                tenencias, ordenes, transacciones, matchingEngine, auditorias);
 
         assertThatThrownBy(() -> service.recargarCreditos(usuario, 1L, BigDecimal.ONE))
                 .isInstanceOf(IllegalStateException.class);

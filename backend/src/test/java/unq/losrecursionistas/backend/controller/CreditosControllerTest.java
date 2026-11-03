@@ -34,10 +34,13 @@ class CreditosControllerTest {
 
     @Test
     void rechazaOperacionSinPrincipal() {
-        CreditosController controller = new CreditosController(mock(MercadoService.class), mock(RepositorioUsuario.class));
+        MercadoService mercado = mock(MercadoService.class);
+        RepositorioUsuario usuarios = mock(RepositorioUsuario.class);
+        CreditosController controller = new CreditosController(mercado, usuarios);
+        var request = new RecargaCreditosRequest(BigDecimal.ONE);
 
         assertThatThrownBy(() -> controller.saldo(1L, null)).isInstanceOf(AccessDeniedException.class);
-        assertThatThrownBy(() -> controller.recargar(1L, new RecargaCreditosRequest(BigDecimal.ONE), null))
+        assertThatThrownBy(() -> controller.recargar(1L, request, null))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -51,7 +54,8 @@ class CreditosControllerTest {
         when(usuarios.buscarPorNombreUsuario("ana")).thenReturn(propio);
         when(usuarios.buscarPorId(1L)).thenReturn(propio);
         when(usuarios.buscarPorId(9L)).thenReturn(admin);
-        CreditosController controller = new CreditosController(mock(MercadoService.class), usuarios);
+        MercadoService mercado = mock(MercadoService.class);
+        CreditosController controller = new CreditosController(mercado, usuarios);
 
         assertThat(controller.saldo(1L, User.withUsername("ana").password("x").roles("USER").build()).getBody().saldo())
                 .isEqualByComparingTo("10");
@@ -66,9 +70,11 @@ class CreditosControllerTest {
         Usuario propio = Usuario.builder().id(1L).nombreUsuario("ana").saldo(10D)
                 .autoridades(Set.of("ROLE_USUARIO")).build();
         when(usuarios.buscarPorNombreUsuario("ana")).thenReturn(propio);
+        MercadoService mercado = mock(MercadoService.class);
+        CreditosController controller = new CreditosController(mercado, usuarios);
+        var principal = User.withUsername("ana").password("x").roles("USER").build();
 
-        assertThatThrownBy(() -> new CreditosController(mock(MercadoService.class), usuarios)
-                .saldo(2L, User.withUsername("ana").password("x").roles("USER").build()))
+        assertThatThrownBy(() -> controller.saldo(2L, principal))
                 .isInstanceOf(AccessDeniedException.class);
     }
 }

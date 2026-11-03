@@ -10,6 +10,7 @@ import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 class RepositoryDelegationCoverageTest {
@@ -30,6 +31,7 @@ class RepositoryDelegationCoverageTest {
         for (String repository : repositories) {
             invokeMethods(repository);
         }
+        assertThat(repositories).hasSize(13);
     }
 
     private void invokeMethods(String simpleName) throws Exception {

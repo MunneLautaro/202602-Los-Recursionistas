@@ -21,14 +21,16 @@ class RemainingSmallCoverageTest {
 
     @Test
     void validaParametrosYExcepciones() {
+        BigDecimal one = BigDecimal.ONE;
+        Map<String, BigDecimal> emptyWeights = Map.of();
         ParametrosCotizacion parameters = new ParametrosCotizacion(BigDecimal.TEN, BigDecimal.ONE,
                 Map.of("goles", BigDecimal.ONE));
         assertThat(parameters.pesos()).containsKey("goles");
-        assertThatThrownBy(() -> new ParametrosCotizacion(null, BigDecimal.ONE, Map.of()))
+        assertThatThrownBy(() -> new ParametrosCotizacion(null, one, emptyWeights))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new ParametrosCotizacion(BigDecimal.ONE, null, Map.of()))
+        assertThatThrownBy(() -> new ParametrosCotizacion(one, null, emptyWeights))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new ParametrosCotizacion(BigDecimal.ONE, BigDecimal.ONE, null))
+        assertThatThrownBy(() -> new ParametrosCotizacion(one, one, null))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThat(new ExcepcionDominio("x", new IllegalStateException()).getCause()).isInstanceOf(IllegalStateException.class);
         assertThat(new ExcepcionValidacion("x", new IllegalStateException()).getCause()).isInstanceOf(IllegalStateException.class);

@@ -52,8 +52,10 @@ class MatchingEngineTest {
     @Test
     void solicitaAlRepositorioSoloElJugadorPrecioYUsuarioCompatibles() {
         RepositorioOrden ordenes = mock(RepositorioOrden.class);
-        MatchingEngineImpl engine = new MatchingEngineImpl(ordenes, mock(RepositorioTenenciaToken.class),
-                mock(RepositorioTransaccionMercado.class), mock(RepositorioAuditoriaTransaccional.class));
+        RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
+        RepositorioTransaccionMercado transacciones = mock(RepositorioTransaccionMercado.class);
+        RepositorioAuditoriaTransaccional auditorias = mock(RepositorioAuditoriaTransaccional.class);
+        MatchingEngineImpl engine = new MatchingEngineImpl(ordenes, tenencias, transacciones, auditorias);
         Usuario comprador = usuario("comprador", 100, 1L);
         Jugador jugador = jugador(10L);
         Orden compra = Orden.crear(comprador, jugador, TipoOrden.COMPRA, 1,

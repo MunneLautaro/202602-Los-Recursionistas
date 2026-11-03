@@ -18,10 +18,14 @@ class MercadoConsultaAutorizacionTest {
         RepositorioTransaccionMercado transacciones = mock(RepositorioTransaccionMercado.class);
         when(transacciones.buscarPorUsuario(eq(4L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
-        MercadoServiceImpl service = new MercadoServiceImpl(mock(RepositorioUsuario.class),
-                mock(RepositorioJugador.class), mock(RepositorioCotizacion.class),
-                mock(RepositorioTenenciaToken.class), mock(RepositorioOrden.class),
-                transacciones, mock(MatchingEngine.class));
+        RepositorioUsuario usuarios = mock(RepositorioUsuario.class);
+        RepositorioJugador jugadores = mock(RepositorioJugador.class);
+        RepositorioCotizacion cotizaciones = mock(RepositorioCotizacion.class);
+        RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
+        RepositorioOrden ordenes = mock(RepositorioOrden.class);
+        MatchingEngine matchingEngine = mock(MatchingEngine.class);
+        MercadoServiceImpl service = new MercadoServiceImpl(usuarios, jugadores, cotizaciones,
+                tenencias, ordenes, transacciones, matchingEngine);
 
         service.listarTransacciones(4L, null);
 
@@ -34,10 +38,14 @@ class MercadoConsultaAutorizacionTest {
         RepositorioTransaccionMercado transacciones = mock(RepositorioTransaccionMercado.class);
         when(transacciones.buscarPorUsuario(eq(4L), any(Pageable.class)))
                 .thenReturn(new PageImpl<>(List.of()));
-        MercadoServiceImpl service = new MercadoServiceImpl(mock(RepositorioUsuario.class),
-                mock(RepositorioJugador.class), mock(RepositorioCotizacion.class),
-                mock(RepositorioTenenciaToken.class), mock(RepositorioOrden.class),
-                transacciones, mock(MatchingEngine.class));
+        RepositorioUsuario usuarios = mock(RepositorioUsuario.class);
+        RepositorioJugador jugadores = mock(RepositorioJugador.class);
+        RepositorioCotizacion cotizaciones = mock(RepositorioCotizacion.class);
+        RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
+        RepositorioOrden ordenes = mock(RepositorioOrden.class);
+        MatchingEngine matchingEngine = mock(MatchingEngine.class);
+        MercadoServiceImpl service = new MercadoServiceImpl(usuarios, jugadores, cotizaciones,
+                tenencias, ordenes, transacciones, matchingEngine);
 
         service.listarTransacciones(4L, org.springframework.data.domain.PageRequest.of(0, 12));
 

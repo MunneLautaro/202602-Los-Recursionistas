@@ -22,8 +22,7 @@ public class UsuarioController {
     @GetMapping("/me")
     public ResponseEntity<UsuarioPerfilResponse> obtenerPerfil(
             @AuthenticationPrincipal UserDetails principal) {
-        if (principal == null || principal.getUsername() == null
-                || principal.getUsername().isBlank()) {
+        if (principal == null || principal.getUsername().isBlank()) {
             throw new AccessDeniedException("Autenticacion requerida");
         }
         return ResponseEntity.ok(UsuarioPerfilResponse.desdeModelo(

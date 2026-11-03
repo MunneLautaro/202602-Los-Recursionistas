@@ -11,6 +11,8 @@ import unq.losrecursionistas.backend.persistence.sql.UsuarioDAOSQL;
 @Component
 public class RepositorioUsuarioImpl implements RepositorioUsuario {
 
+	private static final String USUARIO_NO_ENCONTRADO = "Usuario no encontrado";
+
 	private final UsuarioDAOSQL usuarioDAOSQL;
 
 	public RepositorioUsuarioImpl(UsuarioDAOSQL usuarioDAOSQL) {
@@ -21,19 +23,19 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 	@Override
 	public Usuario buscarPorNombreUsuario(String nombreUsuario) {
 		return usuarioDAOSQL.findByNombreUsuario(nombreUsuario)
-				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado(USUARIO_NO_ENCONTRADO));
 	}
 
 	@Override
 	public Usuario buscarPorId(Long id) {
 		return usuarioDAOSQL.findById(id)
-				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado(USUARIO_NO_ENCONTRADO));
 	}
 
 	@Override
 	public Usuario buscarPorIdBloqueado(Long id) {
 		return usuarioDAOSQL.findLockedById(id)
-				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Usuario no encontrado"));
+				.orElseThrow(() -> new ExcepcionRecursoNoEncontrado(USUARIO_NO_ENCONTRADO));
 	}
 
 	@Override

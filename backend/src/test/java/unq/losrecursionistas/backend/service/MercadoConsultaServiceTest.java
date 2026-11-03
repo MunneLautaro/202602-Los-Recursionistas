@@ -49,8 +49,12 @@ class MercadoConsultaServiceTest {
 
     private static MercadoServiceImpl service(RepositorioOrden ordenes,
                                                RepositorioTransaccionMercado transacciones) {
-        return new MercadoServiceImpl(mock(RepositorioUsuario.class), mock(RepositorioJugador.class),
-                mock(RepositorioCotizacion.class), mock(RepositorioTenenciaToken.class),
-                ordenes, transacciones, mock(MatchingEngine.class));
+        RepositorioUsuario usuarios = mock(RepositorioUsuario.class);
+        RepositorioJugador jugadores = mock(RepositorioJugador.class);
+        RepositorioCotizacion cotizaciones = mock(RepositorioCotizacion.class);
+        RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
+        MatchingEngine matchingEngine = mock(MatchingEngine.class);
+        return new MercadoServiceImpl(usuarios, jugadores, cotizaciones, tenencias,
+                ordenes, transacciones, matchingEngine);
     }
 }

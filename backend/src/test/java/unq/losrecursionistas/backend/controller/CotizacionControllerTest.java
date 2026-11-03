@@ -32,7 +32,8 @@ class CotizacionControllerTest {
     void rechazaRecalculoSiYaHayUnoActivo() {
         CotizacionService service = mock(CotizacionService.class);
         when(service.reservarRecalculo()).thenReturn(false);
-        CotizacionController controller = new CotizacionController(service, mock(CotizacionAsyncWorker.class), 7);
+        CotizacionAsyncWorker worker = mock(CotizacionAsyncWorker.class);
+        CotizacionController controller = new CotizacionController(service, worker, 7);
 
         assertThatThrownBy(controller::recalcular)
                 .isInstanceOf(unq.losrecursionistas.backend.exceptions.ExcepcionCotizacionActiva.class);
@@ -57,7 +58,8 @@ class CotizacionControllerTest {
                 .thenReturn(Page.empty());
         when(service.ranking(isNull(), isNull(), eq(0), eq(12)))
                 .thenReturn(Page.empty());
-        CotizacionController controller = new CotizacionController(service, mock(CotizacionAsyncWorker.class), 7);
+        CotizacionAsyncWorker worker = mock(CotizacionAsyncWorker.class);
+        CotizacionController controller = new CotizacionController(service, worker, 7);
 
         assertThat(controller.historial(1L, null, null, 0, 12)).isEmpty();
         assertThat(controller.ranking(null, null, 0, 12)).isEmpty();

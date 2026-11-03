@@ -65,43 +65,45 @@ class FootballDataApiClientTest {
 
     @Test
     void convierteErroresDeCompeticionYEquipo() {
+        FootballDataApiClient client = new FootballDataApiClient(restClient, mapper);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballCompetitionTeamsResponse.class))
                 .thenThrow(HttpClientErrorException.NotFound.create(HttpStatus.NOT_FOUND, "not found", null, null, null));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquiposPorCompeticion("XX"))
+        assertThatThrownBy(() -> client.getEquiposPorCompeticion("XX"))
                 .isInstanceOf(ExcepcionValidacion.class);
 
         reset(restClient);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballTeamResponse.class))
                 .thenThrow(HttpClientErrorException.NotFound.create(HttpStatus.NOT_FOUND, "not found", null, null, null));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquipo(99L))
+        assertThatThrownBy(() -> client.getEquipo(99L))
                 .isInstanceOf(ExcepcionValidacion.class);
     }
 
     @Test
     void convierteErroresDeRespuestaYConexion() {
+        FootballDataApiClient client = new FootballDataApiClient(restClient, mapper);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballCompetitionTeamsResponse.class))
                 .thenThrow(new RestClientResponseException("error", HttpStatus.BAD_GATEWAY.value(),
                         "bad gateway", null, null, null));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquiposPorCompeticion("PL"))
+        assertThatThrownBy(() -> client.getEquiposPorCompeticion("PL"))
                 .isInstanceOf(ExcepcionValidacion.class);
 
         reset(restClient);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballCompetitionTeamsResponse.class))
                 .thenThrow(new RestClientException("conexion"));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquiposPorCompeticion("PL"))
+        assertThatThrownBy(() -> client.getEquiposPorCompeticion("PL"))
                 .isInstanceOf(ExcepcionValidacion.class);
 
         reset(restClient);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballTeamResponse.class))
                 .thenThrow(new RestClientResponseException("error", HttpStatus.BAD_GATEWAY.value(),
                         "bad gateway", null, null, null));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquipo(1L))
+        assertThatThrownBy(() -> client.getEquipo(1L))
                 .isInstanceOf(ExcepcionValidacion.class);
 
         reset(restClient);
         when(restClient.get().uri(anyString(), any(Object[].class)).retrieve().body(FootballTeamResponse.class))
                 .thenThrow(new RestClientException("conexion"));
-        assertThatThrownBy(() -> new FootballDataApiClient(restClient, mapper).getEquipo(1L))
+        assertThatThrownBy(() -> client.getEquipo(1L))
                 .isInstanceOf(ExcepcionValidacion.class);
     }
 }
