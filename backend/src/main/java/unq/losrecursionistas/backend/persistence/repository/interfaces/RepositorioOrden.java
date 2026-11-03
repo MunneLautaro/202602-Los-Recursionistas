@@ -11,5 +11,8 @@ public interface RepositorioOrden {
     List<Orden> buscarCompatiblesBloqueadas(Long jugadorId, TipoOrden tipo,
                                              BigDecimal precio, Long usuarioId);
     Page<Orden> buscarActivas(Long jugadorId, TipoOrden tipo, Pageable pageable);
+    Page<Orden> buscarActivas(Long jugadorId, TipoOrden tipo, String jugadorNombre,
+                              Pageable pageable);
+    Page<Orden> buscarPorUsuario(Long usuarioId, Pageable pageable);
     Orden buscarLiquidezInicialBloqueada(Long usuarioId, Long jugadorId);
 }

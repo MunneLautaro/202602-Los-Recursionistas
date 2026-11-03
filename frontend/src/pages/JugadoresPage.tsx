@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 import {
   fetchJugadores,
   fetchJugadorDetalle,
@@ -14,12 +15,20 @@ import { JugadoresFilters } from "../features/jugadores/components/JugadoresFilt
 import { PaginationControls } from "../features/jugadores/components/PaginationControls"
 
 export const JugadoresPage: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const equipoIdParam = searchParams.get("equipoId")
+  const equipoId = equipoIdParam && /^\d+$/.test(equipoIdParam) ? Number(equipoIdParam) : undefined
   const [jugadores, setJugadores] = useState<PaginatedJugadores | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [filters, setFilters] = useState<JugadorFiltroRequestDTO>({})
+  const [filters, setFilters] = useState<JugadorFiltroRequestDTO>(() => ({ equipoId }))
   const [page, setPage] = useState(0)
   const [size] = useState(12)
+
+  const effectiveFilters = useMemo(
+    () => ({ ...filters, equipoId }),
+    [equipoId, filters],
+  )
 
   const [selectedJugador, setSelectedJugador] =
     useState<JugadorResponseDTO | null>(null)
@@ -27,18 +36,18 @@ export const JugadoresPage: React.FC = () => {
   const [detailLoading, setDetailLoading] = useState(false)
   const [detailError, setDetailError] = useState<string | null>(null)
 
-  const loadJugadores = async () => {
+  const loadJugadores = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
-      const data = await fetchJugadores(filters, page, size)
+      const data = await fetchJugadores(effectiveFilters, page, size)
       setJugadores(data)
-    } catch (e: any) {
-      setError(e.message ?? "Error al cargar jugadores")
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Error al cargar jugadores")
     } finally {
       setLoading(false)
     }
-  }
+  }, [effectiveFilters, page, size])
 
   const openDetalle = async (id: number) => {
     setDetailLoading(true)
@@ -47,17 +56,21 @@ export const JugadoresPage: React.FC = () => {
       const data = await fetchJugadorDetalle(id)
       setSelectedJugador(data)
       setModalOpen(true)
-    } catch (e: any) {
-      setDetailError(e.message ?? "Error al cargar detalle")
+    } catch (error) {
+      setDetailError(
+        error instanceof Error ? error.message : "Error al cargar detalle",
+      )
     } finally {
       setDetailLoading(false)
     }
   }
 
   useEffect(() => {
-    loadJugadores()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters, page])
+    const timer = window.setTimeout(() => {
+      void loadJugadores()
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [loadJugadores])
 
   return (
     <div className="container mx-auto p-4">
@@ -69,6 +82,12 @@ export const JugadoresPage: React.FC = () => {
       </h1>
 
       <JugadoresFilters filters={filters} setFilters={setFilters} />
+      {equipoId !== undefined && (
+        <div className="mb-3 flex items-center justify-between rounded border border-[var(--accent-border)] bg-[var(--accent-bg)] p-2">
+          <span>Jugadores filtrados por equipo #{equipoId}</span>
+          <button type="button" onClick={() => setSearchParams({})}>Limpiar filtro</button>
+        </div>
+      )}
 
       {loading && <p>Cargando jugadores...</p>}
       {error && <p className="text-red-500">{error}</p>}

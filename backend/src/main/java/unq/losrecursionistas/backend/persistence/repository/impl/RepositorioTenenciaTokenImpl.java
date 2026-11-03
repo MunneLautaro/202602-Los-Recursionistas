@@ -1,5 +1,7 @@
 package unq.losrecursionistas.backend.persistence.repository.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import unq.losrecursionistas.backend.model.TenenciaToken;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioTenenciaToken;
@@ -16,4 +18,7 @@ public class RepositorioTenenciaTokenImpl implements RepositorioTenenciaToken {
         return dao.findByUsuarioIdAndJugadorId(usuarioId, jugadorId).orElse(null);
     }
     public TenenciaToken guardar(TenenciaToken tenencia) { return dao.save(tenencia); }
+    public Page<TenenciaToken> buscarPorUsuario(Long usuarioId, Pageable pageable) {
+        return dao.findByUsuarioId(usuarioId, pageable);
+    }
 }

@@ -1,18 +1,16 @@
 <!-- Sync Impact Report
-Version change: 2.2.0 -> 2.3.0
-Modified principles: Principio VII — Testing obligatorio; Governance
-Added sections: Principio XV — Consistencia transaccional e integridad financiera;
-Principio XVI — Inmutabilidad y auditoría transaccional;
-Principio XVII — Aislamiento del motor de emparejamiento
+Version change: 2.4.0 -> 2.5.0
+Modified principles: Requisitos no funcionales transversales
+Added sections: none
 Removed sections: none
 Follow-up TODOs: none
 -->
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.3.0
+**Versión:** 2.5.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-10-25
+**Última modificación:** 2026-11-02
 
 **Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
 para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
@@ -407,7 +405,11 @@ de generar código o artefactos. No se asume una decisión por default.
 
 ## Principio XII — Arquitectura del frontend
 
-El frontend MUST organizarse con la siguiente estructura bajo `src/`:
+El frontend MUST respetar la estructura existente bajo `src/`, sus convenciones
+y las especificaciones funcionales y técnicas definidas en `specs/`. Toda
+funcionalidad visual MUST implementarse mediante componentes correctamente
+componentizados, cohesivos y reutilizables, evitando componentes monolíticos y
+cambios estructurales innecesarios.
 
 - `app/`: punto de entrada de la aplicación. Contiene `main.tsx`, `App.tsx`, `router.tsx` (definición de rutas con react-router-dom) y `providers.tsx` (wrapping de proveedores globales como `BrowserRouter`).
 - `features/`: módulos de dominio de UI. Cada feature (ej. `auth`, `jugadores`) es un directorio autocontenido con `api/`, `components/`, `hooks/` y `types.ts`. Los módulos MUST exportar su API pública a través de `index.ts`.
@@ -416,6 +418,12 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
 - `lib/`: utilitarios transversales (ej. `fetchClient.ts`).
 
 **Reglas:**
+- Los componentes MUST tener una única responsabilidad clara, interfaces
+  tipadas y composición preferida sobre duplicación o acoplamiento innecesario.
+- Las nuevas implementaciones MUST reutilizar componentes, patrones,
+  tecnologías y estilos existentes antes de crear alternativas.
+- Todo cambio MUST preservar la consistencia visual, la accesibilidad y el
+  tipado seguro del frontend.
 - Los estilos MUST definirse en archivos `.styles.ts` como objetos con clases Tailwind, no en línea ni en archivos CSS separados por componente.
 - El token JWT y el nombre de usuario autenticado MUST almacenarse en `localStorage` con las claves `token` y `nombreUsuario` respectivamente.
 - Las páginas MUST usar el `Layout` compartido como wrapper de rutas en el router, no incluirlo individualmente.
@@ -438,6 +446,14 @@ El frontend MUST organizarse con la siguiente estructura bajo `src/`:
   detalle del cambio, timestamp, estado anterior y posterior).
 - **Seguridad:** validación estricta de inputs, manejo seguro de tokens de
   autenticación/autorización.
+- **Calidad de código:** todo código Java del backend, TypeScript del frontend y
+  sus tests MUST respetar las directrices de Clean Code y buenas prácticas
+  definidas en `.agents/skills/sonarcloud-quality/SKILL.md`. Queda prohibido
+  introducir nuevos code smells, vulnerabilidades o incumplimientos del Quality
+  Gate del proyecto. Antes de entregar cambios, deben ejecutarse las
+  verificaciones aplicables, incluyendo `./gradlew test` para backend o tests
+  Java, lint/type-check/tests del frontend y el escaneo de SonarCloud
+  disponible; toda verificación no ejecutada MUST informarse con su motivo.
 - **Documentación:** todos los endpoints MUST documentarse con OpenAPI
   (Swagger).
 - **Scheduler:** sincronización periódica de datos desde Football-Data.org vía

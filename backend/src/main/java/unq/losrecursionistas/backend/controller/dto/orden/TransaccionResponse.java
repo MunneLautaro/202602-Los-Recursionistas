@@ -6,10 +6,14 @@ import java.time.OffsetDateTime;
 
 public record TransaccionResponse(Long id, Long jugadorId, Long compradorId, Long vendedorId,
                                   Integer cantidad, BigDecimal precioUnitario,
-                                  BigDecimal total, OffsetDateTime ejecutadaEn) {
+                                  BigDecimal total, OffsetDateTime ejecutadaEn,
+                                  String jugadorNombre, String compradorNombre,
+                                  String vendedorNombre) {
     public static TransaccionResponse desde(TransaccionMercado tx) {
         return new TransaccionResponse(tx.getId(), tx.getJugador().getId(),
                 tx.getComprador().getId(), tx.getVendedor().getId(), tx.getCantidad(),
-                tx.getPrecioUnitario(), tx.getTotal(), tx.getEjecutadaEn());
+                tx.getPrecioUnitario(), tx.getTotal(), tx.getEjecutadaEn(),
+                tx.getJugador().getNombre(), tx.getComprador().getNombreUsuario(),
+                tx.getVendedor().getNombreUsuario());
     }
 }

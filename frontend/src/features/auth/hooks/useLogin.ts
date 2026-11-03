@@ -2,6 +2,7 @@ import { useState } from "react"
 import type { ChangeEvent, FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 import { authApi } from "../api/authApi"
+import type { LoginResponse } from "../types"
 import type { LoginFormData, LoginFormErrors } from "../types"
 
 export function useLogin() {
@@ -54,15 +55,22 @@ export function useLogin() {
         contrasena: formData.contrasena,
       })
 
-      localStorage.setItem("token", response.token)
-      localStorage.setItem("nombreUsuario", formData.nombreUsuario.trim())
+      const loginResponse = response as LoginResponse
+      localStorage.setItem("token", loginResponse.token)
+      if (loginResponse.usuario?.id !== undefined) {
+        localStorage.setItem("nombreUsuario", loginResponse.usuario.nombreUsuario)
+        localStorage.setItem("userId", String(loginResponse.usuario.id))
+        localStorage.setItem("usuario", JSON.stringify(loginResponse.usuario))
+      } else {
+        localStorage.setItem("nombreUsuario", formData.nombreUsuario.trim())
+      }
 
       navigate("/")
       window.location.reload()
-    } catch (err: any) {
+    } catch (error) {
       setErrors({
         general:
-          err.message ||
+          (error instanceof Error && error.message) ||
           "Credenciales inválidas. Verificá tu usuario y contraseña.",
       })
     } finally {

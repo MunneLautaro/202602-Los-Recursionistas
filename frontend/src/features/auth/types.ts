@@ -33,6 +33,26 @@ export interface LoginPayload {
 
 export interface LoginResponse {
   token: string
+  usuario: LoginUser
+}
+
+export interface LoginUser {
+  id: number
+  nombreUsuario: string
+  saldo: number
+  saldoReservado?: number
+  saldoDisponible?: number
+  habilitado: boolean
+  fechaCreacion: string
+  autoridades?: string[]
+}
+
+export type SessionStatus = "unauthenticated" | "authenticated" | "invalidated"
+
+export interface Session {
+  token: string
+  usuario?: LoginUser
+  status: SessionStatus
 }
 
 export interface LoginFormData {
