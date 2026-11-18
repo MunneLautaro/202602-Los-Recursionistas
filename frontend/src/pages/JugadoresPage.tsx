@@ -146,7 +146,7 @@ export const JugadoresPage: React.FC = () => {
           onClose={() => setModalOpen(false)}
         />
       )}
-      {detailLoading && <p aria-live="polite" className="ui-chip fixed bottom-6 left-1/2 z-40 -translate-x-1/2 bg-ink-2/90 shadow-2xl backdrop-blur-xl"><span className="ui-dot" aria-hidden="true" />Cargando detalle...</p>}
+      {detailLoading && <p aria-live="polite" className="ui-chip fixed bottom-6 left-1/2 z-40 -translate-x-1/2 bg-ink-2/95 shadow-2xl"><span className="ui-dot" aria-hidden="true" />Cargando detalle...</p>}
       {detailError && <p role="alert" className="ui-alert-error">{detailError}</p>}
     </div>
   )

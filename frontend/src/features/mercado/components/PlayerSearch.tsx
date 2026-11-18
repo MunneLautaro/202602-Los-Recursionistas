@@ -47,7 +47,7 @@ export function PlayerSearch({ selected, onSelect }: PlayerSearchProps) {
         <small className="mt-1.5 block text-xs text-white/40">No se encontraron jugadores.</small>
       )}
       {results.length > 0 && (
-        <div className="absolute z-20 mt-2 grid max-h-64 w-full gap-1 overflow-y-auto rounded-2xl border border-white/10 bg-ink-2/95 p-1.5 shadow-2xl backdrop-blur-xl">
+        <div className="absolute z-20 mt-2 grid max-h-64 w-full gap-1 overflow-y-auto rounded-2xl border border-white/10 bg-ink-2/95 p-1.5 shadow-2xl">
           {results.map((player) => (
             <button
               type="button"
