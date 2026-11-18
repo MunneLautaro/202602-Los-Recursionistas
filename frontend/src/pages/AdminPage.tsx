@@ -80,15 +80,15 @@ export function AdminPage() {
   const renderFeedback = (key: string) => {
     const state = actions[key];
     if (!state || state.loading)
-      return state?.loading ? <p role="status">Procesando...</p> : null;
+      return state?.loading ? <p role="status" className="mt-3 text-sm text-white/50">Procesando...</p> : null;
     return state.error ? (
-      <p role="alert" className="text-sm text-[var(--secondary)]">
+      <p role="alert" className="mt-3 text-sm text-coral">
         {state.error}
       </p>
     ) : (
       <p
         role="status"
-        className="text-sm text-emerald-700 dark:text-[var(--primary)]"
+        className="mt-3 text-sm text-mint"
       >
         {state.message}
       </p>
@@ -117,13 +117,14 @@ export function AdminPage() {
   };
 
   return (
-    <main className="mx-auto grid max-w-6xl gap-8 px-2 py-6 text-left">
-      <header className="rounded-3xl bg-[var(--pantone-darkest-hour)] p-8 text-[var(--pantone-cloud-dancer)] shadow-xl">
-        <p className="mb-2 text-sm font-bold uppercase tracking-[0.2em] text-[var(--pantone-sun-glare)]">
+    <main className="mx-auto grid max-w-6xl gap-8 text-left">
+      <header className="ui-card overflow-hidden bg-[radial-gradient(60%_120%_at_0%_0%,rgba(98,56,222,0.42),transparent_70%),radial-gradient(50%_120%_at_100%_100%,rgba(158,86,38,0.32),transparent_70%)] p-8 sm:p-10">
+        <p className="ui-eyebrow mb-4 flex items-center gap-3">
+          <span className="ui-dot" aria-hidden="true" />
           Centro de control
         </p>
-        <h1 className="m-0 text-4xl font-black text-white">Administración</h1>
-        <p className="mt-3 max-w-2xl text-base text-white/75">
+        <h1 className="ui-page-title">Administración</h1>
+        <p className="mt-4 max-w-2xl text-base font-light text-white/60">
           Gestioná cotizaciones, sincronización e ingestas de datos desde un
           único lugar.
         </p>
@@ -134,18 +135,18 @@ export function AdminPage() {
         aria-labelledby="operaciones-title"
       >
         <div className="md:col-span-2">
-          <h2 id="operaciones-title" className="text-2xl font-bold">
+          <h2 id="operaciones-title" className="text-2xl font-semibold tracking-tight text-white">
             Operaciones del sistema
           </h2>
-          <p className="text-sm opacity-75">
+          <p className="text-sm text-white/50">
             Estas tareas pueden tardar unos minutos y se ejecutan de forma
             segura.
           </p>
         </div>
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]">
-          <p className="mb-2 text-3xl">↗</p>
-          <h3 className="text-xl font-bold">Recalcular cotizaciones</h3>
-          <p className="mb-5 mt-2 text-sm opacity-75">
+        <article className="ui-card p-6 sm:p-8">
+          <p className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint/15 to-lavender/20 text-xl text-mint">↗</p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Recalcular cotizaciones</h3>
+          <p className="mb-5 mt-2 text-sm text-white/50">
             Actualiza el valor de mercado de todos los jugadores.
           </p>
           <button
@@ -158,16 +159,16 @@ export function AdminPage() {
                 "El recálculo fue aceptado.",
               )
             }
-            className="rounded-xl bg-[var(--primary)] px-4 py-2 font-bold text-[var(--pantone-darkest-hour)] disabled:opacity-50"
+            className="ui-btn-ghost px-5 py-2.5 text-sm"
           >
             Recalcular
           </button>
           {renderFeedback("cotizaciones")}
         </article>
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]">
-          <p className="mb-2 text-3xl">⇄</p>
-          <h3 className="text-xl font-bold">Sincronizar jugadores</h3>
-          <p className="mb-4 mt-2 text-sm opacity-75">
+        <article className="ui-card p-6 sm:p-8">
+          <p className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint/15 to-lavender/20 text-xl text-mint">⇄</p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Sincronizar jugadores</h3>
+          <p className="mb-4 mt-2 text-sm text-white/50">
             Importa los jugadores de un equipo externo.
           </p>
           <div className="flex gap-2">
@@ -178,7 +179,7 @@ export function AdminPage() {
               min="1"
               placeholder="ID del equipo"
               aria-label="ID del equipo"
-              className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-transparent px-3 py-2"
+              className="ui-input min-w-0 flex-1"
             />
             <button
               type="button"
@@ -194,17 +195,17 @@ export function AdminPage() {
                   "La sincronización fue aceptada.",
                 );
               }}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
+              className="ui-btn-ghost px-5 py-2.5 text-sm"
             >
               Sincronizar
             </button>
           </div>
           {renderFeedback("sync")}
         </article>
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]">
-          <p className="mb-2 text-3xl">⌁</p>
-          <h3 className="text-xl font-bold">Vincular datos</h3>
-          <p className="mb-5 mt-2 text-sm opacity-75">
+        <article className="ui-card p-6 sm:p-8">
+          <p className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint/15 to-lavender/20 text-xl text-mint">⌁</p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Vincular datos</h3>
+          <p className="mb-5 mt-2 text-sm text-white/50">
             Relaciona los registros de WhoScored con tus jugadores.
           </p>
           <button
@@ -216,16 +217,16 @@ export function AdminPage() {
                 "El linking fue ejecutado.",
               )
             }
-            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
+            className="ui-btn-ghost px-5 py-2.5 text-sm"
           >
             Ejecutar linking
           </button>
           {renderFeedback("linking")}
         </article>
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]">
-          <p className="mb-2 text-3xl">▦</p>
-          <h3 className="text-xl font-bold">Ingestar estadísticas</h3>
-          <p className="mb-5 mt-2 text-sm opacity-75">
+        <article className="ui-card p-6 sm:p-8">
+          <p className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint/15 to-lavender/20 text-xl text-mint">▦</p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Ingestar estadísticas</h3>
+          <p className="mb-5 mt-2 text-sm text-white/50">
             Carga las estadísticas de todos los jugadores.
           </p>
           <button
@@ -237,16 +238,16 @@ export function AdminPage() {
                 "La ingesta de estadísticas fue ejecutada.",
               )
             }
-            className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
+            className="ui-btn-ghost px-5 py-2.5 text-sm"
           >
             Ejecutar ingesta
           </button>
           {renderFeedback("stats")}
         </article>
-        <article className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]">
-          <p className="mb-2 text-3xl">◎</p>
-          <h3 className="text-xl font-bold">Estadísticas de jugador</h3>
-          <p className="mb-4 mt-2 text-sm opacity-75">
+        <article className="ui-card p-6 sm:p-8">
+          <p className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-white/10 bg-gradient-to-br from-mint/15 to-lavender/20 text-xl text-mint">◎</p>
+          <h3 className="text-lg font-semibold tracking-tight text-white">Estadísticas de jugador</h3>
+          <p className="mb-4 mt-2 text-sm text-white/50">
             Actualiza un jugador puntual sin procesar todo el catálogo.
           </p>
           <div className="flex gap-2">
@@ -257,7 +258,7 @@ export function AdminPage() {
               min="1"
               placeholder="ID del jugador"
               aria-label="ID del jugador"
-              className="min-w-0 flex-1 rounded-xl border border-[var(--border)] bg-transparent px-3 py-2"
+              className="ui-input min-w-0 flex-1"
             />
             <button
               type="button"
@@ -276,7 +277,7 @@ export function AdminPage() {
                   "Las estadísticas del jugador fueron ingestas.",
                 );
               }}
-              className="rounded-xl bg-[var(--accent)] px-4 py-2 font-bold text-[var(--accent-foreground)]"
+              className="ui-btn-ghost px-5 py-2.5 text-sm"
             >
               Ingestar
             </button>
@@ -286,13 +287,13 @@ export function AdminPage() {
       </section>
 
       <section
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]"
+        className="ui-card p-6 sm:p-8"
         aria-labelledby="whoscored-title"
       >
-        <h2 id="whoscored-title" className="text-2xl font-bold">
+        <h2 id="whoscored-title" className="text-2xl font-semibold tracking-tight text-white">
           Ingesta WhoScored
         </h2>
-        <p className="mb-5 mt-1 text-sm opacity-75">
+        <p className="mb-5 mt-1 text-sm text-white/50">
           Iniciá una ejecución controlada por alcance y consultá su último
           estado.
         </p>
@@ -300,7 +301,7 @@ export function AdminPage() {
           <select
             value={scope}
             onChange={(event) => setScope(event.target.value as IngestaAlcance)}
-            className="rounded-xl border border-[var(--border)] bg-transparent px-3 py-2"
+            className="ui-input sm:max-w-xs"
           >
             <option value="COMPLETA">Carga completa</option>
             <option value="LIGA">Por liga</option>
@@ -310,7 +311,7 @@ export function AdminPage() {
           <button
             type="button"
             onClick={startIngesta}
-            className="rounded-xl bg-[var(--secondary)] px-4 py-2 font-bold text-[var(--pantone-darkest-hour)]"
+            className="ui-btn-primary px-6"
           >
             Iniciar ingesta
           </button>
@@ -323,26 +324,26 @@ export function AdminPage() {
             min="1"
             placeholder="ID del alcance"
             aria-label="ID del alcance"
-            className="mt-3 w-full rounded-xl border border-[var(--border)] bg-transparent px-3 py-2 sm:max-w-xs"
+            className="ui-input mt-3 sm:max-w-xs"
           />
         )}
         {renderFeedback("ingesta")}
       </section>
 
       <section
-        className="rounded-2xl border border-[var(--border)] bg-[var(--bg)] p-6 shadow-[var(--shadow)]"
+        className="ui-card p-6 sm:p-8"
         aria-labelledby="estado-title"
       >
-        <h2 id="estado-title" className="text-2xl font-bold">
+        <h2 id="estado-title" className="text-2xl font-semibold tracking-tight text-white">
           Última ingesta
         </h2>
         {lastIngestaError && (
-          <p role="alert" className="mt-3 text-[var(--secondary)]">
+          <p role="alert" className="mt-3 text-sm text-coral">
             {lastIngestaError}
           </p>
         )}
         {!lastIngestaError && lastIngesta && (
-          <div className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
+          <div className="mt-5 grid gap-3 text-sm text-white/65 sm:grid-cols-3 *:rounded-2xl *:border *:border-white/[0.08] *:bg-white/[0.025] *:p-4 [&_strong]:mr-1 [&_strong]:font-medium [&_strong]:text-white">
             <span>
               <strong>Estado:</strong> {lastIngesta.estado ?? "Sin información"}
             </span>
@@ -355,7 +356,7 @@ export function AdminPage() {
           </div>
         )}
         {!lastIngestaError && !lastIngesta && (
-          <p className="mt-3 text-sm opacity-75">
+          <p className="mt-3 text-sm text-white/50">
             No hay ejecuciones registradas.
           </p>
         )}
