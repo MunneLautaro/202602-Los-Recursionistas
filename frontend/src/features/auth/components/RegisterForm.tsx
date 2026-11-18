@@ -13,6 +13,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = () => {
   return (
     <div className={registerFormStyles.container}>
       <div className={registerFormStyles.header}>
+        <img src="/logo.svg" alt="" className={registerFormStyles.logo} />
         <h2 className={registerFormStyles.title}>Crear Cuenta</h2>
         <p className={registerFormStyles.subtitle}>
           Regístrate para comenzar a gestionar tu equipo y jugadores

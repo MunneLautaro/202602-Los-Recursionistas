@@ -8,6 +8,7 @@ export const LoginForm: React.FC = () => {
   return (
     <div className={loginFormStyles.container}>
       <div className={loginFormStyles.header}>
+        <img src="/logo.svg" alt="" className={loginFormStyles.logo} />
         <h2 className={loginFormStyles.title}>Iniciar Sesión</h2>
         <p className={loginFormStyles.subtitle}>
           Ingresá tus credenciales para acceder a tu cuenta
