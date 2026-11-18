@@ -51,12 +51,22 @@
   body {
     margin: 0;
     min-width: 320px;
-    background-color: var(--bg);
+    /* Sin fondo propio: el color lo da :root y así la capa body::before queda visible */
+  }
+
+  /* Brillos de fondo en una capa fija propia (compuesta por la GPU).
+     Evita background-attachment: fixed, que repinta todo en cada scroll. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
     background-image:
       radial-gradient(64rem 46rem at -6% -10%, rgba(98, 56, 222, 0.62), transparent 62%),
       radial-gradient(52rem 40rem at 48% 46%, rgba(40, 168, 136, 0.13), transparent 66%),
       radial-gradient(50rem 40rem at 106% 106%, rgba(158, 86, 38, 0.45), transparent 62%);
-    background-attachment: fixed;
+    transform: translateZ(0);
   }
 
   #root {
