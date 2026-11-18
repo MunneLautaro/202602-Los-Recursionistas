@@ -43,8 +43,11 @@ export function RankingPage() {
   }, [load]);
 
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Ranking del mercado</h1>
+    <main className="grid gap-6">
+      <header className="grid gap-3">
+        <span className="ui-eyebrow flex items-center gap-3"><span className="ui-dot" aria-hidden="true" />Cotizaciones</span>
+        <h1 className="ui-page-title">Ranking del mercado</h1>
+      </header>
       <RankingFilters filters={filters} leagues={leagues} onChange={(next) => {
         setFilters(next);
         setPage(0);
@@ -58,12 +61,12 @@ export function RankingPage() {
         <>
           <div className="grid gap-3">
             {players.map((player) => (
-              <button className="rounded border border-[var(--border)] p-4 text-left hover:border-[var(--accent)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]"
+              <button className="ui-tile ui-tile-interactive grid w-full gap-1 p-5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60 md:grid-cols-[minmax(0,1fr)_auto_auto] md:items-center md:gap-x-8"
                 key={player.jugadorId} onClick={() => navigate(`/jugadores?jugadorId=${player.jugadorId}`)}>
-                <strong>{player.nombre}</strong>
-                <span className="block text-sm">{player.posicion} · {player.equipo ?? "Sin equipo"} · {player.liga ?? "Sin liga"}</span>
-                <span className="block">Actual: {player.valorActual} · Anterior: {player.valorAnterior ?? "N/D"}</span>
-                <span className={`mt-2 inline-flex items-center gap-1 text-sm ${player.variacion === null ? "text-[var(--text)]" : player.variacion > 0 ? "text-green-700" : "text-[var(--secondary)]"}`}>
+                <strong className="text-base font-semibold text-white md:col-start-1">{player.nombre}</strong>
+                <span className="block text-sm text-white/50 md:col-start-1">{player.posicion} · {player.equipo ?? "Sin equipo"} · {player.liga ?? "Sin liga"}</span>
+                <span className="block text-sm text-white/70 tabular-nums md:col-start-2 md:row-span-2 md:row-start-1 md:text-right">Actual: {player.valorActual} · Anterior: {player.valorAnterior ?? "N/D"}</span>
+                <span className={`mt-2 inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium tabular-nums md:col-start-3 md:row-span-2 md:row-start-1 md:mt-0 ${player.variacion === null ? "bg-white/[0.05] text-white/55" : player.variacion > 0 ? "bg-mint/10 text-mint" : "bg-amber/10 text-amber"}`}>
                   {player.variacion === null || player.variacion === 0 ? <Minus aria-hidden="true" size={16} /> : player.variacion > 0 ? <ArrowUp aria-hidden="true" size={16} /> : <ArrowDown aria-hidden="true" size={16} />}
                   {player.variacion === null ? "N/D (neutra)" : `${player.variacion > 0 ? "+" : ""}${player.variacion} (${player.variacion > 0 ? "positiva" : "negativa"})`}
                 </span>
