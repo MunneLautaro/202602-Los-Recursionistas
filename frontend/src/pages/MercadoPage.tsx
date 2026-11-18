@@ -16,36 +16,39 @@ export function MercadoPage() {
   const { orders, page, totalPages, loading, error, reload, goToPage } = useOrders(filters);
 
   return (
-    <main className="container mx-auto grid gap-8 p-4">
-      <section>
-        <h1 className="mb-4 text-2xl font-bold">Mercado</h1>
-        <div className="flex flex-wrap items-end justify-between gap-4">
+    <main className="grid gap-8">
+      <section className="grid gap-6">
+        <header className="grid gap-3">
+        <span className="ui-eyebrow flex items-center gap-3"><span className="ui-dot" aria-hidden="true" />Órdenes</span>
+        <h1 className="ui-page-title">Mercado</h1>
+      </header>
+        <div className="flex flex-wrap items-end gap-4">
           <OrderFilters filters={filters} onChange={(next) => setFilters(next)} />
           {isAuthenticated && (
-            <button type="button" className="rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-[var(--pantone-darkest-hour)] transition hover:brightness-95" onClick={() => setOrderModalOpen(true)}>
+            <button type="button" className="ui-btn-primary min-h-12 px-6" onClick={() => setOrderModalOpen(true)}>
               Crear orden
             </button>
           )}
         </div>
-        {loading && <p>Cargando órdenes...</p>}
-        {error && <div className="text-[var(--secondary)]"><p>{error}</p><button className="rounded-lg border border-[var(--secondary)] px-3 py-2 font-semibold text-[var(--secondary)] hover:bg-[var(--accent-bg)]" onClick={reload}>Reintentar</button></div>}
-        {!loading && !error && orders.length === 0 && <p>No hay órdenes disponibles.</p>}
+        {loading && <p className="text-sm text-white/55">Cargando órdenes...</p>}
+        {error && <div className="ui-alert-error flex flex-wrap items-center justify-between gap-3"><p>{error}</p><button className="ui-btn-ghost px-4 py-2 text-sm" onClick={reload}>Reintentar</button></div>}
+        {!loading && !error && orders.length === 0 && <p className="ui-card p-8 text-center text-sm text-white/55">No hay órdenes disponibles.</p>}
         {!loading && !error && orders.length > 0 && <OrderList orders={orders} />}
         <PaginationControls page={page} totalPages={totalPages} onPageChange={goToPage} />
       </section>
       {isAuthenticated ? (
         <section>
           {orderModalOpen && (
-            <div className="fixed inset-0 z-20 grid place-items-center bg-black/50 p-4" role="dialog" aria-modal="true">
-              <div className="w-full max-w-lg rounded-lg bg-[var(--bg)] p-5 shadow-[var(--shadow)]">
+            <div className="ui-overlay fixed inset-0 z-[60] grid place-items-center p-4" role="dialog" aria-modal="true">
+              <div className="ui-modal w-full max-w-lg p-6 sm:p-8">
                 <OrderForm onSuccess={(order) => { setLastOrder(order); void reload(); }} onClose={() => setOrderModalOpen(false)} />
               </div>
             </div>
           )}
-          {lastOrder && <p className="mt-3 text-[var(--accent)]">Orden #{lastOrder.id} creada correctamente.</p>}
+          {lastOrder && <p className="ui-alert-success">Orden #{lastOrder.id} creada correctamente.</p>}
         </section>
       ) : (
-        <p>Para comprar o vender, <Link className="text-[var(--accent)]" to="/login">iniciá sesión</Link>.</p>
+        <p className="ui-card p-6 text-sm text-white/60">Para comprar o vender, <Link className="font-semibold text-mint hover:text-white" to="/login">iniciá sesión</Link>.</p>
       )}
     </main>
   );

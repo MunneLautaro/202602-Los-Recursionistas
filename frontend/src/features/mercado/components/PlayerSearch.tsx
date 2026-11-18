@@ -30,10 +30,10 @@ export function PlayerSearch({ selected, onSelect }: PlayerSearchProps) {
 
   return (
     <div className="relative">
-      <label className="grid gap-1">
+      <label className="grid gap-2 text-sm font-medium text-white/60">
         Jugador
         <input
-          className="rounded border border-[var(--border)] bg-[var(--bg)] p-2"
+          className="ui-input"
           value={query}
           placeholder="Buscar por nombre o apellido"
           onChange={(event) => {
@@ -42,17 +42,17 @@ export function PlayerSearch({ selected, onSelect }: PlayerSearchProps) {
           }}
         />
       </label>
-      {loading && <small>Buscando jugadores...</small>}
+      {loading && <small className="mt-1.5 block text-xs text-white/40">Buscando jugadores...</small>}
       {!selected && !loading && query.trim().length >= 2 && results.length === 0 && (
-        <small>No se encontraron jugadores.</small>
+        <small className="mt-1.5 block text-xs text-white/40">No se encontraron jugadores.</small>
       )}
       {results.length > 0 && (
-        <div className="absolute z-10 mt-1 grid w-full gap-1 rounded border border-[var(--border)] bg-[var(--bg)] p-1 shadow-[var(--shadow)]">
+        <div className="absolute z-20 mt-2 grid max-h-64 w-full gap-1 overflow-y-auto rounded-2xl border border-white/10 bg-ink-2/95 p-1.5 shadow-2xl">
           {results.map((player) => (
             <button
               type="button"
               key={player.id}
-              className="rounded p-2 text-left text-[var(--text)] hover:bg-[var(--accent-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+              className="rounded-xl px-3 py-2.5 text-left text-sm text-white/80 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
               onClick={() => {
                 setQuery(player.nombre);
                 setResults([]);

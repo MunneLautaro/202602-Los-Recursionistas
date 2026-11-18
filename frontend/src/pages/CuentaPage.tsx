@@ -71,27 +71,30 @@ export function CuentaPage() {
 
   if (profileLoading) {
     return (
-      <main className="container mx-auto grid gap-4 p-4">
-        <h1 className="text-2xl font-bold text-[var(--text-h)]">Mi cuenta</h1>
-        <p role="status">Cargando datos del usuario...</p>
+      <main className="grid gap-6">
+        <h1 className="ui-page-title">Mi cuenta</h1>
+        <p role="status" className="text-sm text-white/55">Cargando datos del usuario...</p>
       </main>
     );
   }
 
   if (userId === undefined || user === null) {
     return (
-      <main className="container mx-auto grid gap-4 p-4">
-        <h1 className="text-2xl font-bold text-[var(--text-h)]">Mi cuenta</h1>
-        <p role="alert">{profileError ?? "No se pudo identificar al usuario autenticado."}</p>
+      <main className="grid gap-6">
+        <h1 className="ui-page-title">Mi cuenta</h1>
+        <p role="alert" className="ui-alert-error">{profileError ?? "No se pudo identificar al usuario autenticado."}</p>
       </main>
     );
   }
 
   return (
-    <main className="container mx-auto grid gap-6 p-4">
-      <h1 className="text-2xl font-bold text-[var(--text-h)]">Mi cuenta</h1>
-      <section className="rounded border border-[var(--border)] p-4 text-left">
-        <h2>Datos del usuario</h2>
+    <main className="grid gap-6">
+      <header className="grid gap-3">
+        <span className="ui-eyebrow flex items-center gap-3"><span className="ui-dot" aria-hidden="true" />Cartera</span>
+        <h1 className="ui-page-title">Mi cuenta</h1>
+      </header>
+      <section className="ui-card grid gap-2 p-6 text-sm text-white/65 sm:grid-cols-2 sm:p-8">
+        <h2 className="ui-eyebrow mb-3 sm:col-span-2">Datos del usuario</h2>
         <p>Usuario: {user.nombreUsuario}</p>
         <p>ID: {userId}</p>
         <p>Estado: {user.habilitado ? "Habilitado" : "No disponible"}</p>
@@ -99,35 +102,35 @@ export function CuentaPage() {
         {user.fechaCreacion && <p>Creada: {new Date(user.fechaCreacion).toLocaleString("es-AR")}</p>}
       </section>
       {account.error && (
-        <div role="alert" className="grid gap-2 text-[var(--secondary)]">
+        <div role="alert" className="ui-alert-error grid gap-3">
           <p>{account.errorStatus === 403 ? "No tenés permisos para consultar esta cuenta." : account.error}</p>
-          <button type="button" className="rounded-lg border border-[var(--accent)] px-3 py-2 font-semibold text-[var(--accent)] hover:bg-[var(--accent-bg)]" onClick={account.reloadTransactions}>Reintentar historial</button>
+          <button type="button" className="ui-btn-ghost w-fit px-4 py-2 text-sm" onClick={account.reloadTransactions}>Reintentar historial</button>
         </div>
       )}
       <BalanceCard balance={account.balance} loading={account.loading && account.balance === null} />
-      <button type="button" className="w-fit rounded-lg bg-[var(--primary)] px-4 py-2 font-semibold text-[var(--pantone-darkest-hour)] transition hover:brightness-95" onClick={() => setReloadOpen(true)}>
+      <button type="button" className="ui-btn-primary w-fit px-6" onClick={() => setReloadOpen(true)}>
         Cargar saldo
       </button>
       {reloadOpen && (
-        <div className="fixed inset-0 z-20 grid place-items-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-lg bg-[var(--bg)] p-5">
+        <div className="ui-overlay fixed inset-0 z-[60] grid place-items-center p-4">
+          <div className="ui-modal grid w-full max-w-md gap-3 p-6 sm:p-8">
             <CreditReloadForm disabled={account.reloadingCredits} onSubmit={async (amount) => { await account.reload(amount); setReloadOpen(false); }} />
-            <button type="button" className="rounded-lg border border-[var(--border)] px-4 py-2 font-semibold text-[var(--text)] hover:bg-[var(--accent-bg)]" onClick={() => setReloadOpen(false)}>Cancelar</button>
+            <button type="button" className="ui-btn-ghost w-full py-3" onClick={() => setReloadOpen(false)}>Cancelar</button>
           </div>
         </div>
       )}
       <nav className="flex flex-wrap gap-3">
-        <Link className="rounded bg-[var(--accent)] px-4 py-2 text-[var(--pantone-cloud-dancer)]" to="/cuenta/ordenes">Ver todas mis órdenes</Link>
-        <Link className="rounded bg-[var(--accent)] px-4 py-2 text-[var(--pantone-cloud-dancer)]" to="/cuenta/tokens">Mis tokens</Link>
-        <Link className="rounded bg-[var(--accent)] px-4 py-2 text-[var(--pantone-cloud-dancer)]" to="/cuenta/transacciones">Ver transacciones</Link>
+        <Link className="ui-btn-ghost px-5 py-2.5 text-sm" to="/cuenta/ordenes">Ver todas mis órdenes</Link>
+        <Link className="ui-btn-ghost px-5 py-2.5 text-sm" to="/cuenta/tokens">Mis tokens</Link>
+        <Link className="ui-btn-ghost px-5 py-2.5 text-sm" to="/cuenta/transacciones">Ver transacciones</Link>
       </nav>
-      <section className="grid gap-3 text-left">
-        <h2>Mis órdenes</h2>
-        {ordersError && <p role="alert" className="text-[var(--secondary)]">{ordersError}</p>}
-        {!ordersError && orders.length === 0 && <p>No tenés órdenes registradas.</p>}
+      <section className="grid gap-3">
+        <h2 className="ui-eyebrow">Mis órdenes</h2>
+        {ordersError && <p role="alert" className="ui-alert-error">{ordersError}</p>}
+        {!ordersError && orders.length === 0 && <p className="text-sm text-white/50">No tenés órdenes registradas.</p>}
         {orders.map((order) => (
-          <article key={order.id} className="rounded border border-[var(--border)] p-3">
-            <strong>{order.tipo} - {order.jugadorNombre ?? `Jugador #${order.jugadorId}`}</strong>
+          <article key={order.id} className="ui-tile grid gap-1.5 p-5 text-sm text-white/60 tabular-nums">
+            <strong className="text-base font-semibold text-white">{order.tipo} - {order.jugadorNombre ?? `Jugador #${order.jugadorId}`}</strong>
             <p>Estado: {order.estado} · Cantidad: {order.cantidadDisponible}/{order.cantidadOriginal}</p>
             <p>Precio unitario: {order.precioUnitario} · Total restante: {order.precioTotalRemanente}</p>
           </article>

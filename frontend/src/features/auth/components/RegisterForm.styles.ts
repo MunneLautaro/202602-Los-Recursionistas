@@ -1,24 +1,21 @@
 export const registerFormStyles = {
   container:
-    "w-full max-w-md p-8 rounded-2xl bg-[var(--bg)] border border-[var(--border)] shadow-xl transition-all",
-  header: "mb-6 text-center",
-  title: "text-3xl font-extrabold text-[var(--text-h)] tracking-tight",
-  subtitle: "mt-2 text-sm text-[var(--text)] opacity-80",
-  form: "flex flex-col gap-5",
-  fieldGroup: "flex flex-col gap-1.5 text-left",
-  label: "text-sm font-semibold text-[var(--text)]",
-  input:
-    "w-full px-4 py-2.5 rounded-lg bg-[var(--bg)] border border-[var(--border)] text-[var(--text)] outline-none transition-all focus:border-[var(--pantone-blue-violet)] focus:ring-2 focus:ring-[var(--pantone-blue-violet)]/30",
+    "ui-card w-full max-w-md overflow-hidden p-8 sm:p-10 before:pointer-events-none before:absolute before:-top-24 before:-left-24 before:h-56 before:w-56 before:rounded-full before:bg-lavender/25 before:blur-3xl before:content-['']",
+  header: "relative mb-8 text-left",
+  logo: "mb-6 h-14 w-14 drop-shadow-[0_0_18px_rgba(169,139,255,0.4)]",
+  title: "text-3xl font-semibold tracking-tight text-white sm:text-4xl",
+  subtitle: "mt-3 text-sm leading-relaxed text-white/55",
+  form: "relative flex flex-col gap-5",
+  fieldGroup: "flex flex-col gap-2 text-left",
+  label: "text-sm font-medium text-white/60",
+  input: "ui-input",
   inputError:
-    "border-[var(--pantone-exuberant-orange)] focus:border-[var(--pantone-exuberant-orange)] focus:ring-[var(--pantone-exuberant-orange)]/30",
-  errorText: "text-xs font-medium text-[var(--pantone-exuberant-orange)] mt-1",
-  alertError:
-    "p-3 rounded-lg bg-[var(--pantone-exuberant-orange)]/10 border border-[var(--pantone-exuberant-orange)]/40 text-[var(--pantone-exuberant-orange)] text-sm text-center font-medium",
-  alertSuccess:
-    "p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/40 text-emerald-600 dark:text-emerald-400 text-sm text-center font-medium",
-  submitBtn:
-    "w-full mt-2 py-3 px-6 rounded-xl bg-[var(--pantone-sun-glare)] text-[var(--pantone-darkest-hour)] font-bold text-base shadow-md transition-all hover:brightness-105 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
-  footer: "mt-6 text-center text-sm text-[var(--text)] opacity-90",
+    "border-coral/70 focus:border-coral! focus:shadow-[0_0_0_4px_rgba(255,127,122,0.14)]!",
+  errorText: "mt-0.5 text-xs font-medium text-coral",
+  alertError: "ui-alert-error mb-5 text-center",
+  alertSuccess: "ui-alert-success mb-5 text-center",
+  submitBtn: "ui-btn-primary mt-3 w-full py-3.5 text-base",
+  footer: "relative mt-8 border-t border-white/[0.06] pt-6 text-center text-sm text-white/50",
   footerLink:
-    "font-bold text-[var(--pantone-blue-violet)] hover:underline ml-1 cursor-pointer",
+    "ml-1.5 cursor-pointer font-semibold text-mint transition-colors hover:text-white",
 } as const

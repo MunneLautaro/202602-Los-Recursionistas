@@ -46,8 +46,11 @@ export function EquiposPage() {
   }, []);
 
   return (
-    <main className="container mx-auto grid gap-6 p-4">
-      <h1 className="text-2xl font-bold text-[var(--text-h)]">Equipos</h1>
+    <main className="grid gap-10">
+      <header className="grid gap-3">
+        <span className="ui-eyebrow flex items-center gap-3"><span className="ui-dot" aria-hidden="true" />Clubes</span>
+        <h1 className="ui-page-title">Equipos</h1>
+      </header>
       {loading && <EstadoConsulta estado="cargando" mensaje="Cargando equipos..." />}
       {!loading && error && (
         <EstadoConsulta
@@ -60,29 +63,29 @@ export function EquiposPage() {
         <EstadoConsulta estado="vacio" mensaje="No hay ligas disponibles." />
       )}
       {ligas.map((liga) => (
-        <section key={liga.id} className="grid gap-3">
-          <h2>{liga.nombre}</h2>
+        <section key={liga.id} className="grid gap-4">
+          <h2 className="flex items-center gap-4 text-xl font-semibold text-white after:h-px after:flex-1 after:bg-white/[0.08] after:content-['']">{liga.nombre}</h2>
           {liga.equipos.length === 0 ? (
-            <p>No hay equipos disponibles en esta liga.</p>
+            <p className="text-sm text-white/50">No hay equipos disponibles en esta liga.</p>
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {liga.equipos.map((equipo) => (
                 <button
                   type="button"
                   key={equipo.id}
-                  className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--accent-bg)] p-4 text-left shadow-[var(--shadow)] transition hover:-translate-y-0.5 hover:border-[var(--accent)] hover:bg-[var(--accent-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
+                  className="ui-tile ui-tile-interactive flex items-center gap-4 p-4 text-left hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
                   onClick={() => navigate(`/jugadores?equipoId=${equipo.id}`)}
                 >
                   {equipo.escudoUrl ? (
-                    <img src={equipo.escudoUrl} alt="" className="h-12 w-12 object-contain" />
+                    <img src={equipo.escudoUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl bg-white/[0.04] object-contain p-1.5" />
                   ) : (
-                    <span aria-hidden="true" className="grid h-12 w-12 place-items-center rounded-full bg-[var(--accent)] font-bold text-[var(--pantone-cloud-dancer)]">
+                    <span aria-hidden="true" className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-mint to-lavender text-sm font-semibold text-ink">
                       {(equipo.sigla || equipo.nombreCorto || equipo.nombre).slice(0, 3).toUpperCase()}
                     </span>
                   )}
-                  <span>
-                    <strong className="block text-[var(--text-h)]">{equipo.nombre}</strong>
-                    <small>{equipo.sigla || equipo.nombreCorto}</small>
+                  <span className="min-w-0">
+                    <strong className="block truncate font-semibold text-white">{equipo.nombre}</strong>
+                    <small className="text-xs uppercase tracking-[0.2em] text-white/45">{equipo.sigla || equipo.nombreCorto}</small>
                   </span>
                 </button>
               ))}

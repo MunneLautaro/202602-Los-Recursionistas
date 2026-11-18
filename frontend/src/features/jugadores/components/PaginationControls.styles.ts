@@ -1,9 +1,10 @@
 export const paginationStyles = {
-  container: "flex items-center justify-center gap-4 mt-6",
-  button:
-    "rounded-lg bg-[var(--pantone-sun-glare)] px-3 py-1 text-[var(--pantone-darkest-hour)] transition hover:brightness-95 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-50",
-  numbers: "flex gap-1",
+  container: "mt-8 flex flex-wrap items-center justify-center gap-3",
+  button: "ui-btn-ghost px-4 py-2 text-sm",
+  numbers:
+    "flex gap-1 rounded-full border border-white/10 bg-white/[0.03] p-1 text-white/60",
   pageButton:
-    "rounded-lg border border-[var(--border)] px-2 py-1 text-[var(--text)] hover:bg-[var(--accent-bg)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]",
-  active: "bg-[var(--pantone-blue-violet)] text-white",
+    "grid h-9 min-w-9 place-items-center rounded-full px-3 text-sm font-medium tabular-nums hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60",
+  active:
+    "bg-gradient-to-r from-mint to-lavender font-semibold text-ink! shadow-[0_0_20px_-6px_rgba(92,255,210,0.8)]",
 } as const;

@@ -51,14 +51,14 @@ export function OrderFilters({ filters, onChange }: OrderFiltersProps) {
               });
             }}
           />
-          {loadingPlayers && <small className="block">Buscando...</small>}
+          {loadingPlayers && <small className={orderFiltersStyles.hint}>Buscando...</small>}
           {players.length > 0 && (
-            <div className="absolute z-10 mt-1 grid w-full rounded border border-[var(--border)] bg-[var(--bg)] p-1 shadow-[var(--shadow)]">
+            <div className={orderFiltersStyles.suggestions}>
               {players.map((player) => (
                 <button
                   type="button"
                   key={player.id}
-                  className="p-2 text-left hover:bg-[var(--accent-bg)]"
+                  className={orderFiltersStyles.suggestion}
                   onClick={() => {
                     setQuery(player.nombre);
                     setPlayers([]);
