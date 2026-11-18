@@ -6,7 +6,13 @@ export const Footer: React.FC = () => {
     <footer className={footerStyles.footer}>
       <div className={footerStyles.container}>
         <div className={footerStyles.brandSection}>
-          <span className={footerStyles.brandTitle}>Los Recursionistas</span>
+          <span className={footerStyles.brandLockup}>
+            <img src="/logo.svg" alt="" className={footerStyles.brandLogo} />
+            <span className={footerStyles.brandText}>
+              <span className={footerStyles.brandTitle}>Los Recursionistas</span>
+              <span className={footerStyles.brandTagline}>Mercado de fútbol</span>
+            </span>
+          </span>
           <span className={footerStyles.copyright}>
             © {new Date().getFullYear()} - Todos los derechos reservados.
           </span>
