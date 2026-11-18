@@ -8,27 +8,27 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, "Segoe UI", Roboto, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Consolas, monospace;
 
-  --color-ink: #05060a;
+  --color-ink: #04050a;
   --color-ink-2: #0c0e15;
   --color-ink-3: #141722;
-  --color-mint: #5ef5cf;
+  --color-mint: #5cffd2;
   --color-lavender: #a98bff;
-  --color-amber: #ffae5f;
+  --color-amber: #ffb36b;
   --color-coral: #ff7f7a;
 }
 
 :root {
-  --bg: #05060a;
+  --bg: #04050a;
   --text: #a4a8b8;
   --text-h: #f5f6fa;
   --muted: #6c7184;
   --border: rgba(255, 255, 255, 0.08);
   --border-strong: rgba(255, 255, 255, 0.14);
-  --accent: #5ef5cf;
-  --accent-foreground: #05060a;
-  --accent-bg: rgba(94, 245, 207, 0.1);
-  --accent-border: rgba(94, 245, 207, 0.45);
-  --primary: #5ef5cf;
+  --accent: #5cffd2;
+  --accent-foreground: #04050a;
+  --accent-bg: rgba(92, 255, 210, 0.1);
+  --accent-border: rgba(92, 255, 210, 0.45);
+  --primary: #5cffd2;
   --secondary: #ff7f7a;
   --surface: rgba(255, 255, 255, 0.03);
   --code-bg: rgba(255, 255, 255, 0.06);
@@ -78,7 +78,7 @@
   }
 
   ::selection {
-    background: rgba(94, 245, 207, 0.28);
+    background: rgba(92, 255, 210, 0.28);
     color: #fff;
   }
 
@@ -192,14 +192,14 @@
   }
 
   .ui-tile-interactive:hover {
-    border-color: rgba(94, 245, 207, 0.45);
+    border-color: rgba(92, 255, 210, 0.45);
     background: rgba(255, 255, 255, 0.045);
-    box-shadow: 0 0 0 1px rgba(94, 245, 207, 0.12), 0 18px 50px -24px rgba(94, 245, 207, 0.45);
+    box-shadow: 0 0 0 1px rgba(92, 255, 210, 0.12), 0 18px 50px -24px rgba(92, 255, 210, 0.45);
   }
 
   .ui-tile-selected {
-    border-color: rgba(94, 245, 207, 0.75);
-    box-shadow: 0 0 0 1px rgba(94, 245, 207, 0.25), 0 0 44px -14px rgba(94, 245, 207, 0.55);
+    border-color: rgba(92, 255, 210, 0.75);
+    box-shadow: 0 0 0 1px rgba(92, 255, 210, 0.25), 0 0 44px -14px rgba(92, 255, 210, 0.55);
   }
 
   /* Rótulo en mayúsculas con tracking amplio */
@@ -228,7 +228,7 @@
     flex-shrink: 0;
     border-radius: 9999px;
     background: var(--color-mint);
-    box-shadow: 0 0 12px rgba(94, 245, 207, 0.8);
+    box-shadow: 0 0 12px rgba(92, 255, 210, 0.8);
   }
 
   .ui-dot::after {
@@ -268,7 +268,7 @@
   .ui-btn-primary {
     color: var(--color-ink);
     background: linear-gradient(90deg, var(--color-mint), #8fc4f5 55%, var(--color-lavender));
-    box-shadow: 0 10px 34px -12px rgba(94, 245, 207, 0.55);
+    box-shadow: 0 10px 34px -12px rgba(92, 255, 210, 0.55);
   }
 
   .ui-btn-primary:not(:disabled):hover {
@@ -292,7 +292,7 @@
   .ui-btn-amber {
     color: var(--color-ink);
     background: linear-gradient(90deg, var(--color-amber), #ff8f6b);
-    box-shadow: 0 10px 34px -12px rgba(255, 174, 95, 0.55);
+    box-shadow: 0 10px 34px -12px rgba(255, 179, 107, 0.55);
   }
 
   .ui-btn-amber:not(:disabled):hover {
@@ -342,9 +342,9 @@
 
   .ui-input:focus,
   .ui-input:focus-visible {
-    border-color: rgba(94, 245, 207, 0.7);
+    border-color: rgba(92, 255, 210, 0.7);
     background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: 0 0 0 4px rgba(94, 245, 207, 0.12);
+    box-shadow: 0 0 0 4px rgba(92, 255, 210, 0.12);
     outline: none;
   }
 
@@ -396,8 +396,8 @@
 
   .ui-alert-success {
     color: var(--color-mint);
-    border: 1px solid rgba(94, 245, 207, 0.3);
-    background: rgba(94, 245, 207, 0.08);
+    border: 1px solid rgba(92, 255, 210, 0.3);
+    background: rgba(92, 255, 210, 0.08);
   }
 
   /* Modal */
@@ -456,7 +456,7 @@
     transform: rotateX(52deg);
     transform-origin: 50% 100%;
     background:
-      radial-gradient(38% 60% at 68% 40%, rgba(94, 245, 207, 0.32), transparent 70%),
+      radial-gradient(38% 60% at 68% 40%, rgba(92, 255, 210, 0.32), transparent 70%),
       radial-gradient(32% 55% at 30% 62%, rgba(169, 139, 255, 0.26), transparent 70%),
       linear-gradient(180deg, rgba(40, 168, 136, 0.18), rgba(40, 168, 136, 0.06));
   }
@@ -510,7 +510,7 @@
 
   .ui-pitch-player--mint {
     background: var(--color-mint);
-    box-shadow: 0 0 18px 4px rgba(94, 245, 207, 0.55);
+    box-shadow: 0 0 18px 4px rgba(92, 255, 210, 0.55);
   }
 
   .ui-pitch-player--lavender {

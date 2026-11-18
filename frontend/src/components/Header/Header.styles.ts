@@ -25,7 +25,7 @@ export const headerStyles = {
   actionsContainer: "flex items-center gap-2 text-white/60 sm:gap-3",
   // Píldora de usuario (como el saldo arriba a la derecha)
   userName:
-    "hidden max-w-[180px] items-center gap-2 truncate rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-mint before:shadow-[0_0_10px_rgba(94,245,207,0.9)] before:content-[''] lg:inline-flex",
+    "hidden max-w-[180px] items-center gap-2 truncate rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-medium text-white before:h-1.5 before:w-1.5 before:shrink-0 before:rounded-full before:bg-mint before:shadow-[0_0_10px_rgba(92,255,210,0.9)] before:content-[''] lg:inline-flex",
   btnLogin: "ui-btn-primary px-4 py-2 text-sm sm:px-5",
   btnRegister: "ui-btn-ghost px-4 py-2 text-sm sm:px-5",
   btnLogout:
