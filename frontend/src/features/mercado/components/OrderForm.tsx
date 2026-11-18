@@ -38,7 +38,10 @@ export function OrderForm({ onSuccess, onClose }: OrderFormProps) {
 
   return (
     <form className={orderFormStyles.form} onSubmit={(event) => void handleSubmit(submit)(event)}>
-      <h2>Crear orden</h2>
+      <div className={orderFormStyles.header}>
+        <span className="ui-eyebrow">Tomar posición</span>
+        <h2 className={orderFormStyles.title}>Crear orden</h2>
+      </div>
       <PlayerSearch selected={player} onSelect={(selected) => {
         setPlayer(selected);
         setValue("jugadorId", selected?.id ?? 0, { shouldValidate: true });
@@ -53,7 +56,7 @@ export function OrderForm({ onSuccess, onClose }: OrderFormProps) {
       </select>
       {error && <p className={orderFormStyles.error}>{error}</p>}
       <div className={orderFormStyles.actions}>
-        <button className={orderFormStyles.button} type="button" onClick={onClose}>Cancelar</button>
+        <button className={orderFormStyles.cancelButton} type="button" onClick={onClose}>Cancelar</button>
         <button className={orderFormStyles.button} disabled={isSubmitting} type="submit">
           {isSubmitting ? "Enviando..." : "Confirmar"}
         </button>

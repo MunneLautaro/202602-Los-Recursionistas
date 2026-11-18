@@ -6,7 +6,7 @@ export function OrderList({ orders }: { orders: Order[] }) {
     <div className={orderListStyles.grid}>
       {orders.map((order) => (
         <article className={orderListStyles.card} key={order.id}>
-          <strong>{order.tipo} - {order.jugadorNombre ?? `Jugador #${order.jugadorId}`}</strong>
+          <strong className={orderListStyles.title}>{order.tipo} - {order.jugadorNombre ?? `Jugador #${order.jugadorId}`}</strong>
           <div className={orderListStyles.meta}>
             <span>{order.equipoNombre ?? "Equipo no disponible"}{order.posicion ? ` - ${order.posicion}` : ""}</span>
             <small>Jugador ID: {order.jugadorId}</small>
