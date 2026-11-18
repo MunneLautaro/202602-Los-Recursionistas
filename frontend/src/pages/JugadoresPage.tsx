@@ -84,21 +84,19 @@ export const JugadoresPage: React.FC = () => {
   }, [loadJugadores])
 
   return (
-    <div className="container mx-auto p-4">
-      <h1
-        className="text-2xl font-bold mb-4"
-        style={{ color: "var(--text-h)" }}
-      >
-        Lista de Jugadores
-      </h1>
+    <div className="grid gap-6">
+      <header className="grid gap-3">
+        <span className="ui-eyebrow flex items-center gap-3"><span className="ui-dot" aria-hidden="true" />Catálogo</span>
+        <h1 className="ui-page-title">Lista de Jugadores</h1>
+      </header>
 
       <JugadoresFilters filters={filters} setFilters={updateFilters} />
       {equipoId !== undefined && (
-        <div className="mb-3 flex flex-wrap items-center gap-2 rounded border border-[var(--accent-border)] bg-[var(--accent-bg)] p-2">
-          <span className="text-sm">Filtro de equipo: #{equipoId}</span>
+        <div className="flex w-fit flex-wrap items-center gap-3 rounded-full border border-mint/40 bg-mint/10 py-1.5 pr-1.5 pl-4">
+          <span className="text-sm font-medium text-mint">Filtro de equipo: #{equipoId}</span>
           <button
             type="button"
-            className="inline-flex items-center gap-1 rounded px-2 py-1 text-sm font-semibold text-[var(--accent)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]"
+            className="inline-flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-sm font-medium text-white hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60"
             onClick={() => {
               setSearchParams({})
               setPage(0)
@@ -126,10 +124,10 @@ export const JugadoresPage: React.FC = () => {
       )}
       {!loading && !error && jugadores && jugadores.content.length > 0 && (
         <>
-          <p className="mt-4 text-sm text-[var(--text)]">
+          <p className="-mb-2 text-sm text-white/50">
             {jugadores.totalElements} jugadores encontrados
           </p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
             {jugadores.content.map((j) => (
               <JugadorCard key={j.id} jugador={j} onClick={openDetalle} />
             ))}
@@ -148,8 +146,8 @@ export const JugadoresPage: React.FC = () => {
           onClose={() => setModalOpen(false)}
         />
       )}
-      {detailLoading && <p aria-live="polite">Cargando detalle...</p>}
-      {detailError && <p role="alert" className="text-[var(--secondary)]">{detailError}</p>}
+      {detailLoading && <p aria-live="polite" className="ui-chip fixed bottom-6 left-1/2 z-40 -translate-x-1/2 bg-ink-2/90 shadow-2xl backdrop-blur-xl"><span className="ui-dot" aria-hidden="true" />Cargando detalle...</p>}
+      {detailError && <p role="alert" className="ui-alert-error">{detailError}</p>}
     </div>
   )
 }

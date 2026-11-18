@@ -1,10 +1,8 @@
 export const jugadoresFiltersStyles = {
-  form: "grid grid-cols-1 gap-3 rounded-lg border border-[var(--border)] bg-[var(--accent-bg)] p-4 sm:grid-cols-2 lg:grid-cols-5",
-  field: "grid gap-1",
-  label: "text-sm font-semibold text-[var(--text-h)]",
-  input:
-    "min-h-10 rounded-md border border-[var(--border)] bg-[var(--bg)] px-3 py-2 text-[var(--text)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]",
-  button:
-    "self-end rounded-md bg-[var(--pantone-sun-glare)] px-4 py-2 font-semibold text-[var(--pantone-darkest-hour)] transition hover:opacity-90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--accent)]",
-  error: "basis-full text-sm text-[var(--pantone-exuberant-orange)]",
+  form: "ui-card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:p-6 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr_auto]",
+  field: "grid gap-2",
+  label: "text-xs font-medium text-white/50",
+  input: "ui-input",
+  button: "ui-btn-primary min-h-[2.875rem] self-end px-6",
+  error: "col-span-full text-sm text-coral",
 } as const;
