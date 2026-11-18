@@ -14,11 +14,11 @@ const formatAmount = (amount: number) =>
 
 export function BalanceCard({ balance, loading }: BalanceCardProps) {
   if (loading) {
-    return <p aria-live="polite">Cargando saldo...</p>;
+    return <p aria-live="polite" className={balanceCardStyles.status}>Cargando saldo...</p>;
   }
 
   if (!balance) {
-    return <p>No hay información de saldo disponible.</p>;
+    return <p className={balanceCardStyles.status}>No hay información de saldo disponible.</p>;
   }
 
   return (
