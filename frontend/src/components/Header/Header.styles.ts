@@ -1,6 +1,6 @@
 export const headerStyles = {
   header:
-    "sticky top-0 z-50 w-full border-b border-white/[0.04] bg-ink/20 backdrop-blur-xl",
+    "sticky top-0 z-50 w-full border-b border-white/[0.04] bg-ink/45 backdrop-blur-md",
   container:
     "relative mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-10",
   brandContainer: "group flex min-w-0 items-center gap-3",
@@ -15,7 +15,7 @@ export const headerStyles = {
     "bg-white/10 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]",
   // Variantes max-md: para que el menú abierto siempre gane sobre "hidden" en mobile
   mobileNav:
-    "max-md:absolute max-md:left-4 max-md:right-4 max-md:top-full max-md:mt-2 max-md:flex max-md:flex-col max-md:items-stretch max-md:rounded-3xl max-md:border-white/10 max-md:bg-ink-2/95 max-md:p-2 max-md:shadow-2xl max-md:backdrop-blur-xl",
+    "max-md:absolute max-md:left-4 max-md:right-4 max-md:top-full max-md:mt-2 max-md:flex max-md:flex-col max-md:items-stretch max-md:rounded-3xl max-md:border-white/10 max-md:bg-ink-2/95 max-md:p-2 max-md:shadow-2xl",
   menuButton:
     "grid h-10 w-10 place-items-center rounded-full border border-white/10 bg-white/[0.03] text-white/80 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60 md:hidden",
   adminLink:
