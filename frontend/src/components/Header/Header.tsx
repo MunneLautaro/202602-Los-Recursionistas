@@ -21,13 +21,19 @@ export const Header: React.FC<HeaderProps> = ({
     { to: "/mercado", label: "Mercado" },
   ];
   const closeMenu = () => setMenuOpen(false);
+  const [titleFirst, ...titleRest] = title.split(" ");
 
   return (
     <header className={headerStyles.header}>
       <div className={headerStyles.container}>
         <Link to="/" className={headerStyles.brandContainer}>
-          <img src="/logo2.png" alt="Logo" className={headerStyles.logo} />
-          <span className={headerStyles.title}>{title}</span>
+          <img src="/logo.svg" alt="" className={headerStyles.logo} />
+          <span className={headerStyles.title}>
+            <span className={headerStyles.titleLight}>{titleFirst}</span>
+            {titleRest.length > 0 && (
+              <span className={headerStyles.titleBold}>{titleRest.join(" ")}</span>
+            )}
+          </span>
         </Link>
 
         <nav className={`${headerStyles.nav} ${menuOpen ? headerStyles.mobileNav : ""}`} aria-label="Navegación principal">

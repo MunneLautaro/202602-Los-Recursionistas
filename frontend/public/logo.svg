@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="122 104 780 780" role="img" aria-label="Los Recursionistas">
+  <defs>
+    <linearGradient id="lr-stroke" x1="140" y1="150" x2="884" y2="850" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#5CFFD2"/>
+      <stop offset="0.5" stop-color="#A98BFF"/>
+      <stop offset="1" stop-color="#FFB36B"/>
+    </linearGradient>
+    <linearGradient id="lr-r" x1="512" y1="487" x2="590" y2="583" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7FE3F0"/>
+      <stop offset="1" stop-color="#A98BFF"/>
+    </linearGradient>
+    <filter id="lr-glow" x="-1" y="-1" width="3" height="3">
+      <feGaussianBlur stdDeviation="12"/>
+    </filter>
+  </defs>
+  <g fill="none" stroke="url(#lr-stroke)" stroke-linejoin="round" stroke-linecap="round">
+    <polygon points="512,155 874.7,418.5 736.2,845 287.8,845 149.3,418.5" stroke-width="30" stroke-opacity="1"/>
+    <polygon points="693.4,286.8 805.5,631.8 512,845 218.5,631.8 330.6,286.8" stroke-width="27" stroke-opacity="0.85"/>
+    <polygon points="749.4,459.3 658.7,738.4 365.3,738.4 274.6,459.3 512,286.8" stroke-width="24" stroke-opacity="0.7"/>
+    <polygon points="704.1,598.8 512,738.4 319.9,598.8 393.3,373 630.7,373" stroke-width="21" stroke-opacity="0.56"/>
+    <polygon points="608,668.6 416,668.6 356.6,485.9 512,373 667.4,485.9" stroke-width="18" stroke-opacity="0.44"/>
+  </g>
+  <g fill="none" stroke-width="25" stroke-linejoin="miter" stroke-linecap="butt">
+    <path d="M450.5 487V572.5H504" stroke="#F4F5FB"/>
+    <path d="M522.5 583V497.5H557A21.5 21.5 0 0 1 557 540.5H522.5M549 540.5L588 583" stroke="url(#lr-r)"/>
+  </g>
+  <circle cx="512" cy="155" r="34" fill="#FFB36B" opacity="0.35" filter="url(#lr-glow)"/>
+  <circle cx="512" cy="155" r="28" fill="#FFB36B"/>
+</svg>

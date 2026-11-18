@@ -2,6 +2,7 @@ export const loginFormStyles = {
   container:
     "ui-card w-full max-w-md overflow-hidden p-8 sm:p-10 before:pointer-events-none before:absolute before:-top-24 before:-left-24 before:h-56 before:w-56 before:rounded-full before:bg-lavender/25 before:blur-3xl before:content-['']",
   header: "relative mb-8 text-left",
+  logo: "mb-6 h-14 w-14 drop-shadow-[0_0_18px_rgba(169,139,255,0.4)]",
   title: "text-3xl font-semibold tracking-tight text-white sm:text-4xl",
   subtitle: "mt-3 text-sm leading-relaxed text-white/55",
   form: "relative flex flex-col gap-5",
