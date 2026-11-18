@@ -30,7 +30,7 @@ export function CreditReloadForm({ disabled, onSubmit }: CreditReloadFormProps) 
           aria-invalid={Boolean(errors.monto)}
         />
       </label>
-      {errors.monto && <p role="alert" className="text-[var(--secondary)]">{errors.monto.message}</p>}
+      {errors.monto && <p role="alert" className={creditReloadFormStyles.error}>{errors.monto.message}</p>}
       <button className={creditReloadFormStyles.button} type="submit" disabled={disabled || isSubmitting}>
         {disabled || isSubmitting ? "Procesando..." : "Recargar"}
       </button>

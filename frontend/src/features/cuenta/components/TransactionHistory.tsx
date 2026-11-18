@@ -19,9 +19,9 @@ export function TransactionHistory({
 }: TransactionHistoryProps) {
   return (
     <section className={transactionHistoryStyles.section}>
-      <h2 className="text-xl font-semibold text-[var(--text-h)]">Historial de transacciones</h2>
-      {loading && <p aria-live="polite">Cargando historial...</p>}
-      {!loading && transactions.length === 0 && <p>No hay transacciones para mostrar.</p>}
+      <h2 className={transactionHistoryStyles.title}>Historial de transacciones</h2>
+      {loading && <p aria-live="polite" className={transactionHistoryStyles.status}>Cargando historial...</p>}
+      {!loading && transactions.length === 0 && <p className={transactionHistoryStyles.status}>No hay transacciones para mostrar.</p>}
       {!loading && transactions.length > 0 && (
         <div className={transactionHistoryStyles.tableWrapper}>
           <table className={transactionHistoryStyles.table}>
