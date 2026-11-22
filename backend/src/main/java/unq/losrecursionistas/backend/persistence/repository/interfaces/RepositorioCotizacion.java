@@ -3,7 +3,7 @@ package unq.losrecursionistas.backend.persistence.repository.interfaces;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import unq.losrecursionistas.backend.model.Cotizacion;
-import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
+import unq.losrecursionistas.backend.model.RankingCotizacion;
 
 public interface RepositorioCotizacion {
     Cotizacion guardar(Cotizacion cotizacion);
@@ -16,6 +16,5 @@ public interface RepositorioCotizacion {
      */
     java.util.List<Cotizacion> buscarSeriePorJugador(Long jugadorId, java.time.LocalDate desde,
                                                      java.time.LocalDate hasta, int limite);
-    Page<CotizacionDAOSQL.RankingProyeccion> buscarRanking(Long ligaId, String posicion,
-                                                            Pageable pageable);
+    Page<RankingCotizacion> buscarRanking(Long ligaId, String posicion, Pageable pageable);
 }

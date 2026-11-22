@@ -11,9 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.model.Cotizacion;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import unq.losrecursionistas.backend.model.Jugador;
-import unq.losrecursionistas.backend.controller.dto.cotizacion.CotizacionResponse;
-import unq.losrecursionistas.backend.controller.dto.cotizacion.PuntoCotizacionResponse;
-import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorResponse;
+import unq.losrecursionistas.backend.model.RankingCotizacion;
 import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
@@ -138,23 +136,20 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CotizacionResponse> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
-                                              int pagina, int tamano) {
+    public Page<Cotizacion> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
+                                      int pagina, int tamano) {
         validarPagina(pagina, tamano);
         validarRangoYJugador(jugadorId, desde, hasta);
         var page = PageRequest.of(pagina, tamano,
                 Sort.by(Sort.Order.desc("timestampCalculo"), Sort.Order.desc("id")));
-        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page)
-                .map(CotizacionResponse::desde);
+        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<PuntoCotizacionResponse> serie(Long jugadorId, LocalDate desde, LocalDate hasta) {
+    public List<Cotizacion> serie(Long jugadorId, LocalDate desde, LocalDate hasta) {
         validarRangoYJugador(jugadorId, desde, hasta);
-        return cotizaciones.buscarSeriePorJugador(jugadorId, desde, hasta, MAX_PUNTOS_SERIE).stream()
-                .map(PuntoCotizacionResponse::desde)
-                .toList();
+        return cotizaciones.buscarSeriePorJugador(jugadorId, desde, hasta, MAX_PUNTOS_SERIE);
     }
 
     private void validarRangoYJugador(Long jugadorId, LocalDate desde, LocalDate hasta) {
@@ -168,13 +163,10 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RankingJugadorResponse> ranking(Long ligaId, String posicion, int pagina, int tamano) {
+    public Page<RankingCotizacion> ranking(Long ligaId, String posicion, int pagina, int tamano) {
         validarPagina(pagina, tamano);
         return cotizaciones.buscarRanking(ligaId, normalizarPosicion(posicion),
-                        PageRequest.of(pagina, tamano))
-                .map(r -> new RankingJugadorResponse(r.getJugadorId(), r.getNombre(), r.getPosicion(),
-                        r.getEquipo(), r.getLiga(), r.getValorActual(), r.getValorAnterior(),
-                        r.getVariacion()));
+                PageRequest.of(pagina, tamano));
     }
 
     @Override

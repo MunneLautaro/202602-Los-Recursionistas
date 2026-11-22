@@ -76,10 +76,10 @@ class CotizacionServiceImplTest {
         var serie = nuevoServicio().serie(1L, desde, hasta);
 
         assertEquals(2, serie.size());
-        assertEquals(LocalDateTime.of(2026, 10, 5, 3, 0), serie.get(0).fecha());
-        assertEquals(new BigDecimal("100.00"), serie.get(0).valor());
-        assertEquals(new BigDecimal("120.56"), serie.get(1).valor());
-        assertEquals("PERFORMANCE_GENERAL", serie.get(1).estrategiaUsada());
+        assertEquals(LocalDateTime.of(2026, 10, 5, 3, 0), serie.get(0).getTimestampCalculo());
+        assertEquals(new BigDecimal("100.00"), serie.get(0).getValor());
+        assertEquals(new BigDecimal("120.56"), serie.get(1).getValor());
+        assertEquals("PERFORMANCE_GENERAL", serie.get(1).getEstrategiaUsada());
     }
 
     @Test

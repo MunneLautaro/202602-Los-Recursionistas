@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import unq.losrecursionistas.backend.model.Cotizacion;
+import unq.losrecursionistas.backend.model.RankingCotizacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCotizacion;
 import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
 
@@ -55,8 +56,10 @@ public class RepositorioCotizacionImpl implements RepositorioCotizacion {
     }
 
     @Override
-    public Page<CotizacionDAOSQL.RankingProyeccion> buscarRanking(Long ligaId, String posicion,
-                                                                   Pageable pageable) {
-        return dao.buscarRanking(ligaId, posicion, pageable);
+    public Page<RankingCotizacion> buscarRanking(Long ligaId, String posicion, Pageable pageable) {
+        return dao.buscarRanking(ligaId, posicion, pageable)
+                .map(r -> new RankingCotizacion(r.getJugadorId(), r.getNombre(), r.getPosicion(),
+                        r.getEquipo(), r.getLiga(), r.getValorActual(), r.getValorAnterior(),
+                        r.getVariacion()));
     }
 }
