@@ -1,6 +1,7 @@
 package unq.losrecursionistas.backend.persistence.repository.impl;
 
 import org.springframework.stereotype.Component;
+import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.persistence.sql.LigaDAOSQL;
@@ -54,7 +55,7 @@ public class RepositorioLigaImpl implements RepositorioLiga {
 
     @Override
     public Liga buscarPorCodigo(String codigo) {
-        return ligaDAOSQL.findByCodigo(codigo).orElseThrow(() -> new RuntimeException("Liga no encontrada con código: " + codigo));
+        return ligaDAOSQL.findByCodigo(codigo).orElseThrow(() -> new ExcepcionRecursoNoEncontrado("Liga no encontrada con código: " + codigo));
     }
 
     @Override
