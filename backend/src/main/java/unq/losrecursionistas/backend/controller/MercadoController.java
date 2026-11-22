@@ -13,16 +13,16 @@ import unq.losrecursionistas.backend.controller.dto.orden.OrdenResponse;
 import unq.losrecursionistas.backend.controller.dto.orden.TransaccionResponse;
 import unq.losrecursionistas.backend.controller.dto.orden.TenenciaTokenResponse;
 import unq.losrecursionistas.backend.model.*;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.interfaces.MercadoService;
+import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
 
 @RestController
 public class MercadoController {
     private static final int PAGE_SIZE_DEFAULT = 12;
     private final MercadoService mercado;
-    private final RepositorioUsuario usuarios;
+    private final UsuarioService usuarios;
 
-    public MercadoController(MercadoService mercado, RepositorioUsuario usuarios) {
+    public MercadoController(MercadoService mercado, UsuarioService usuarios) {
         this.mercado = mercado;
         this.usuarios = usuarios;
     }

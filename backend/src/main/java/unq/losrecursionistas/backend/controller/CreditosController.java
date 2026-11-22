@@ -8,15 +8,15 @@ import org.springframework.web.bind.annotation.*;
 import unq.losrecursionistas.backend.controller.dto.usuario.RecargaCreditosRequest;
 import unq.losrecursionistas.backend.controller.dto.usuario.SaldoResponse;
 import unq.losrecursionistas.backend.model.Usuario;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
 import unq.losrecursionistas.backend.service.interfaces.MercadoService;
+import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
 
 @RestController
 public class CreditosController {
     private final MercadoService mercado;
-    private final RepositorioUsuario usuarios;
+    private final UsuarioService usuarios;
 
-    public CreditosController(MercadoService mercado, RepositorioUsuario usuarios) {
+    public CreditosController(MercadoService mercado, UsuarioService usuarios) {
         this.mercado = mercado;
         this.usuarios = usuarios;
     }

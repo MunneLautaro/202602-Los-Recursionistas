@@ -58,4 +58,13 @@ class UsuarioServiceTest {
         verify(repositorioUsuario).existeElUsuario("usuarioPrueba");
         verify(repositorioUsuario, never()).crearUsuario(usuarioNuevo);
     }
+
+    @Test
+    @DisplayName("buscarPorId delega en el repositorio")
+    void buscarPorIdDelegaEnRepositorio() {
+        when(repositorioUsuario.buscarPorId(7L)).thenReturn(usuarioNuevo);
+
+        assertThat(usuarioService.buscarPorId(7L)).isSameAs(usuarioNuevo);
+        verify(repositorioUsuario).buscarPorId(7L);
+    }
 }
