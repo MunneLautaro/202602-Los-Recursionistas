@@ -124,6 +124,9 @@ public class InitialDataLoadScheduler {
 
     private boolean inicializarLiquidez(Jugador jugador) {
         try {
+            if (cotizacionService != null) {
+                cotizacionService.asegurarCotizacionInicial(jugador);
+            }
             liquidezInicial.inicializar(jugador);
             return true;
         } catch (RuntimeException exception) {
