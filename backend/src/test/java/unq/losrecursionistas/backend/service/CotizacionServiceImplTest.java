@@ -10,10 +10,15 @@ import unq.losrecursionistas.backend.service.impl.CotizacionServiceImpl;
 import unq.losrecursionistas.backend.service.interfaces.*;
 
 import java.math.BigDecimal;
+import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
+import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -53,5 +58,59 @@ class CotizacionServiceImplTest {
         service.recalcular();
 
         verifyNoInteractions(estadisticas, cotizaciones, estrategia);
+    }
+
+    @Test
+    void serieDevuelvePuntosEnOrdenCronologicoConTopeDePuntos() {
+        var jugador = Jugador.builder().id(1L).activo(true).build();
+        var desde = LocalDate.of(2026, 10, 1);
+        var hasta = LocalDate.of(2026, 10, 31);
+        var primera = Cotizacion.crear(jugador, new BigDecimal("100"),
+                LocalDateTime.of(2026, 10, 5, 3, 0), "PERFORMANCE_GENERAL", desde, desde.plusDays(4));
+        var segunda = Cotizacion.crear(jugador, new BigDecimal("120.555"),
+                LocalDateTime.of(2026, 10, 12, 3, 0), "PERFORMANCE_GENERAL", desde, desde.plusDays(11));
+        when(jugadores.existe(1L)).thenReturn(true);
+        when(cotizaciones.buscarSeriePorJugador(1L, desde, hasta, CotizacionServiceImpl.MAX_PUNTOS_SERIE))
+                .thenReturn(List.of(primera, segunda));
+
+        var serie = nuevoServicio().serie(1L, desde, hasta);
+
+        assertEquals(2, serie.size());
+        assertEquals(LocalDateTime.of(2026, 10, 5, 3, 0), serie.get(0).getTimestampCalculo());
+        assertEquals(new BigDecimal("100.00"), serie.get(0).getValor());
+        assertEquals(new BigDecimal("120.56"), serie.get(1).getValor());
+        assertEquals("PERFORMANCE_GENERAL", serie.get(1).getEstrategiaUsada());
+    }
+
+    @Test
+    void serieRechazaRangoInvertidoSinConsultarRepositorio() {
+        var servicio = nuevoServicio();
+
+        assertThrows(ExcepcionValidacion.class, () -> servicio.serie(1L,
+                LocalDate.of(2026, 10, 31), LocalDate.of(2026, 10, 1)));
+        verifyNoInteractions(jugadores, cotizaciones);
+    }
+
+    @Test
+    void serieDeJugadorInexistenteLanzaRecursoNoEncontrado() {
+        when(jugadores.existe(99L)).thenReturn(false);
+        var servicio = nuevoServicio();
+
+        assertThrows(ExcepcionRecursoNoEncontrado.class, () -> servicio.serie(99L, null, null));
+        verifyNoInteractions(cotizaciones);
+    }
+
+    @Test
+    void serieSinCotizacionesDevuelveListaVacia() {
+        when(jugadores.existe(1L)).thenReturn(true);
+        when(cotizaciones.buscarSeriePorJugador(eq(1L), isNull(), isNull(), anyInt())).thenReturn(List.of());
+
+        assertTrue(nuevoServicio().serie(1L, null, null).isEmpty());
+    }
+
+    private CotizacionServiceImpl nuevoServicio() {
+        return new CotizacionServiceImpl(jugadores, estadisticas, cotizaciones,
+                Map.of("PERFORMANCE_GENERAL", estrategia), "PERFORMANCE_GENERAL", 7,
+                BigDecimal.TEN, BigDecimal.ONE);
     }
 }

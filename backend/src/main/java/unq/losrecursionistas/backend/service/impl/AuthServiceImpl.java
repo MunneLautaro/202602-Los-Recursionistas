@@ -7,13 +7,10 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import java.util.Set;
-import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
-import unq.losrecursionistas.backend.controller.dto.LoginUsuarioResponse;
-import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.service.interfaces.AuthService;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
+import unq.losrecursionistas.backend.service.interfaces.ResultadoLogin;
 import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
 
 @Service
@@ -38,15 +35,12 @@ public class AuthServiceImpl implements AuthService {
 	}
 
 	@Override
-	public RespuestaTokenDto login(CredencialesLoginDto credenciales) {
+	public ResultadoLogin login(String nombreUsuario, String contrasena) {
 		Authentication autenticacion = authenticationManager.authenticate(
-				new UsernamePasswordAuthenticationToken(credenciales.nombreUsuario(), credenciales.contrasena()));
+				new UsernamePasswordAuthenticationToken(nombreUsuario, contrasena));
 		UserDetails usuario = (UserDetails) autenticacion.getPrincipal();
 		String token = jwtService.generarToken(usuario);
 		Usuario usuarioModelo = usuarioService.buscarPorNombreUsuario(usuario.getUsername());
-		LoginUsuarioResponse datosUsuario = usuarioModelo == null
-				? new LoginUsuarioResponse(null, usuario.getUsername(), null, null, null, Set.of())
-				: LoginUsuarioResponse.desde(usuarioModelo);
-		return new RespuestaTokenDto(token, datosUsuario);
+		return new ResultadoLogin(token, usuario.getUsername(), usuarioModelo);
 	}
 }

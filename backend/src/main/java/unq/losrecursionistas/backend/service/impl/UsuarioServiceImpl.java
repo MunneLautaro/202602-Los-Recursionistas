@@ -34,6 +34,11 @@ public class UsuarioServiceImpl implements UsuarioService {
         return repositorioUsuario.buscarPorNombreUsuario(nombreUsuario);
     }
 
+    @Override
+    public Usuario buscarPorId(Long id) {
+        return repositorioUsuario.buscarPorId(id);
+    }
+
     private boolean existeUsuarioConMismoNombreDeUsuario(Usuario usuario) {
         return repositorioUsuario.existeElUsuario(usuario.getNombreUsuario());
     }

@@ -22,6 +22,18 @@ public interface CotizacionDAOSQL extends JpaRepository<Cotizacion, Long> {
                                       @Param("hasta") java.time.LocalDateTime hasta,
                                       Pageable pageable);
 
+    @Query("""
+            SELECT c FROM Cotizacion c
+            WHERE c.jugador.id = :jugadorId
+              AND c.timestampCalculo >= :desde
+              AND c.timestampCalculo < :hasta
+            ORDER BY c.timestampCalculo DESC, c.id DESC
+            """)
+    java.util.List<Cotizacion> buscarSeriePorJugador(@Param("jugadorId") Long jugadorId,
+                                                     @Param("desde") java.time.LocalDateTime desde,
+                                                     @Param("hasta") java.time.LocalDateTime hasta,
+                                                     Pageable limite);
+
     @Query(value = """
             WITH cotizaciones_ordenadas AS (
                 SELECT c.*, ROW_NUMBER() OVER (

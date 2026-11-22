@@ -1,11 +1,12 @@
-import { fetchClient } from "../../../lib/fetchClient";
+import { fetchClient } from "../../../lib/fetchClient"
 import type {
   JugadorFiltroRequestDTO,
   PaginatedJugadores,
   JugadorResponseDTO,
   PlayerStats,
   Quote,
-} from "../types";
+  QuotePoint,
+} from "../types"
 
 export async function fetchJugadores(
   filtros: JugadorFiltroRequestDTO = {},
@@ -20,23 +21,23 @@ export async function fetchJugadores(
         .filter(([, v]) => v !== undefined && v !== "")
         .map(([k, v]) => [k, String(v)]),
     ),
-  });
-  return await fetchClient<PaginatedJugadores>(`/players?${params}`);
+  })
+  return await fetchClient<PaginatedJugadores>(`/players?${params}`)
 }
 
 export async function fetchJugadorDetalle(
   id: number,
 ): Promise<JugadorResponseDTO> {
-  return await fetchClient<JugadorResponseDTO>(`/players/${id}`);
+  return await fetchClient<JugadorResponseDTO>(`/players/${id}`)
 }
 
 export interface QuoteFilters {
-  desde?: string;
-  hasta?: string;
+  desde?: string
+  hasta?: string
 }
 
 export async function fetchJugadorStats(id: number): Promise<PlayerStats> {
-  return await fetchClient<PlayerStats>(`/players/${id}/stats`);
+  return await fetchClient<PlayerStats>(`/players/${id}/stats`)
 }
 
 export async function fetchJugadorQuotes(
@@ -48,21 +49,35 @@ export async function fetchJugadorQuotes(
   const params = new URLSearchParams({
     page: String(page),
     size: String(size),
-  });
+  })
   Object.entries(filters).forEach(([key, value]) => {
     if (value) {
-      params.set(key, value);
+      params.set(key, value)
     }
-  });
+  })
   return await fetchClient<PaginatedResponse<Quote>>(
     `/players/${id}/quotes?${params}`,
-  );
+  )
+}
+
+export async function fetchJugadorQuoteSeries(
+  id: number,
+  filters: QuoteFilters = {},
+): Promise<QuotePoint[]> {
+  const params = new URLSearchParams()
+  Object.entries(filters).forEach(([key, value]) => {
+    if (value) {
+      params.set(key, value)
+    }
+  })
+  const query = params.size > 0 ? `?${params}` : ""
+  return await fetchClient<QuotePoint[]>(`/players/${id}/quotes/series${query}`)
 }
 
 export interface PaginatedResponse<T> {
-  content: T[];
-  totalPages: number;
-  number: number;
-  size: number;
-  totalElements: number;
+  content: T[]
+  totalPages: number
+  number: number
+  size: number
+  totalElements: number
 }

@@ -6,13 +6,12 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
-import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
 import unq.losrecursionistas.backend.model.Jugador;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
-import unq.losrecursionistas.backend.service.impl.SincronizacionService;
-import unq.losrecursionistas.backend.service.impl.WhoscoredBootstrapService;
 import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
+import unq.losrecursionistas.backend.service.interfaces.JugadorService;
 import unq.losrecursionistas.backend.service.interfaces.LiquidezInicialService;
+import unq.losrecursionistas.backend.service.interfaces.SincronizacionService;
+import unq.losrecursionistas.backend.service.interfaces.WhoscoredBootstrapService;
 
 import java.util.List;
 
@@ -24,24 +23,21 @@ public class InitialDataLoadScheduler {
 
     private final SincronizacionService footballData;
     private final WhoscoredBootstrapService whoscored;
-    private final ScrapingConfiguration scrapingConfiguration;
     private final String footballDataApiKey;
     private final boolean footballDataStartupEnabled;
-    private final RepositorioJugador jugadores;
+    private final JugadorService jugadores;
     private final LiquidezInicialService liquidezInicial;
     private final CotizacionService cotizacionService;
 
     public InitialDataLoadScheduler(SincronizacionService footballData,
                                     WhoscoredBootstrapService whoscored,
-                                    ScrapingConfiguration scrapingConfiguration,
                                     @Value("${football.api.key}") String footballDataApiKey,
                                     @Value("${scheduler.football-data.startup-enabled:true}") boolean footballDataStartupEnabled,
-                                    RepositorioJugador jugadores,
+                                    JugadorService jugadores,
                                     LiquidezInicialService liquidezInicial,
                                     CotizacionService cotizacionService) {
         this.footballData = footballData;
         this.whoscored = whoscored;
-        this.scrapingConfiguration = scrapingConfiguration;
         this.footballDataApiKey = footballDataApiKey;
         this.footballDataStartupEnabled = footballDataStartupEnabled;
         this.jugadores = jugadores;
@@ -76,7 +72,7 @@ public class InitialDataLoadScheduler {
     }
 
     private void cargarWhoScored() {
-        if (!scrapingConfiguration.isStartupEnabled()) {
+        if (!whoscored.cargaInicialHabilitada()) {
             LOGGER.info("[WhoScored] Carga inicial deshabilitada por configuración (WHOSCORED_STARTUP_ENABLED=false).");
         } else {
             LOGGER.info("[WhoScored] Iniciando descubrimiento, vinculación y scraping inicial...");
@@ -124,6 +120,9 @@ public class InitialDataLoadScheduler {
 
     private boolean inicializarLiquidez(Jugador jugador) {
         try {
+            if (cotizacionService != null) {
+                cotizacionService.asegurarCotizacionInicial(jugador);
+            }
             liquidezInicial.inicializar(jugador);
             return true;
         } catch (RuntimeException exception) {

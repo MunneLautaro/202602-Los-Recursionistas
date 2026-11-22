@@ -8,12 +8,16 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.*;
+import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
 import unq.losrecursionistas.backend.model.Equipo;
+import unq.losrecursionistas.backend.model.EstadisticaTemporada;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.JugadorFiltro;
+import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaTemporada;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
 import unq.losrecursionistas.backend.service.impl.JugadorServiceImpl;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -26,6 +30,12 @@ class JugadorServiceTest {
 
     @Mock
     private RepositorioJugador repositorioJugador;
+
+    @Mock
+    private RepositorioEstadisticaTemporada repositorioEstadisticas;
+
+    @Mock
+    private ScrapingConfiguration configuracionScraping;
 
     @InjectMocks
     private JugadorServiceImpl jugadorService;
@@ -115,5 +125,25 @@ class JugadorServiceTest {
         assertThat(resultado).isNotNull();
         assertThat(resultado.getContent()).isEmpty();
         verify(repositorioJugador).buscarJugadoresConFiltro(filtro, expectedPageable);
+    }
+
+    @Test
+    @DisplayName("obtenerJugadoresActivos delega en el repositorio")
+    void obtenerJugadoresActivosDelegaEnRepositorio() {
+        when(repositorioJugador.obtenerJugadoresActivos()).thenReturn(List.of(jugador1));
+
+        assertThat(jugadorService.obtenerJugadoresActivos()).containsExactly(jugador1);
+    }
+
+    @Test
+    @DisplayName("obtenerEstadisticasTemporadaActual consulta la temporada configurada para el scraping")
+    void obtenerEstadisticasTemporadaActualUsaTemporadaConfigurada() {
+        LocalDate temporada = LocalDate.of(2026, 7, 1);
+        EstadisticaTemporada estadistica = EstadisticaTemporada.builder().jugador(jugador1).goles(3).build();
+        when(configuracionScraping.getTemporadaInicio()).thenReturn(temporada);
+        when(repositorioEstadisticas.buscarPorJugadorYTemporada(1L, temporada)).thenReturn(List.of(estadistica));
+
+        assertThat(jugadorService.obtenerEstadisticasTemporadaActual(1L)).containsExactly(estadistica);
+        verify(repositorioEstadisticas).buscarPorJugadorYTemporada(1L, temporada);
     }
 }

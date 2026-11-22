@@ -4,10 +4,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 import unq.losrecursionistas.backend.model.Cotizacion;
+import unq.losrecursionistas.backend.model.RankingCotizacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCotizacion;
 import unq.losrecursionistas.backend.persistence.sql.CotizacionDAOSQL;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Component
 public class RepositorioCotizacionImpl implements RepositorioCotizacion {
@@ -39,8 +45,21 @@ public class RepositorioCotizacionImpl implements RepositorioCotizacion {
     }
 
     @Override
-    public Page<CotizacionDAOSQL.RankingProyeccion> buscarRanking(Long ligaId, String posicion,
-                                                                   Pageable pageable) {
-        return dao.buscarRanking(ligaId, posicion, pageable);
+    public List<Cotizacion> buscarSeriePorJugador(Long jugadorId, java.time.LocalDate desde,
+                                                  java.time.LocalDate hasta, int limite) {
+        var recientes = new ArrayList<>(dao.buscarSeriePorJugador(jugadorId,
+                desde == null ? FECHA_MINIMA : desde.atStartOfDay(),
+                hasta == null ? FECHA_MAXIMA : hasta.plusDays(1).atStartOfDay(),
+                PageRequest.of(0, limite)));
+        Collections.reverse(recientes);
+        return recientes;
+    }
+
+    @Override
+    public Page<RankingCotizacion> buscarRanking(Long ligaId, String posicion, Pageable pageable) {
+        return dao.buscarRanking(ligaId, posicion, pageable)
+                .map(r -> new RankingCotizacion(r.getJugadorId(), r.getNombre(), r.getPosicion(),
+                        r.getEquipo(), r.getLiga(), r.getValorActual(), r.getValorAnterior(),
+                        r.getVariacion()));
     }
 }

@@ -14,12 +14,11 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
-import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.service.impl.AuthServiceImpl;
 import unq.losrecursionistas.backend.service.impl.exceptions.ExcepcionNombreDeUsuarioExistente;
 import unq.losrecursionistas.backend.service.interfaces.JwtService;
+import unq.losrecursionistas.backend.service.interfaces.ResultadoLogin;
 import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,12 +48,10 @@ class AuthServiceTest {
 	@InjectMocks
 	private AuthServiceImpl authService;
 
-	private CredencialesLoginDto credenciales;
 	private UserDetails userDetails;
 
 	@BeforeEach
 	void setUp() {
-		credenciales = new CredencialesLoginDto("usuarioTest", "clave123");
 		userDetails = User.withUsername("usuarioTest")
 				.password("clave123")
 				.authorities("ROLE_USUARIO")
@@ -99,10 +96,11 @@ class AuthServiceTest {
 		when(autenticacion.getPrincipal()).thenReturn(userDetails);
 		when(jwtService.generarToken(userDetails)).thenReturn("jwt.token.valido");
 
-		RespuestaTokenDto respuesta = authService.login(credenciales);
+		ResultadoLogin resultado = authService.login("usuarioTest", "clave123");
 
-		assertThat(respuesta).isNotNull();
-		assertThat(respuesta.token()).isEqualTo("jwt.token.valido");
+		assertThat(resultado).isNotNull();
+		assertThat(resultado.token()).isEqualTo("jwt.token.valido");
+		assertThat(resultado.nombreUsuario()).isEqualTo("usuarioTest");
 		verify(authenticationManager).authenticate(any(UsernamePasswordAuthenticationToken.class));
 		verify(jwtService).generarToken(userDetails);
 	}
@@ -113,7 +111,7 @@ class AuthServiceTest {
 		when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
 				.thenThrow(new BadCredentialsException("Credenciales invalidas"));
 
-		assertThatThrownBy(() -> authService.login(credenciales))
+		assertThatThrownBy(() -> authService.login("usuarioTest", "clave123"))
 				.isInstanceOf(BadCredentialsException.class)
 				.hasMessage("Credenciales invalidas");
 

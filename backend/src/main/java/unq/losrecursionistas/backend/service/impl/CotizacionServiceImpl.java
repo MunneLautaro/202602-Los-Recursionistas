@@ -11,8 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.model.Cotizacion;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import unq.losrecursionistas.backend.model.Jugador;
-import unq.losrecursionistas.backend.controller.dto.cotizacion.CotizacionResponse;
-import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorResponse;
+import unq.losrecursionistas.backend.model.RankingCotizacion;
 import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
@@ -29,6 +28,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Transactional
 public class CotizacionServiceImpl implements CotizacionService {
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    /** Tope de puntos para el grafico: se devuelven los mas recientes dentro del rango. */
+    public static final int MAX_PUNTOS_SERIE = 500;
 
     private static final Logger log = LoggerFactory.getLogger(CotizacionServiceImpl.class);
     private final RepositorioJugador jugadores;
@@ -135,30 +136,37 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<CotizacionResponse> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
-                                              int pagina, int tamano) {
+    public Page<Cotizacion> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
+                                      int pagina, int tamano) {
         validarPagina(pagina, tamano);
+        validarRangoYJugador(jugadorId, desde, hasta);
+        var page = PageRequest.of(pagina, tamano,
+                Sort.by(Sort.Order.desc("timestampCalculo"), Sort.Order.desc("id")));
+        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Cotizacion> serie(Long jugadorId, LocalDate desde, LocalDate hasta) {
+        validarRangoYJugador(jugadorId, desde, hasta);
+        return cotizaciones.buscarSeriePorJugador(jugadorId, desde, hasta, MAX_PUNTOS_SERIE);
+    }
+
+    private void validarRangoYJugador(Long jugadorId, LocalDate desde, LocalDate hasta) {
         if (desde != null && hasta != null && desde.isAfter(hasta)) {
             throw new ExcepcionValidacion("El rango de fechas es invalido");
         }
         if (!jugadores.existe(jugadorId)) {
             throw new ExcepcionRecursoNoEncontrado("No existe el jugador con el id: " + jugadorId);
         }
-        var page = PageRequest.of(pagina, tamano,
-                Sort.by(Sort.Order.desc("timestampCalculo"), Sort.Order.desc("id")));
-        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page)
-                .map(CotizacionResponse::desde);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<RankingJugadorResponse> ranking(Long ligaId, String posicion, int pagina, int tamano) {
+    public Page<RankingCotizacion> ranking(Long ligaId, String posicion, int pagina, int tamano) {
         validarPagina(pagina, tamano);
         return cotizaciones.buscarRanking(ligaId, normalizarPosicion(posicion),
-                        PageRequest.of(pagina, tamano))
-                .map(r -> new RankingJugadorResponse(r.getJugadorId(), r.getNombre(), r.getPosicion(),
-                        r.getEquipo(), r.getLiga(), r.getValorActual(), r.getValorAnterior(),
-                        r.getVariacion()));
+                PageRequest.of(pagina, tamano));
     }
 
     @Override

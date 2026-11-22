@@ -8,14 +8,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import unq.losrecursionistas.backend.controller.dto.usuario.UsuarioPerfilResponse;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioUsuario;
+import unq.losrecursionistas.backend.service.interfaces.UsuarioService;
 
 @RestController
 @RequestMapping({"", "/users"})
 public class UsuarioController {
-    private final RepositorioUsuario usuarios;
+    private final UsuarioService usuarios;
 
-    public UsuarioController(RepositorioUsuario usuarios) {
+    public UsuarioController(UsuarioService usuarios) {
         this.usuarios = usuarios;
     }
 

@@ -47,7 +47,8 @@ public class AutenticacionController {
     @ApiResponse(responseCode = "401", description = "Credenciales invalidas o incompletas", content = @Content(mediaType = "application/json"))
     @PostMapping("/login")
     public ResponseEntity<RespuestaTokenDto> login(@Valid @RequestBody CredencialesLoginDto credenciales) {
-        return ResponseEntity.ok(authService.login(credenciales));
+        return ResponseEntity.ok(RespuestaTokenDto.desde(
+                authService.login(credenciales.nombreUsuario(), credenciales.contrasena())));
     }
 
     @ExceptionHandler({ AuthenticationException.class, IllegalArgumentException.class,

@@ -8,4 +8,6 @@ public interface UsuarioService {
 
     Usuario buscarPorNombreUsuario(String nombreUsuario);
 
+    Usuario buscarPorId(Long id);
+
 }

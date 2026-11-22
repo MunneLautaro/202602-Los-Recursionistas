@@ -7,13 +7,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.CotizacionResponse;
+import unq.losrecursionistas.backend.controller.dto.cotizacion.PuntoCotizacionResponse;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorResponse;
 import unq.losrecursionistas.backend.exceptions.ExcepcionCotizacionActiva;
-import unq.losrecursionistas.backend.service.impl.CotizacionAsyncWorker;
 import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
+import unq.losrecursionistas.backend.service.interfaces.RecalculoCotizacionAsincrono;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -21,13 +23,14 @@ public class CotizacionController {
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
 
     private final CotizacionService servicio;
-    private final CotizacionAsyncWorker worker;
+    private final RecalculoCotizacionAsincrono recalculoAsincrono;
     private final int ventanaDias;
 
-    public CotizacionController(CotizacionService servicio, CotizacionAsyncWorker worker,
+    public CotizacionController(CotizacionService servicio,
+                                RecalculoCotizacionAsincrono recalculoAsincrono,
                                 @Value("${cotizacion.ventana-dias:7}") int ventanaDias) {
         this.servicio = servicio;
-        this.worker = worker;
+        this.recalculoAsincrono = recalculoAsincrono;
         this.ventanaDias = ventanaDias;
     }
 
@@ -41,7 +44,22 @@ public class CotizacionController {
                              @RequestParam(required = false) LocalDate hasta,
                              @RequestParam(defaultValue = "0") int page,
                              @RequestParam(defaultValue = "12") int size) {
-        return servicio.historial(id, desde, hasta, page, size);
+        return servicio.historial(id, desde, hasta, page, size).map(CotizacionResponse::desde);
+    }
+
+    @GetMapping("/players/{id}/quotes/series")
+    @Operation(summary = "Serie temporal de cotizaciones de un jugador para graficar",
+            description = "Devuelve hasta 500 puntos (los mas recientes del rango) ordenados "
+                    + "cronologicamente, de la cotizacion mas antigua a la mas reciente.")
+    @ApiResponse(responseCode = "200", description = "Serie de cotizaciones")
+    @ApiResponse(responseCode = "400", description = "Rango de fechas invalido")
+    @ApiResponse(responseCode = "404", description = "Jugador inexistente")
+    public List<PuntoCotizacionResponse> serie(@PathVariable Long id,
+                                               @RequestParam(required = false) LocalDate desde,
+                                               @RequestParam(required = false) LocalDate hasta) {
+        return servicio.serie(id, desde, hasta).stream()
+                .map(PuntoCotizacionResponse::desde)
+                .toList();
     }
 
     @GetMapping("/players/ranking")
@@ -51,7 +69,7 @@ public class CotizacionController {
                            @RequestParam(required = false) String posicion,
                            @RequestParam(defaultValue = "0") int page,
                            @RequestParam(defaultValue = "12") int size) {
-        return servicio.ranking(ligaId, posicion, page, size);
+        return servicio.ranking(ligaId, posicion, page, size).map(RankingJugadorResponse::desde);
     }
 
     @PostMapping("/quotes/recalculate")
@@ -65,7 +83,7 @@ public class CotizacionController {
         }
         LocalDate fin = LocalDate.now(ZONA_ARGENTINA);
         try {
-            worker.ejecutar(fin.minusDays(ventanaDias), fin);
+            recalculoAsincrono.ejecutar(fin.minusDays(ventanaDias), fin);
         } catch (RuntimeException ex) {
             servicio.liberarRecalculo();
             throw ex;

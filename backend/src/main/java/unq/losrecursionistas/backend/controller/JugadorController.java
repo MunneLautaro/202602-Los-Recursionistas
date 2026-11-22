@@ -7,11 +7,9 @@ import org.springframework.web.bind.annotation.*;
 import unq.losrecursionistas.backend.controller.dto.jugador.EstadisticaTemporadaResponseDTO;
 import unq.losrecursionistas.backend.controller.dto.jugador.JugadorFiltroRequestDTO;
 import unq.losrecursionistas.backend.controller.dto.jugador.JugadorResponseDTO;
+import unq.losrecursionistas.backend.model.EstadisticaTemporada;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
-import unq.losrecursionistas.backend.adapter.whoscored.ScrapingConfiguration;
-import unq.losrecursionistas.backend.model.EstadisticaTemporada;
-import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioEstadisticaTemporada;
 
 import java.util.*;
 
@@ -20,14 +18,9 @@ import java.util.*;
 public class JugadorController {
 
     private final JugadorService jugadorService;
-    private final RepositorioEstadisticaTemporada estadisticas;
-    private final ScrapingConfiguration configuracion;
 
-    public JugadorController(JugadorService jugadorService, RepositorioEstadisticaTemporada estadisticas,
-                             ScrapingConfiguration configuracion) {
+    public JugadorController(JugadorService jugadorService) {
         this.jugadorService = jugadorService;
-        this.estadisticas = estadisticas;
-        this.configuracion = configuracion;
     }
 
     @GetMapping("/{id}")
@@ -48,8 +41,7 @@ public class JugadorController {
     @GetMapping("/{id}/stats")
     public Map<String, Object> estadisticas(@PathVariable Long id) {
         Jugador jugador = jugadorService.obtenerJugadorPorId(id);
-        List<EstadisticaTemporada> porTorneo =
-                estadisticas.buscarPorJugadorYTemporada(id, configuracion.getTemporadaInicio());
+        List<EstadisticaTemporada> porTorneo = jugadorService.obtenerEstadisticasTemporadaActual(id);
         Map<String, Object> respuesta = new LinkedHashMap<>();
         respuesta.put("jugadorId", id);
         respuesta.put("nombre", jugador.getNombre());

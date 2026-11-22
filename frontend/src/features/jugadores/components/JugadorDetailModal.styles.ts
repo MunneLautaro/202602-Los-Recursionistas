@@ -25,5 +25,12 @@ export const jugadorDetailModalStyles = {
   table: "w-full min-w-[36rem] border-collapse text-left text-sm tabular-nums",
   tableHeader:
     "border-b border-white/[0.08] px-3 py-3 text-[0.68rem] font-medium uppercase tracking-[0.2em] text-white/40",
+  viewToggle:
+    "mb-4 inline-flex self-start gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] p-1",
+  viewToggleButton:
+    "inline-flex min-h-9 items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium text-white/55 hover:bg-white/[0.06] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60",
+  viewToggleActive:
+    "inline-flex min-h-9 items-center gap-2 rounded-full bg-white/[0.1] px-4 py-1.5 text-sm font-medium text-white shadow-[inset_0_0_0_1px_rgba(92,255,210,0.35)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mint/60",
+  chartSkeleton: "ui-skeleton h-72 w-full sm:h-80",
   status: "rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 text-sm text-white/55",
 } as const;
