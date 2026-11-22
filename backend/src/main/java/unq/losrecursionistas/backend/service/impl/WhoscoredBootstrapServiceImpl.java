@@ -16,6 +16,7 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.Repositor
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioJugador;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
 import unq.losrecursionistas.backend.service.interfaces.IngestaWhoscoredService;
+import unq.losrecursionistas.backend.service.interfaces.WhoscoredBootstrapService;
 
 import java.text.Normalizer;
 import java.util.List;
@@ -23,9 +24,9 @@ import java.util.Locale;
 import java.util.Set;
 
 @Service
-public class WhoscoredBootstrapService {
+public class WhoscoredBootstrapServiceImpl implements WhoscoredBootstrapService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(WhoscoredBootstrapService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(WhoscoredBootstrapServiceImpl.class);
     private static final Set<String> LIGAS_INICIALES = Set.of(
             "premier league", "bundesliga", "la liga", "primera division", "serie a", "ligue 1");
 
@@ -37,13 +38,13 @@ public class WhoscoredBootstrapService {
     private final MatchingWhoscoredService matching;
     private final IngestaWhoscoredService ingesta;
 
-    public WhoscoredBootstrapService(ScrapingPort scraping,
-                                     ScrapingConfiguration configuracion,
-                                     RepositorioLiga ligas,
-                                     RepositorioEquipo equipos,
-                                     RepositorioJugador jugadores,
-                                     MatchingWhoscoredService matching,
-                                     IngestaWhoscoredService ingesta) {
+    public WhoscoredBootstrapServiceImpl(ScrapingPort scraping,
+                                         ScrapingConfiguration configuracion,
+                                         RepositorioLiga ligas,
+                                         RepositorioEquipo equipos,
+                                         RepositorioJugador jugadores,
+                                         MatchingWhoscoredService matching,
+                                         IngestaWhoscoredService ingesta) {
         this.scraping = scraping;
         this.configuracion = configuracion;
         this.ligas = ligas;
@@ -53,6 +54,12 @@ public class WhoscoredBootstrapService {
         this.ingesta = ingesta;
     }
 
+    @Override
+    public boolean cargaInicialHabilitada() {
+        return configuracion.isStartupEnabled();
+    }
+
+    @Override
     public void cargarDatosIniciales() {
         LOGGER.info("Iniciando carga inicial de WhoScored a través del servicio unificado de ingesta...");
         ingesta.iniciar(EjecucionIngesta.Alcance.COMPLETA, null);

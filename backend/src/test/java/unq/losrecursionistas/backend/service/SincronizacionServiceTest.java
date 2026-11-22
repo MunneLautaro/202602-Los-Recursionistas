@@ -14,7 +14,7 @@ import unq.losrecursionistas.backend.model.Equipo;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.model.Liga;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioLiga;
-import unq.losrecursionistas.backend.service.impl.SincronizacionService;
+import unq.losrecursionistas.backend.service.impl.SincronizacionServiceImpl;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
 
@@ -42,11 +42,11 @@ class SincronizacionServiceTest {
     @Mock
     private RepositorioLiga repositorioLiga;
 
-    private SincronizacionService sincronizacionService;
+    private SincronizacionServiceImpl sincronizacionService;
 
     @BeforeEach
     void setUp() {
-        sincronizacionService = new SincronizacionService(apiClient, mapper, jugadorService, equipoService, repositorioLiga);
+        sincronizacionService = new SincronizacionServiceImpl(apiClient, mapper, jugadorService, equipoService, repositorioLiga);
     }
 
     @Test

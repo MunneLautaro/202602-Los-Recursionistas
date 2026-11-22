@@ -16,14 +16,15 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.Repositor
 import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
 import unq.losrecursionistas.backend.service.interfaces.EquipoService;
 import unq.losrecursionistas.backend.service.interfaces.JugadorService;
+import unq.losrecursionistas.backend.service.interfaces.SincronizacionService;
 
 import java.util.List;
 
 @Service
 @Transactional
-public class SincronizacionService {
+public class SincronizacionServiceImpl implements SincronizacionService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SincronizacionService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SincronizacionServiceImpl.class);
 
     private final FootballDataApiClient apiClient;
     private final FootballDataMapper mapper;
@@ -31,11 +32,11 @@ public class SincronizacionService {
     private final EquipoService equipoService;
     private final RepositorioLiga repositorioLiga;
     @Autowired
-    public SincronizacionService(FootballDataApiClient apiClient,
-                                 FootballDataMapper mapper,
-                                 JugadorService jugadorService,
-                                 EquipoService equipoService,
-                                 RepositorioLiga repositorioLiga) {
+    public SincronizacionServiceImpl(FootballDataApiClient apiClient,
+                                     FootballDataMapper mapper,
+                                     JugadorService jugadorService,
+                                     EquipoService equipoService,
+                                     RepositorioLiga repositorioLiga) {
         this.apiClient = apiClient;
         this.mapper = mapper;
         this.jugadorService = jugadorService;
@@ -43,6 +44,7 @@ public class SincronizacionService {
         this.repositorioLiga = repositorioLiga;
     }
 
+    @Override
     public void sincronizarTodasLasLigas(List<String> codigosLigas) {
         for (String codigoLiga : codigosLigas) {
             try {
@@ -53,6 +55,7 @@ public class SincronizacionService {
         }
     }
 
+    @Override
     public void sincronizarLiga(String codigoLiga) {
         LOGGER.info("Iniciando sincronización para la liga con código: {}", codigoLiga);
         FootballCompetitionTeamsResponse response = apiClient.getEquiposPorCompeticion(codigoLiga);
@@ -92,6 +95,7 @@ public class SincronizacionService {
         }
     }
 
+    @Override
     public void sincronizarJugadores(Long equipoExternoId) {
         FootballTeamResponse teamDto = apiClient.getEquipo(equipoExternoId);
         if (teamDto == null) {
