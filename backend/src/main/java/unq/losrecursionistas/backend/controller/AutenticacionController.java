@@ -15,10 +15,12 @@ import unq.losrecursionistas.backend.controller.dto.CredencialesLoginDto;
 import unq.losrecursionistas.backend.controller.dto.RespuestaTokenDto;
 import unq.losrecursionistas.backend.controller.dto.usuario.UsuarioRequestDTO;
 import unq.losrecursionistas.backend.controller.dto.usuario.UsuarioResponseDTO;
+import unq.losrecursionistas.backend.exceptions.RespuestaError;
 import unq.losrecursionistas.backend.model.Usuario;
 import unq.losrecursionistas.backend.service.interfaces.AuthService;
 
-import java.util.Map;
+import java.time.Clock;
+import java.time.Instant;
 
 @RestController
 @RequestMapping
@@ -53,8 +55,9 @@ public class AutenticacionController {
 
     @ExceptionHandler({ AuthenticationException.class, IllegalArgumentException.class,
             MethodArgumentNotValidException.class, HttpMessageNotReadableException.class })
-    public ResponseEntity<Map<String, String>> credencialesInvalidas() {
+    public ResponseEntity<RespuestaError> credencialesInvalidas() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "unauthorized", "message", "Credenciales invalidas"));
+                .body(new RespuestaError(HttpStatus.UNAUTHORIZED.value(), "Credenciales invalidas",
+                        HttpStatus.UNAUTHORIZED.getReasonPhrase(), Instant.now(Clock.systemUTC())));
     }
 }
