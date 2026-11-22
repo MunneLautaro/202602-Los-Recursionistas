@@ -1,6 +1,10 @@
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 export interface ApiErrorResponse {
+  codigo?: number;
+  mensaje?: string;
+  detalle?: string;
+  timestamp?: string;
   message?: string;
   error?: string;
   status?: number;
@@ -35,8 +39,9 @@ function hasHeader(headers: HeadersInit, name: string): boolean {
 function getErrorMessage(data: unknown, status: number, statusText: string) {
   if (typeof data === "object" && data !== null) {
     const errorData = data as ApiErrorResponse;
-    if (errorData.message || errorData.error) {
-      return errorData.message ?? errorData.error ?? "Error de API";
+    const mensaje = errorData.mensaje || errorData.message || errorData.error;
+    if (mensaje) {
+      return mensaje;
     }
   }
 
