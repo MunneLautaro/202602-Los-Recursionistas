@@ -2,7 +2,7 @@ package unq.losrecursionistas.backend.security.handlers;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
@@ -10,11 +10,15 @@ import java.io.IOException;
 
 public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
+	private final EscritorRespuestaError escritor;
+
+	public JwtAccessDeniedHandler(EscritorRespuestaError escritor) {
+		this.escritor = escritor;
+	}
+
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 			AccessDeniedException accessDeniedException) throws IOException {
-		response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-		response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-		response.getWriter().write("{\"error\":\"forbidden\",\"message\":\"No tiene permisos suficientes\"}");
+		escritor.escribir(response, HttpStatus.FORBIDDEN, "No tiene permisos suficientes");
 	}
 }

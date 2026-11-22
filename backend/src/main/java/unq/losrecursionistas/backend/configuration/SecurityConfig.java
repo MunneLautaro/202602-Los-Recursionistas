@@ -16,6 +16,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import tools.jackson.databind.ObjectMapper;
+import unq.losrecursionistas.backend.security.handlers.EscritorRespuestaError;
 import unq.losrecursionistas.backend.security.handlers.JwtAccessDeniedHandler;
 import unq.losrecursionistas.backend.security.handlers.JwtAuthenticationEntryPoint;
 import unq.losrecursionistas.backend.security.jwt.impl.JwtAuthFilter;
@@ -30,14 +32,15 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
-			UserDetailsService userDetailsService) {
+			UserDetailsService userDetailsService, ObjectMapper objectMapper) {
+		EscritorRespuestaError escritorErrores = new EscritorRespuestaError(objectMapper);
 		try {
 			http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
 				.csrf(csrf -> csrf.disable())
 				.sessionManagement(sesiones -> sesiones.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(errores -> errores
-						.authenticationEntryPoint(new JwtAuthenticationEntryPoint())
-						.accessDeniedHandler(new JwtAccessDeniedHandler()))
+						.authenticationEntryPoint(new JwtAuthenticationEntryPoint(escritorErrores))
+						.accessDeniedHandler(new JwtAccessDeniedHandler(escritorErrores)))
 				.addFilterBefore(new JwtAuthFilter(jwtService, userDetailsService), UsernamePasswordAuthenticationFilter.class)
 				.authorizeHttpRequests(autorizacion -> autorizacion
 					.requestMatchers("/auth/**", "/login", "/registrar", "/public/**", "/swagger-ui/**", "/swagger-ui.html",
