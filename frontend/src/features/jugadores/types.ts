@@ -91,6 +91,13 @@ export interface PlayerStats {
   totalesGlobal: GlobalStats;
 }
 
+/** Punto de la serie temporal de cotizaciones (GET /players/{id}/quotes/series). */
+export interface QuotePoint {
+  fecha: string;
+  valor: number;
+  estrategiaUsada: string;
+}
+
 export interface Quote {
   id: number;
   jugadorId: number;
