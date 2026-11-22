@@ -10,6 +10,12 @@ public interface RepositorioCotizacion {
     Cotizacion vigente(Long jugadorId);
     Page<Cotizacion> buscarPorJugador(Long jugadorId, java.time.LocalDate desde,
                                       java.time.LocalDate hasta, Pageable pageable);
+    /**
+     * Devuelve las ultimas {@code limite} cotizaciones del jugador dentro del rango,
+     * ordenadas cronologicamente (de la mas antigua a la mas reciente).
+     */
+    java.util.List<Cotizacion> buscarSeriePorJugador(Long jugadorId, java.time.LocalDate desde,
+                                                     java.time.LocalDate hasta, int limite);
     Page<CotizacionDAOSQL.RankingProyeccion> buscarRanking(Long ligaId, String posicion,
                                                             Pageable pageable);
 }

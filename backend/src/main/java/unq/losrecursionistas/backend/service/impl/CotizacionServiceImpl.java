@@ -12,6 +12,7 @@ import unq.losrecursionistas.backend.model.Cotizacion;
 import unq.losrecursionistas.backend.model.EstadisticaPartido;
 import unq.losrecursionistas.backend.model.Jugador;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.CotizacionResponse;
+import unq.losrecursionistas.backend.controller.dto.cotizacion.PuntoCotizacionResponse;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorResponse;
 import unq.losrecursionistas.backend.exceptions.ExcepcionRecursoNoEncontrado;
 import unq.losrecursionistas.backend.exceptions.ExcepcionValidacion;
@@ -29,6 +30,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Transactional
 public class CotizacionServiceImpl implements CotizacionService {
     private static final ZoneId ZONA_ARGENTINA = ZoneId.of("America/Argentina/Buenos_Aires");
+    /** Tope de puntos para el grafico: se devuelven los mas recientes dentro del rango. */
+    public static final int MAX_PUNTOS_SERIE = 500;
 
     private static final Logger log = LoggerFactory.getLogger(CotizacionServiceImpl.class);
     private final RepositorioJugador jugadores;
@@ -138,16 +141,29 @@ public class CotizacionServiceImpl implements CotizacionService {
     public Page<CotizacionResponse> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
                                               int pagina, int tamano) {
         validarPagina(pagina, tamano);
+        validarRangoYJugador(jugadorId, desde, hasta);
+        var page = PageRequest.of(pagina, tamano,
+                Sort.by(Sort.Order.desc("timestampCalculo"), Sort.Order.desc("id")));
+        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page)
+                .map(CotizacionResponse::desde);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<PuntoCotizacionResponse> serie(Long jugadorId, LocalDate desde, LocalDate hasta) {
+        validarRangoYJugador(jugadorId, desde, hasta);
+        return cotizaciones.buscarSeriePorJugador(jugadorId, desde, hasta, MAX_PUNTOS_SERIE).stream()
+                .map(PuntoCotizacionResponse::desde)
+                .toList();
+    }
+
+    private void validarRangoYJugador(Long jugadorId, LocalDate desde, LocalDate hasta) {
         if (desde != null && hasta != null && desde.isAfter(hasta)) {
             throw new ExcepcionValidacion("El rango de fechas es invalido");
         }
         if (!jugadores.existe(jugadorId)) {
             throw new ExcepcionRecursoNoEncontrado("No existe el jugador con el id: " + jugadorId);
         }
-        var page = PageRequest.of(pagina, tamano,
-                Sort.by(Sort.Order.desc("timestampCalculo"), Sort.Order.desc("id")));
-        return cotizaciones.buscarPorJugador(jugadorId, desde, hasta, page)
-                .map(CotizacionResponse::desde);
     }
 
     @Override

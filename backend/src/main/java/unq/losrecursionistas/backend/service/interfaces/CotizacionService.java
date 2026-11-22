@@ -2,6 +2,7 @@ package unq.losrecursionistas.backend.service.interfaces;
 
 import org.springframework.data.domain.Page;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.CotizacionResponse;
+import unq.losrecursionistas.backend.controller.dto.cotizacion.PuntoCotizacionResponse;
 import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorResponse;
 import unq.losrecursionistas.backend.model.Jugador;
 
@@ -14,6 +15,7 @@ public interface CotizacionService {
     void recalcular(List<Jugador> jugadores, LocalDate ventanaInicio, LocalDate ventanaFin);
     Page<CotizacionResponse> historial(Long jugadorId, LocalDate desde, LocalDate hasta,
                                        int pagina, int tamano);
+    List<PuntoCotizacionResponse> serie(Long jugadorId, LocalDate desde, LocalDate hasta);
     Page<RankingJugadorResponse> ranking(Long ligaId, String posicion, int pagina, int tamano);
     boolean reservarRecalculo();
     void liberarRecalculo();
