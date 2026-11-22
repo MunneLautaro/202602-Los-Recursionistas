@@ -28,27 +28,14 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.stream.Collectors;
 
-/**
- * Traduce cualquier excepción que escape de un controller a una {@link RespuestaError} con el
- * código HTTP adecuado.
- *
- * <ul>
- *   <li>Excepciones de dominio propias ({@code Excepcion*}).</li>
- *   <li>Excepciones estándar de Spring MVC (404 de ruta, 405, 415, parámetros faltantes o mal
- *       tipados, cuerpo ilegible, etc.), heredadas de {@link ResponseEntityExceptionHandler}.</li>
- *   <li>Seguridad: {@link AuthenticationException} → 401 y {@link AccessDeniedException} → 403
- *       (o 401 si no hay usuario autenticado).</li>
- *   <li>Validación, conflictos de persistencia y, como último recurso, 500 sin exponer detalles
- *       internos.</li>
- * </ul>
- */
+
 @RestControllerAdvice
 public class ControladorErrores extends ResponseEntityExceptionHandler {
 
 	private static final Logger log = LoggerFactory.getLogger(ControladorErrores.class);
 	private static final String MENSAJE_ERROR_INTERNO = "Ocurrio un error inesperado";
 
-	// ---------- Excepciones de dominio ----------
+
 
 	@ExceptionHandler(ExcepcionValidacion.class)
 	public ResponseEntity<Object> manejarValidacion(ExcepcionValidacion excepcion) {
@@ -70,7 +57,7 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(HttpStatus.CONFLICT, excepcion.getMessage());
 	}
 
-	// ---------- Seguridad ----------
+
 
 	@ExceptionHandler(AuthenticationException.class)
 	public ResponseEntity<Object> manejarAutenticacion(AuthenticationException excepcion) {
@@ -85,7 +72,6 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(HttpStatus.FORBIDDEN, mensajeOPorDefecto(excepcion, "No tiene permisos suficientes"));
 	}
 
-	// ---------- Validación y argumentos inválidos ----------
 
 	@ExceptionHandler(ConstraintViolationException.class)
 	public ResponseEntity<Object> manejarRestricciones(ConstraintViolationException excepcion) {
@@ -101,7 +87,6 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(HttpStatus.BAD_REQUEST, mensajeOPorDefecto(excepcion, "La solicitud es invalida"));
 	}
 
-	// ---------- Persistencia ----------
 
 	@ExceptionHandler(DataIntegrityViolationException.class)
 	public ResponseEntity<Object> manejarIntegridadDeDatos(DataIntegrityViolationException excepcion) {
@@ -116,7 +101,6 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 				"El recurso fue modificado por otra operacion, intente nuevamente");
 	}
 
-	// ---------- Último recurso ----------
 
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<Object> manejarErrorNoControlado(Exception excepcion) {
@@ -124,7 +108,6 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(HttpStatus.INTERNAL_SERVER_ERROR, MENSAJE_ERROR_INTERNO);
 	}
 
-	// ---------- Excepciones estándar de Spring MVC ----------
 
 	@Override
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException excepcion,
@@ -152,11 +135,7 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(status, headers, "La solicitud no supera las validaciones", detalle);
 	}
 
-	/**
-	 * Punto único por el que pasan todas las excepciones que resuelve
-	 * {@link ResponseEntityExceptionHandler}: se reemplaza el ProblemDetail por {@link RespuestaError}
-	 * para mantener un formato homogéneo, conservando los headers (por ejemplo {@code Allow} en 405).
-	 */
+
 	@Override
 	protected ResponseEntity<Object> handleExceptionInternal(Exception excepcion, Object body,
 			HttpHeaders headers, HttpStatusCode status, WebRequest request) {
