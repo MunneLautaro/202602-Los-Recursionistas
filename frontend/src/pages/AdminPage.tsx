@@ -4,6 +4,7 @@ import {
   type IngestaAlcance,
   type IngestaStatus,
 } from "../features/admin/api/adminApi";
+import { EstrategiaCotizacionPanel } from "../features/admin/components/EstrategiaCotizacionPanel";
 
 interface ActionState {
   loading: boolean;
@@ -285,6 +286,8 @@ export function AdminPage() {
           {renderFeedback("playerStats")}
         </article>
       </section>
+
+      <EstrategiaCotizacionPanel />
 
       <section
         className="ui-card p-6 sm:p-8"

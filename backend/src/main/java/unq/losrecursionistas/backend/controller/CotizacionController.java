@@ -12,6 +12,7 @@ import unq.losrecursionistas.backend.controller.dto.cotizacion.RankingJugadorRes
 import unq.losrecursionistas.backend.exceptions.ExcepcionCotizacionActiva;
 import unq.losrecursionistas.backend.service.interfaces.CotizacionService;
 import unq.losrecursionistas.backend.service.interfaces.RecalculoCotizacionAsincrono;
+import unq.losrecursionistas.backend.service.estrategia.CatalogoEstrategias;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -44,7 +45,8 @@ public class CotizacionController {
                              @RequestParam(required = false) LocalDate hasta,
                              @RequestParam(defaultValue = "0") int page,
                              @RequestParam(defaultValue = "12") int size) {
-        return servicio.historial(id, desde, hasta, page, size).map(CotizacionResponse::desde);
+        return servicio.historial(id, desde, hasta, page, size)
+                .map(cotizacion -> CotizacionResponse.desde(cotizacion, nombreEstrategia(cotizacion.getEstrategiaUsada())));
     }
 
     @GetMapping("/players/{id}/quotes/series")
@@ -58,7 +60,7 @@ public class CotizacionController {
                                                @RequestParam(required = false) LocalDate desde,
                                                @RequestParam(required = false) LocalDate hasta) {
         return servicio.serie(id, desde, hasta).stream()
-                .map(PuntoCotizacionResponse::desde)
+                .map(cotizacion -> PuntoCotizacionResponse.desde(cotizacion, nombreEstrategia(cotizacion.getEstrategiaUsada())))
                 .toList();
     }
 
@@ -89,5 +91,10 @@ public class CotizacionController {
             throw ex;
         }
         return ResponseEntity.accepted().body(Map.of("mensaje", "Recálculo de cotizaciones aceptado"));
+    }
+
+    private String nombreEstrategia(String codigo) {
+        var estrategia = CatalogoEstrategias.obtener(codigo);
+        return estrategia == null ? "Estrategia configurada" : estrategia.nombre();
     }
 }

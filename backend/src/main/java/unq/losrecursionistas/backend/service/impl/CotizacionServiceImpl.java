@@ -3,6 +3,7 @@ package unq.losrecursionistas.backend.service.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -36,16 +37,19 @@ public class CotizacionServiceImpl implements CotizacionService {
     private final RepositorioEstadisticaPartido estadisticas;
     private final RepositorioCotizacion cotizaciones;
     private final Map<String, EstrategiaCotizacion> estrategias;
+    private final RepositorioConfiguracionEstrategia configuracionEstrategia;
     private final String estrategiaActiva;
     private final int ventanaDias;
     private final BigDecimal valorBase;
     private final BigDecimal factorEscala;
     private final AtomicBoolean recalculoActivo = new AtomicBoolean();
 
+    @Autowired
     public CotizacionServiceImpl(RepositorioJugador jugadores,
                                  RepositorioEstadisticaPartido estadisticas,
                                  RepositorioCotizacion cotizaciones,
                                  Map<String, EstrategiaCotizacion> estrategias,
+                                 RepositorioConfiguracionEstrategia configuracionEstrategia,
                                  @Value("${cotizacion.estrategia.activa:PERFORMANCE_GENERAL}") String estrategiaActiva,
                                  @Value("${cotizacion.ventana-dias:7}") int ventanaDias,
                                  @Value("${cotizacion.valor-base:100}") BigDecimal valorBase,
@@ -54,6 +58,26 @@ public class CotizacionServiceImpl implements CotizacionService {
         this.estadisticas = estadisticas;
         this.cotizaciones = cotizaciones;
         this.estrategias = estrategias;
+        this.configuracionEstrategia = configuracionEstrategia;
+        this.estrategiaActiva = estrategiaActiva;
+        this.ventanaDias = ventanaDias;
+        this.valorBase = valorBase;
+        this.factorEscala = factorEscala;
+    }
+
+    public CotizacionServiceImpl(RepositorioJugador jugadores,
+                                 RepositorioEstadisticaPartido estadisticas,
+                                 RepositorioCotizacion cotizaciones,
+                                 Map<String, EstrategiaCotizacion> estrategias,
+                                 String estrategiaActiva,
+                                 int ventanaDias,
+                                 BigDecimal valorBase,
+                                 BigDecimal factorEscala) {
+        this.jugadores = jugadores;
+        this.estadisticas = estadisticas;
+        this.cotizaciones = cotizaciones;
+        this.estrategias = estrategias;
+        this.configuracionEstrategia = null;
         this.estrategiaActiva = estrategiaActiva;
         this.ventanaDias = ventanaDias;
         this.valorBase = valorBase;
@@ -73,7 +97,8 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     public void recalcular(List<Jugador> jugadoresElegibles, LocalDate inicio, LocalDate fin) {
-        EstrategiaCotizacion estrategia = obtenerEstrategiaActiva();
+        String codigoEstrategia = resolverCodigoEstrategia();
+        EstrategiaCotizacion estrategia = obtenerEstrategiaActiva(codigoEstrategia);
         if (estrategia == null || valorBase == null || factorEscala == null || inicio == null
                 || fin == null || inicio.isAfter(fin)) {
             throw new IllegalStateException("La estrategia o ventana de cotizacion es invalida");
@@ -95,7 +120,7 @@ public class CotizacionServiceImpl implements CotizacionService {
             try {
                 BigDecimal valor = estrategia.calcular(item.resumen, item.jugador.getPosicion(), maximos, parametros);
                 cotizaciones.guardar(Cotizacion.crear(item.jugador, valor, LocalDateTime.now(ZONA_ARGENTINA),
-                        estrategiaActiva, inicio, fin));
+                        codigoEstrategia, inicio, fin));
                 log.info("Cotización recalculada para jugador '{}' (ID: {}): ${}",
                         item.jugador.getNombre(), item.jugador.getId(), valor);
             } catch (RuntimeException ex) {
@@ -105,17 +130,25 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     }
 
-    private EstrategiaCotizacion obtenerEstrategiaActiva() {
-        EstrategiaCotizacion estrategia = estrategias.get(estrategiaActiva);
+    private String resolverCodigoEstrategia() {
+        if (configuracionEstrategia == null) {
+            return estrategiaActiva;
+        }
+        var configuracion = configuracionEstrategia.buscar();
+        return configuracion == null ? estrategiaActiva : configuracion.getEstrategiaActiva();
+    }
+
+    private EstrategiaCotizacion obtenerEstrategiaActiva(String codigo) {
+        EstrategiaCotizacion estrategia = estrategias.get(codigo);
         if (estrategia != null) {
             return estrategia;
         }
         return estrategias.entrySet().stream()
-                .filter(entry -> entry.getKey().equalsIgnoreCase(estrategiaActiva))
+                .filter(entry -> entry.getKey().equalsIgnoreCase(codigo))
                 .map(Map.Entry::getValue)
                 .findFirst()
                 .orElseThrow(() -> new ExcepcionValidacion(
-                        "Estrategia de cotización no encontrada: " + estrategiaActiva));
+                        "Estrategia de cotización no encontrada: " + codigo));
     }
 
     @Override
@@ -177,6 +210,11 @@ public class CotizacionServiceImpl implements CotizacionService {
     @Override
     public void liberarRecalculo() {
         recalculoActivo.set(false);
+    }
+
+    @Override
+    public boolean estaRecalculoActivo() {
+        return recalculoActivo.get();
     }
 
     private void validarPagina(int pagina, int tamano) {
