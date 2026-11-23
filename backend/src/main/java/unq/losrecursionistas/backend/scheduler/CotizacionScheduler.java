@@ -27,20 +27,28 @@ public class CotizacionScheduler {
 
     @Scheduled(cron = "${scheduler.cotizacion.cron}", zone = "${scheduler.cotizacion.zone:America/Argentina/Buenos_Aires}")
     public void ejecutarCotizacion() {
-        servicio.recalcular();
-        int procesados = 0;
-        int errores = 0;
-        for (var jugador : jugadores.obtenerJugadoresActivos()) {
-            try {
-                liquidezInicial.inicializar(jugador);
-                procesados++;
-            } catch (RuntimeException exception) {
-                LOGGER.warn("No se pudo inicializar liquidez para el jugador '{}' (ID: {}): {}",
-                        jugador.getNombre(), jugador.getId(), exception.getMessage());
-                errores++;
-            }
+        if (!servicio.reservarRecalculo()) {
+            LOGGER.info("Se omitio el recálculo programado porque ya existe uno activo");
+            return;
         }
-        LOGGER.info("Proceso de liquidez semanal finalizado. Jugadores procesados: {}, Errores: {}.",
-                procesados, errores);
+        try {
+            servicio.recalcular();
+            int procesados = 0;
+            int errores = 0;
+            for (var jugador : jugadores.obtenerJugadoresActivos()) {
+                try {
+                    liquidezInicial.inicializar(jugador);
+                    procesados++;
+                } catch (RuntimeException exception) {
+                    LOGGER.warn("No se pudo inicializar liquidez para el jugador '{}' (ID: {}): {}",
+                            jugador.getNombre(), jugador.getId(), exception.getMessage());
+                    errores++;
+                }
+            }
+            LOGGER.info("Proceso de liquidez semanal finalizado. Jugadores procesados: {}, Errores: {}.",
+                    procesados, errores);
+        } finally {
+            servicio.liberarRecalculo();
+        }
     }
 }

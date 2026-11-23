@@ -7,7 +7,11 @@ import java.time.LocalDateTime;
 
 public record PuntoCotizacionResponse(LocalDateTime fecha, BigDecimal valor, String estrategiaUsada) {
     public static PuntoCotizacionResponse desde(Cotizacion cotizacion) {
+        return desde(cotizacion, cotizacion.getEstrategiaUsada());
+    }
+
+    public static PuntoCotizacionResponse desde(Cotizacion cotizacion, String estrategiaLegible) {
         return new PuntoCotizacionResponse(cotizacion.getTimestampCalculo(), cotizacion.getValor(),
-                cotizacion.getEstrategiaUsada());
+                estrategiaLegible);
     }
 }

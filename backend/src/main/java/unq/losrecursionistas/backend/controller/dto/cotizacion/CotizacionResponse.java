@@ -10,9 +10,13 @@ public record CotizacionResponse(Long id, Long jugadorId, BigDecimal valor,
                                   LocalDateTime timestampCalculo, String estrategiaUsada,
                                   LocalDate ventanaInicio, LocalDate ventanaFin) {
     public static CotizacionResponse desde(Cotizacion cotizacion) {
+        return desde(cotizacion, cotizacion.getEstrategiaUsada());
+    }
+
+    public static CotizacionResponse desde(Cotizacion cotizacion, String estrategiaLegible) {
         return new CotizacionResponse(cotizacion.getId(), cotizacion.getJugador().getId(),
                 cotizacion.getValor(), cotizacion.getTimestampCalculo(),
-                cotizacion.getEstrategiaUsada(), cotizacion.getVentanaInicio(),
+                estrategiaLegible, cotizacion.getVentanaInicio(),
                 cotizacion.getVentanaFin());
     }
 }
