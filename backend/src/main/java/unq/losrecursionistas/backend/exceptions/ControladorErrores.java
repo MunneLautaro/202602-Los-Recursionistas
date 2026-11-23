@@ -57,6 +57,11 @@ public class ControladorErrores extends ResponseEntityExceptionHandler {
 		return respuesta(HttpStatus.CONFLICT, excepcion.getMessage());
 	}
 
+	@ExceptionHandler(ExcepcionEstrategiaEnRecalculo.class)
+	public ResponseEntity<Object> manejarEstrategiaEnRecalculo(ExcepcionEstrategiaEnRecalculo excepcion) {
+		return respuesta(HttpStatus.CONFLICT, excepcion.getMessage());
+	}
+
 
 
 	@ExceptionHandler(AuthenticationException.class)
