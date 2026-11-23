@@ -1,6 +1,6 @@
 <!-- Sync Impact Report
-Version change: 2.4.0 -> 2.5.0
-Modified principles: Requisitos no funcionales transversales
+Version change: 2.6.0 -> 2.7.0
+Modified principles: XIV - Sistema de cotización con estrategia intercambiable; VII - Testing obligatorio
 Added sections: none
 Removed sections: none
 Follow-up TODOs: none
@@ -8,9 +8,24 @@ Follow-up TODOs: none
 
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.5.0
+**Versión:** 2.7.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-11-02
+**Última modificación:** 2026-11-22
+
+**Resumen del cambio 2.7.0:** Se enmienda el Principio XIV para reconocer la base
+de datos como fuente primaria de la estrategia activa de cotización, con fallback
+al valor de `cotizacion.estrategia.activa` en `application.yml` cuando no existe
+ninguna estrategia persistida. Se establece que `CotizacionService` MUST resolver
+la estrategia activa en tiempo de ejecución (no en tiempo de inyección), y que
+todo cambio de estrategia desde el panel administrativo MUST persistirse y
+sobrevivir al reinicio del sistema. Se actualiza el Principio VII para incluir
+`EstrategiaAdminServiceTest` en el alcance obligatorio de tests de `service`.
+
+**Resumen del cambio 2.6.0:** Se declara una matriz verificable de dependencias
+entre capas alineada con `ArquitecturaCapasTest`, se incorpora ArchUnit a la suite
+obligatoria, se corrige la ubicación JWT y de excepciones personalizadas, y se
+endurecen Governance, stack tecnológico y calidad sobre la relación entre la
+constitution y las reglas ejecutables de arquitectura.
 
 **Resumen del cambio 2.0.0:** Se establece `adapter/` como única ubicación backend
 para integraciones con sistemas externos. Se eliminan `client/` y `gateway/` como
@@ -60,6 +75,9 @@ constitution, prevalece la constitution.
 
 - **Backend:** Java 21, Spring Boot, Spring Security, PostgreSQL y Playwright for Java
   dentro del módulo de scraping gobernado por el Principio XIII.
+- **Testing backend aprobado:** JUnit 5, Mockito, Spring Boot test starters y
+  ArchUnit (`com.tngtech.archunit:archunit-junit5`) para las reglas ejecutables
+  de arquitectura.
 - **Frontend:** React 19, Vite, TypeScript, Tailwind CSS 4, react-router-dom 7.
   - Manejador de paquetes: Yarn (`.yarnrc.yml` en `/frontend`).
   - Estilos: Tailwind CSS 4 integrado vía plugin de Vite (`@tailwindcss/vite`). Los estilos específicos de componente se extraen en archivos `.styles.ts` con clases Tailwind.
@@ -81,8 +99,8 @@ responsabilidades entre ellos:
 - `controller`: controladores REST. Contiene el subpaquete `dto` con los DTOs
   de request/response.
 - `service`: lógica de orquestación de negocio, dividida en `interfaces` (los
-  contratos) e `impl` (las implementaciones). El subpaquete `impl/exceptions`
-  aloja excepciones específicas de servicios (ej. `ExcepcionNombreDeUsuarioExistente`).
+  contratos) e `impl` (las implementaciones). Las excepciones específicas de
+  servicios deben vivir exclusivamente en `exceptions`, según el Principio V.
 - `persistence`: acceso a datos. El subpaquete `repository` se divide en
   `interfaces` e `impl`. El subpaquete `sql` contiene los DAOs Spring Data JPA.
 - `adapter`: única ubicación de integraciones backend con sistemas externos,
@@ -101,9 +119,40 @@ responsabilidades entre ellos:
 - `exceptions`: excepciones personalizadas de dominio y manejo centralizado de
   errores (`ControladorErrores`).
 
-**Regla:** una capa nunca invoca directamente a una capa no adyacente ni
-depende de detalles de implementación de otra capa (por ejemplo, el
-`controller` no accede a `repository` directamente).
+La matriz de dependencias permitidas MUST ser:
+
+```text
+Controller ─┐
+Scheduler  ─┼─► Service ─┬─► Persistence ─► Model
+Security   ─┘            └─► Adapter
+```
+
+- `Controller`, `Scheduler` y `Configuration` MUST NOT ser accedidas por ninguna
+  otra capa.
+- `Service` solo puede ser accedido por `Controller`, `Scheduler`, `Security`
+  y `Configuration`.
+- `Persistence` solo puede ser accedido por `Service` y `Configuration`.
+- `Adapter` solo puede ser accedido por `Service` y `Configuration`.
+- `Security` solo puede ser accedido por `Configuration`.
+- `Configuration` puede depender de cualquier capa para cablear la aplicación,
+  y ninguna otra capa puede depender de `configuration`.
+- `Model` y `exceptions` son transversales: cualquier capa puede usarlos.
+- `Model` MUST NOT depender de `controller`, `service`, `persistence`, `adapter`,
+  `scheduler`, `security` ni `configuration`.
+- Fuera de `service` ninguna clase puede depender de `service/impl`; las demás
+  capas deben depender de `service/interfaces`.
+- Los DAOs de `persistence/sql` solo pueden ser usados desde `persistence`;
+  los services acceden a datos mediante repositorios declarados por el Principio IV.
+- Las entidades anotadas con `@Entity` viven solo en `model`.
+- Las interfaces de Spring Data (`Repository` y derivadas) viven solo en
+  `persistence/sql`.
+- Las clases anotadas con `@RestController` viven en `controller` y sus nombres
+  terminan en `Controller`. Las clases `@RestControllerAdvice`, como
+  `ControladorErrores`, viven en `exceptions`.
+- No puede haber ciclos de dependencia entre los paquetes de primer nivel
+  `unq.losrecursionistas.backend.(*)..`.
+- Estas reglas se verifican automaticamente con
+  `backend/src/test/java/unq/losrecursionistas/backend/architecture/ArquitecturaCapasTest.java`.
 
 ---
 
@@ -125,9 +174,16 @@ depende de detalles de implementación de otra capa (por ejemplo, el
 - Los servicios MUST retornar únicamente entidades de dominio, DTOs de autenticación/casos de uso o `Page<Entidad>`. **Prohibido** contener lógica de presentación o detalles del protocolo HTTP.
 - El mapeo a DTO de respuesta HTTP es responsabilidad del `controller` (excepto flujos de autenticación donde `AuthService` expone el resultado de autenticación).
 - Los servicios se definen mediante interfaz (`service/interfaces`) y su implementación (`service/impl`).
-- Cada implementación de servicio MUST implementar su propia interfaz de caso de uso (ej: `AuthService` / `AuthServiceImpl`, `JwtService` / `JwtServiceImpl`). Las implementaciones MUST NOT extender una clase base genérica de servicios únicamente para reutilizar operaciones comunes; esa reutilización MUST resolverse por composición cuando sea necesaria.
+- Cada implementación de servicio MUST implementar su propia interfaz de caso de uso (ej: `AuthService` / `AuthServiceImpl`). Las implementaciones MUST NOT extender una clase base genérica de servicios únicamente para reutilizar operaciones comunes; esa reutilización MUST resolverse por composición cuando sea necesaria.
 - La configuración principal de Spring Security MUST llamarse `SecurityConfig` (o equivalente del contexto) y residir en `configuration`. Prohibido crear nombres redundantes u obsoletos (ej: `ManejadorToken`, `PoliticaAcceso`).
-- Los adaptadores de infraestructura e identidad que implementen contratos de Spring Security (por ejemplo, `UserDetailsService`) MUST ubicarse en `service/impl` y su interfaz en `service/interfaces`. Los filtros HTTP (`JwtAuthFilter`) e interfaces de firma JWT viven en `security` y `service/interfaces` respectivamente, y los manejadores de excepciones 401/403 (`JwtAuthenticationEntryPoint`, `JwtAccessDeniedHandler`) en `security/handlers`.
+- Los adaptadores de infraestructura e identidad que implementen contratos de Spring Security (por ejemplo, `UserDetailsService`) MUST ubicarse en `service/impl` y su interfaz en `service/interfaces`.
+- Las implementaciones JWT de firma de tokens y el filtro HTTP `JwtAuthFilter`
+  viven en `security/jwt/impl`. La interfaz `JwtService` vive en
+  `service/interfaces`; por ejemplo, `JwtServiceImpl` en `security/jwt/impl`
+  implementa el contrato `JwtService`. Los manejadores de excepciones 401/403
+  (`JwtAuthenticationEntryPoint`, `JwtAccessDeniedHandler`) viven en
+  `security/handlers`. Esta ubicación es compatible con la dependencia
+  `security -> service` permitida por el Principio I.
 - El dominio y la aplicación MUST depender solo de puertos (interfaces) y
   nunca de adaptadores concretos, clientes HTTP ni Playwright.
 
@@ -159,7 +215,9 @@ depende de detalles de implementación de otra capa (por ejemplo, el
 ## Principio V — Manejo de errores
 
 - Todas las excepciones personalizadas MUST ser no chequeadas (extender
-  directa o indirectamente de `RuntimeException`) y vivir en `exceptions`.
+  directa o indirectamente de `RuntimeException`) y vivir exclusivamente en
+  `exceptions`. MUST NOT existir excepciones personalizadas bajo
+  `service/impl/exceptions` u otro paquete distinto de `exceptions`.
 - El manejo centralizado de errores (`@ControllerAdvice` o equivalente) MUST
   vivir también en `exceptions`, traduciendo excepciones de dominio a
   respuestas HTTP adecuadas.
@@ -184,12 +242,21 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
 
 ## Principio VII — Testing obligatorio
 
-- La suite de pruebas MUST estar acotada estrictamente a la jerarquía de paquetes `model` y `service`.
+- Como regla general vigente, la suite de pruebas unitarias funcionales MUST
+  estar acotada estrictamente a la jerarquía de paquetes `model` y `service`.
+- Se admite un único test de reglas de arquitectura con ArchUnit:
+  `architecture/ArquitecturaCapasTest`. Este test es la verificación ejecutable
+  obligatoria de los Principios I, III, IV y V, forma parte de la suite por
+  defecto y MUST ejecutarse con `./gradlew test`.
 - **Alcance en `model`:** Mantener únicamente tests unitarios simples para métodos de negocio específicos que pertenezcan intrínsecamente al dominio/entidad (ej. cálculo de totales, cambio de estados, lógica pura de negocio). Si una clase de modelo solo contiene atributos, getters, setters y constructores generados por Lombok (`@Data`, `@Getter`, `@Setter`, `@Builder`), **NO debe tener archivo de test individual**.
-- **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ArquitecturaBaseTest`, `ValidacionInfraestructuraTest`, o clases de prueba dentro de `configuration` o `security`).
+- **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ValidacionInfraestructuraTest`, o clases de prueba genéricas dentro de `configuration` o `security`). Esta prohibición se aplica a tests de arquitectura genéricos o boilerplate; no incluye las reglas específicas y verificables de `ArquitecturaCapasTest`.
 - Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación. El alcance actual incluye: `AuthServiceTest`, `EquipoServiceTest`, `JugadorServiceTest`, `LigaServiceTest`, `SincronizacionServiceTest`, `UsuarioDetailsServiceTest` y `UsuarioServiceTest`. Los adaptadores de identidad (`UsuarioDetailsServiceImpl`) también son testeables dentro de `service`.
-- El alcance de tests de la capa `service` MUST incluir también `CotizacionServiceTest`
-  y un test unitario por cada implementación concreta de `EstrategiaCotizacion`.
+- El alcance de tests de la capa `service` MUST incluir también `CotizacionServiceTest`,
+  `EstrategiaAdminServiceTest` y un test unitario por cada implementación concreta
+  de `EstrategiaCotizacion`. `EstrategiaAdminServiceTest` MUST cubrir: consulta de
+  estrategia activa con y sin registro persistido, cambio efectivo con auditoría,
+  idempotencia (misma estrategia ya activa), rechazo por recálculo en curso,
+  rechazo por rol insuficiente y rollback ante fallo de persistencia.
 - El adapter de scraping MUST probarse con tests unitarios basados en fixtures
   HTML/JSON locales, sin acceder a WhoScored durante CI. Los tests de integración
   que levanten Playwright o accedan a la web real MUST quedar marcados aparte y
@@ -291,11 +358,29 @@ implementaciones concretas MUST ubicarse en `service/impl/estrategia/`.
 Queda prohibido ubicar lógica de cálculo de cotización en `model`, `controller`
 o `adapter`.
 
-La estrategia activa MUST seleccionarse mediante la configuración
-`cotizacion.estrategia.activa` en `application.yml`, como nombre `String` del
-bean o enum. El servicio de cotización MUST inyectar la estrategia activa por
-nombre de bean o mediante un mapa de beans; quedan prohibidos los condicionales
-hardcodeados para seleccionar estrategias.
+### Resolución de la estrategia activa (dos niveles)
+
+La estrategia activa MUST resolverse en tiempo de ejecución según la siguiente
+prioridad, en este orden:
+
+1. **Fuente primaria — base de datos:** si existe una estrategia persistida por
+   un administrador mediante el panel, esa estrategia es la activa. MUST
+   sobrevivir al reinicio del sistema.
+2. **Fuente de respaldo — configuración:** si no existe ninguna estrategia
+   persistida en la base de datos, se utiliza el valor de
+   `cotizacion.estrategia.activa` en `application.yml` como valor inicial.
+   Esta propiedad MUST mantenerse como respaldo obligatorio.
+
+`CotizacionService` MUST resolver la estrategia activa en cada ejecución de
+recálculo leyéndola desde el repositorio en tiempo de ejecución; queda prohibido
+inyectarla como campo fijo en tiempo de arranque. Las estrategias disponibles
+MUST inyectarse como mapa de beans (`Map<String, EstrategiaCotizacion>`); quedan
+prohibidos los condicionales hardcodeados para seleccionar estrategias.
+
+El cambio de estrategia activa desde el panel administrativo MUST persistirse
+en la base de datos dentro de una transacción atómica y conservarse después
+de reiniciar el sistema. Este cambio MUST rechazarse si existe un recálculo
+en curso al momento de la solicitud, dejando intacta la estrategia activa.
 
 Cada `Cotizacion` persistida MUST registrar el nombre de la estrategia usada
 para calcularla. Este campo MUST ser inmutable una vez persistido.
@@ -454,6 +539,10 @@ cambios estructurales innecesarios.
   verificaciones aplicables, incluyendo `./gradlew test` para backend o tests
   Java, lint/type-check/tests del frontend y el escaneo de SonarCloud
   disponible; toda verificación no ejecutada MUST informarse con su motivo.
+- **Verificación de arquitectura:** `./gradlew test` incluye
+  `ArquitecturaCapasTest` y cualquier otro test ejecutable de la suite por
+  defecto. Un fallo de ArchUnit MUST bloquear la entrega hasta corregir la
+  estructura o aprobar la enmienda correspondiente de esta constitution.
 - **Documentación:** todos los endpoints MUST documentarse con OpenAPI
   (Swagger).
 - **Scheduler:** sincronización periódica de datos desde Football-Data.org vía
@@ -480,6 +569,15 @@ cambios estructurales innecesarios.
 
 - Esta constitution prevalece sobre cualquier spec, plan o tarea que la
   contradiga.
+- Todo cambio en la estructura de capas o en las reglas de los Principios I,
+  III, IV o V MUST reflejarse en `ArquitecturaCapasTest` dentro del mismo PR.
+  Toda regla nueva en `ArquitecturaCapasTest` que cambie una restricción
+  arquitectónica MUST tener respaldo previo o simultáneo en esta constitution;
+  una regla nueva del test sin respaldo constituye una enmienda.
+- `ArquitecturaCapasTest` MUST ampliarse para verificar también:
+  - que `service` depende solo de puertos (`*Port` o interfaces) de `adapter`;
+  - que ninguna clase fuera de `adapter` depende de
+    `com.microsoft.playwright..`.
 - Toda modificación a este documento MUST versionarse (semver), incluir un
   resumen del cambio y su motivo, y actualizar la fecha de última modificación.
   Una nueva sección o una expansión material de un principio incrementa MINOR;
