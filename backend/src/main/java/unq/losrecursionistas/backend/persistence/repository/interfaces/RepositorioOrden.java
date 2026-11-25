@@ -15,4 +15,9 @@ public interface RepositorioOrden {
                               Pageable pageable);
     Page<Orden> buscarPorUsuario(Long usuarioId, Pageable pageable);
     Orden buscarLiquidezInicialBloqueada(Long usuarioId, Long jugadorId);
+    /**
+     * Ordenes creadas por usuarios por dia (America/Argentina/Buenos_Aires), solo los dias con datos.
+     * El rango esta acotado a 90 dias.
+     */
+    List<ActividadDiariaMercado> contarOrdenesCreadasPorDia(java.time.LocalDate desde, java.time.LocalDate hasta);
 }

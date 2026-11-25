@@ -17,4 +17,10 @@ public interface RepositorioCotizacion {
     java.util.List<Cotizacion> buscarSeriePorJugador(Long jugadorId, java.time.LocalDate desde,
                                                      java.time.LocalDate hasta, int limite);
     Page<RankingCotizacion> buscarRanking(Long ligaId, String posicion, Pageable pageable);
+    /**
+     * Cotizaciones calculadas por dia y variacion promedio respecto del valor previo,
+     * solo los dias con datos. El rango esta acotado a 90 dias.
+     */
+    java.util.List<unq.losrecursionistas.backend.model.ActividadDiariaCotizacion> resumirPorDia(
+            java.time.LocalDate desde, java.time.LocalDate hasta);
 }

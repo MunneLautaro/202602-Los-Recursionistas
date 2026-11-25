@@ -43,6 +43,11 @@ public class RepositorioUsuarioImpl implements RepositorioUsuario {
 	}
 
 	@Override
+	public Long idCustodio() {
+		return usuarioDAOSQL.buscarMenorIdConAutoridad("ROLE_ADMIN");
+	}
+
+	@Override
 	public Usuario crearUsuario(Usuario usuario) {
 		return usuarioDAOSQL.save(usuario);
 	}

@@ -12,6 +12,8 @@ public interface RepositorioUsuario{
 	Usuario buscarPorId(Long id);
 	Usuario buscarPorIdBloqueado(Long id);
 	Usuario buscarCustodio();
+	/** Id de la cuenta custodio sin bloquear la fila (null si no existe). Para consultas de solo lectura. */
+	Long idCustodio();
 
 	Usuario crearUsuario(Usuario usuario);
 

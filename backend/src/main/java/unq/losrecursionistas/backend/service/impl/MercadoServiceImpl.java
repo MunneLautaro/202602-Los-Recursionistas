@@ -12,12 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.exceptions.ExcepcionCotizacionNoEncontrada;
+import unq.losrecursionistas.backend.exceptions.ExcepcionDominio;
 import unq.losrecursionistas.backend.exceptions.ExcepcionJugadorInactivo;
 import unq.losrecursionistas.backend.exceptions.ExcepcionRecursosInsuficientes;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;
 import unq.losrecursionistas.backend.service.interfaces.MercadoService;
+import unq.losrecursionistas.backend.service.interfaces.MetricasNegocio;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioAuditoriaTransaccional;
 
 import java.math.BigDecimal;
@@ -35,6 +37,7 @@ public class MercadoServiceImpl implements MercadoService {
     private final RepositorioTransaccionMercado transacciones;
     private final MatchingEngine matching;
     private final RepositorioAuditoriaTransaccional auditorias;
+    private final MetricasNegocio metricas;
 
     public MercadoServiceImpl(RepositorioUsuario usuarios, RepositorioJugador jugadores,
                               RepositorioCotizacion cotizaciones,
@@ -45,13 +48,24 @@ public class MercadoServiceImpl implements MercadoService {
                 matching, null);
     }
 
-    @Autowired
     public MercadoServiceImpl(RepositorioUsuario usuarios, RepositorioJugador jugadores,
                               RepositorioCotizacion cotizaciones,
                               RepositorioTenenciaToken tenencias, RepositorioOrden ordenes,
                               RepositorioTransaccionMercado transacciones,
                               MatchingEngine matching,
                               RepositorioAuditoriaTransaccional auditorias) {
+        this(usuarios, jugadores, cotizaciones, tenencias, ordenes, transacciones,
+                matching, auditorias, MetricasNegocio.SIN_REGISTRO);
+    }
+
+    @Autowired
+    public MercadoServiceImpl(RepositorioUsuario usuarios, RepositorioJugador jugadores,
+                              RepositorioCotizacion cotizaciones,
+                              RepositorioTenenciaToken tenencias, RepositorioOrden ordenes,
+                              RepositorioTransaccionMercado transacciones,
+                              MatchingEngine matching,
+                              RepositorioAuditoriaTransaccional auditorias,
+                              MetricasNegocio metricas) {
         this.usuarios = usuarios;
         this.jugadores = jugadores;
         this.cotizaciones = cotizaciones;
@@ -60,6 +74,7 @@ public class MercadoServiceImpl implements MercadoService {
         this.transacciones = transacciones;
         this.matching = matching;
         this.auditorias = auditorias;
+        this.metricas = metricas;
     }
 
     @Override
@@ -80,7 +95,7 @@ public class MercadoServiceImpl implements MercadoService {
         }
         BigDecimal precio = cotizacion.getValor();
         if (tipo == TipoOrden.COMPRA) {
-            usuarioBloqueado.reservar(precio.multiply(BigDecimal.valueOf(cantidad)).doubleValue());
+            reservarSaldo(usuarioBloqueado, precio.multiply(BigDecimal.valueOf(cantidad)));
         } else {
             TenenciaToken tenencia = tenencias.buscarBloqueada(usuarioBloqueado.getId(), jugadorId);
             if (tenencia == null) {
@@ -95,8 +110,22 @@ public class MercadoServiceImpl implements MercadoService {
                 tipo, orden.getId(), usuarioBloqueado.getNombreUsuario(), jugador.getNombre(), jugadorId, cantidad, precio,
                 precio.multiply(BigDecimal.valueOf(cantidad)));
 
+        metricas.registrarOrdenCreada(tipo);
         matching.ejecutar(orden);
         return orden;
+    }
+
+    /**
+     * Reserva el saldo de una compra. Si el modelo la rechaza por saldo insuficiente,
+     * registra el rechazo y relanza la misma excepcion sin alterar el contrato.
+     */
+    private void reservarSaldo(Usuario usuario, BigDecimal monto) {
+        try {
+            usuario.reservar(monto.doubleValue());
+        } catch (ExcepcionDominio excepcion) {
+            metricas.registrarRechazoSaldoInsuficiente();
+            throw excepcion;
+        }
     }
 
     @Override
