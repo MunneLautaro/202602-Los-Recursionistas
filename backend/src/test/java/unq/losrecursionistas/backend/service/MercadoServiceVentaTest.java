@@ -11,6 +11,7 @@ import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.MercadoServiceImpl;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;
+import unq.losrecursionistas.backend.service.interfaces.MetricasNegocio;
 
 import java.math.BigDecimal;
 
@@ -28,6 +29,7 @@ class MercadoServiceVentaTest {
     @Mock RepositorioOrden ordenes;
     @Mock RepositorioTransaccionMercado transacciones;
     @Mock MatchingEngine matching;
+    @Mock MetricasNegocio metricas;
     private MercadoServiceImpl service;
     private Usuario vendedor;
     private Jugador jugador;
@@ -36,7 +38,7 @@ class MercadoServiceVentaTest {
     @BeforeEach
     void setUp() {
         service = new MercadoServiceImpl(usuarios, jugadores, cotizaciones, tenencias,
-                ordenes, transacciones, matching);
+                ordenes, transacciones, matching, null, metricas);
         vendedor = new Usuario("vendedor", "clave", 0.0);
         vendedor.setId(2L);
         jugador = new Jugador("Jugador", "DEL", null, true);
@@ -64,6 +66,7 @@ class MercadoServiceVentaTest {
         assertThat(tenencia.getCantidadReservada()).isEqualTo(4);
         verify(tenencias).guardar(tenencia);
         verify(matching).ejecutar(orden);
+        verify(metricas).registrarOrdenCreada(TipoOrden.VENTA);
     }
 
     @Test
@@ -73,6 +76,15 @@ class MercadoServiceVentaTest {
 
         assertThat(tenencia.getCantidadReservada()).isZero();
         verify(ordenes, never()).guardar(any());
+    }
+
+    @Test
+    void testVentaSinTokensNoRegistraRechazoPorSaldoNiOrdenCreada() {
+        assertThatThrownBy(() -> service.crearOrden(vendedor, 10L, 11, TipoOrden.VENTA))
+                .isInstanceOf(ExcepcionRecursosInsuficientes.class);
+
+        verify(metricas, never()).registrarRechazoSaldoInsuficiente();
+        verify(metricas, never()).registrarOrdenCreada(any());
     }
 
     @Test

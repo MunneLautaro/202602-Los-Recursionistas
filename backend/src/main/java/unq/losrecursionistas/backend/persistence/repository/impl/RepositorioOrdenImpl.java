@@ -6,7 +6,10 @@ import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioOrden;
 import unq.losrecursionistas.backend.persistence.sql.OrdenDAOSQL;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Component
 public class RepositorioOrdenImpl implements RepositorioOrden {
@@ -33,5 +36,18 @@ public class RepositorioOrdenImpl implements RepositorioOrden {
     public Orden buscarLiquidezInicialBloqueada(Long usuarioId, Long jugadorId) {
         return dao.findFirstByUsuarioIdAndJugadorIdAndEsLiquidezInicialTrue(
                 usuarioId, jugadorId).orElse(null);
+    }
+    public List<ActividadDiariaMercado> contarOrdenesCreadasPorDia(LocalDate desde, LocalDate hasta) {
+        AgregadosDiarios.validarRango(desde, hasta);
+        Map<LocalDate, long[]> porDia = new TreeMap<>();
+        for (OrdenDAOSQL.OrdenesPorDiaProyeccion fila : dao.contarCreadasPorDia(desde, hasta)) {
+            long[] conteo = porDia.computeIfAbsent(AgregadosDiarios.dia(fila.getDia()), d -> new long[2]);
+            int indice = TipoOrden.COMPRA.name().equals(fila.getTipo()) ? 0 : 1;
+            conteo[indice] += AgregadosDiarios.entero(fila.getCantidad());
+        }
+        return porDia.entrySet().stream()
+                .map(e -> new ActividadDiariaMercado(e.getKey(), e.getValue()[0], e.getValue()[1], 0,
+                        ActividadDiariaMercado.vacia(e.getKey()).volumenCreditos()))
+                .toList();
     }
 }

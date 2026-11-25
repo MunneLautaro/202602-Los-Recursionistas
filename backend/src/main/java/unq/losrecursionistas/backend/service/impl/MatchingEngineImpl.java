@@ -2,11 +2,13 @@ package unq.losrecursionistas.backend.service.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;
+import unq.losrecursionistas.backend.service.interfaces.MetricasNegocio;
 
 import java.math.BigDecimal;
 
@@ -18,14 +20,24 @@ public class MatchingEngineImpl implements MatchingEngine {
     private final RepositorioTenenciaToken tenencias;
     private final RepositorioTransaccionMercado transacciones;
     private final RepositorioAuditoriaTransaccional auditorias;
+    private final MetricasNegocio metricas;
 
     public MatchingEngineImpl(RepositorioOrden ordenes, RepositorioTenenciaToken tenencias,
                               RepositorioTransaccionMercado transacciones,
                               RepositorioAuditoriaTransaccional auditorias) {
+        this(ordenes, tenencias, transacciones, auditorias, MetricasNegocio.SIN_REGISTRO);
+    }
+
+    @Autowired
+    public MatchingEngineImpl(RepositorioOrden ordenes, RepositorioTenenciaToken tenencias,
+                              RepositorioTransaccionMercado transacciones,
+                              RepositorioAuditoriaTransaccional auditorias,
+                              MetricasNegocio metricas) {
         this.ordenes = ordenes;
         this.tenencias = tenencias;
         this.transacciones = transacciones;
         this.auditorias = auditorias;
+        this.metricas = metricas;
     }
 
     @Override
@@ -74,6 +86,7 @@ public class MatchingEngineImpl implements MatchingEngine {
         ordenes.guardar(segunda);
         TransaccionMercado transaccion = transacciones.crear(
                 TransaccionMercado.crear(compra, venta, cantidad));
+        metricas.registrarEmparejamiento(transaccion.getTotal());
         auditorias.crear(AuditoriaTransaccional.crear("TRANSACCION_MERCADO",
                 transaccion.getId(), comprador, "Liquidacion de match",
                 "ordenes activas; reservas pendientes",

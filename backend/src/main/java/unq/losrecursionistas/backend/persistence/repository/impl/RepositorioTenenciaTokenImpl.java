@@ -21,4 +21,7 @@ public class RepositorioTenenciaTokenImpl implements RepositorioTenenciaToken {
     public Page<TenenciaToken> buscarPorUsuario(Long usuarioId, Pageable pageable) {
         return dao.findByUsuarioId(usuarioId, pageable);
     }
+    public long sumarTokensExcluyendoUsuario(Long usuarioId) {
+        return dao.sumarExcluyendoUsuario(usuarioId);
+    }
 }
