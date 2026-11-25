@@ -27,6 +27,7 @@ dependencies {
 	implementation 'org.springframework.security:spring-security-oauth2-jose'
 	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 	implementation 'io.github.resilience4j:resilience4j-ratelimiter:2.2.0'
 	implementation 'com.microsoft.playwright:playwright:1.56.0'
 	compileOnly 'org.projectlombok:lombok'
@@ -57,4 +58,8 @@ sonar {
         property "sonar.projectKey", "MunneLautaro_202602-Los-Recursionistas"
         property "sonar.organization", "munnelautaro"
     }
+}
+
+springBoot {
+	buildInfo()
 }
