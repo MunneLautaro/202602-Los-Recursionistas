@@ -48,6 +48,8 @@ public class SecurityConfig {
 					.permitAll()
 					.requestMatchers(HttpMethod.GET, "/players/**", "/leagues/**", "/teams/**", "/orders")
 					.permitAll()
+					.requestMatchers("/actuator/**")
+					.hasAuthority("ROLE_ADMIN")
 					.requestMatchers("/api/admin/whoscored/**", "/api/admin/cotizacion/**", "/admin/sync/**", "/ingesta/**", "/quotes/recalculate")
 					.hasAuthority("ROLE_ADMIN")
 					.anyRequest().authenticated());
