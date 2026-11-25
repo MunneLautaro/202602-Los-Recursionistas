@@ -1,16 +1,31 @@
-<!-- Sync Impact Report
-Version change: 2.6.0 -> 2.7.0
-Modified principles: XIV - Sistema de cotización con estrategia intercambiable; VII - Testing obligatorio
-Added sections: none
-Removed sections: none
-Follow-up TODOs: none
--->
-
 # Constitution — Valoración de Mercado de Jugadores de Fútbol
 
-**Versión:** 2.7.0
+**Versión:** 2.9.0
 **Fecha de ratificación:** 2026-09-15
-**Última modificación:** 2026-11-22
+**Última modificación:** 2026-11-24
+
+**Resumen del cambio 2.9.0:** Se amplía la política de Observabilidad con una
+excepción acotada que habilita la feature 013. Se admiten endpoints REST
+administrativos bajo `/api/admin/observabilidad/**`, solo con `ROLE_ADMIN`.
+Esos endpoints resumen, en modo de solo lectura, datos que ya publican
+Actuator y Micrometer, junto con agregados de datos de negocio persistidos,
+para el panel de administración. Motivo: el panel necesita un contrato tipado
+y estable sin que el frontend dependa del formato interno de Actuator. Actuator
+sigue siendo el único mecanismo para exponer endpoints de monitoreo de
+propósito general.
+
+**Resumen del cambio 2.8.0:** Se habilita la feature de observabilidad de la
+Entrega 3. Se aprueban `spring-boot-starter-actuator` y
+`micrometer-registry-prometheus` en el stack del backend. Se reemplaza el
+requisito genérico de Observabilidad por una política declarativa y
+verificable: Actuator como único mecanismo bajo `/actuator`, lista cerrada de
+endpoints expuestos (`health`, `info`, `metrics`, `prometheus`), `health` como
+único endpoint público y sin detalles, `ROLE_ADMIN` para el resto, Micrometer
+como única librería de métricas y prohibición de exponer secretos o datos
+personales. Se amplía el Principio VII con una excepción acotada que admite
+`observabilidad/ObservabilidadSeguridadTest`, porque la exposición de Actuator
+es un riesgo de seguridad que no puede verificarse con tests de `model` ni
+`service`.
 
 **Resumen del cambio 2.7.0:** Se enmienda el Principio XIV para reconocer la base
 de datos como fuente primaria de la estrategia activa de cotización, con fallback
@@ -78,6 +93,9 @@ constitution, prevalece la constitution.
 - **Testing backend aprobado:** JUnit 5, Mockito, Spring Boot test starters y
   ArchUnit (`com.tngtech.archunit:archunit-junit5`) para las reglas ejecutables
   de arquitectura.
+- **Observabilidad backend aprobada:** `org.springframework.boot:spring-boot-starter-actuator`
+  e `io.micrometer:micrometer-registry-prometheus`, ambas declaradas sin versión
+  explícita y gestionadas por el plugin de Spring Boot.
 - **Frontend:** React 19, Vite, TypeScript, Tailwind CSS 4, react-router-dom 7.
   - Manejador de paquetes: Yarn (`.yarnrc.yml` en `/frontend`).
   - Estilos: Tailwind CSS 4 integrado vía plugin de Vite (`@tailwindcss/vite`). Los estilos específicos de componente se extraen en archivos `.styles.ts` con clases Tailwind.
@@ -248,6 +266,15 @@ mezclar concerns de transporte, orquestación y reglas de negocio:
   `architecture/ArquitecturaCapasTest`. Este test es la verificación ejecutable
   obligatoria de los Principios I, III, IV y V, forma parte de la suite por
   defecto y MUST ejecutarse con `./gradlew test`.
+- Se admite, como única excepción adicional, un test de integración
+  `observabilidad/ObservabilidadSeguridadTest` basado en MockMvc. Este test MUST
+  verificar que `/actuator/health` es público y no muestra detalles de
+  componentes; que `info`, `metrics` y `prometheus` responden 401 sin token,
+  403 con `ROLE_USUARIO` y 200 con `ROLE_ADMIN`; y que un endpoint no aprobado
+  (por ejemplo `env`) responde 404. Justificación: la exposición de Actuator es
+  un riesgo de seguridad que no puede verificarse con tests de `model` ni
+  `service`. Esta excepción MUST NOT interpretarse como habilitación de otros
+  tests de `configuration` o `security`.
 - **Alcance en `model`:** Mantener únicamente tests unitarios simples para métodos de negocio específicos que pertenezcan intrínsecamente al dominio/entidad (ej. cálculo de totales, cambio de estados, lógica pura de negocio). Si una clase de modelo solo contiene atributos, getters, setters y constructores generados por Lombok (`@Data`, `@Getter`, `@Setter`, `@Builder`), **NO debe tener archivo de test individual**.
 - **Remoción de tests redundantes:** **Prohibido** probar en la capa de modelo validaciones de formato de cadenas o campos de texto. **Prohibido** incluir tests redundantes, boilerplate, de contexto básico de Spring Boot, documentación de configuración o infraestructura de seguridad genérica (ej: `BackendApplicationTests`, `ValidacionInfraestructuraTest`, o clases de prueba genéricas dentro de `configuration` o `security`). Esta prohibición se aplica a tests de arquitectura genéricos o boilerplate; no incluye las reglas específicas y verificables de `ArquitecturaCapasTest`.
 - Los tests de la capa `service` MUST testear únicamente métodos y servicios reales que estén implementados en la aplicación. El alcance actual incluye: `AuthServiceTest`, `EquipoServiceTest`, `JugadorServiceTest`, `LigaServiceTest`, `SincronizacionServiceTest`, `UsuarioDetailsServiceTest` y `UsuarioServiceTest`. Los adaptadores de identidad (`UsuarioDetailsServiceImpl`) también son testeables dentro de `service`.
@@ -525,8 +552,36 @@ cambios estructurales innecesarios.
   archivo. El paquete `configuration/` MUST contener únicamente configuración
   global de la aplicación; la configuración propia de cada integración MUST
   vivir en `adapter/<fuente>/`.
-- **Observabilidad:** logs estructurados, Correlation ID por request, health
-  checks y métricas de latencia/tasa de error.
+- **Observabilidad:**
+  - Los endpoints de monitoreo MUST exponerse únicamente mediante Spring Boot
+    Actuator bajo `/actuator`, configurados en `application.yml`, sin perfiles
+    nuevos.
+  - Los únicos endpoints de Actuator expuestos por HTTP MUST ser `health`,
+    `info`, `metrics` y `prometheus`. Cualquier otro endpoint de Actuator
+    (`env`, `beans`, `configprops`, `heapdump`, `threaddump`, `loggers`,
+    `mappings`, `shutdown`, etc.) MUST NOT exponerse sin una enmienda a esta
+    constitution.
+  - `/actuator/health` es el único endpoint de Actuator público y MUST NOT
+    mostrar detalles de componentes a usuarios no autenticados. `info`,
+    `metrics` y `prometheus` MUST requerir `ROLE_ADMIN`, declarado en
+    `SecurityConfig` dentro de `configuration/`.
+  - Las métricas MUST registrarse con Micrometer (no se admiten librerías de
+    métricas alternativas) y exponerse en formato Prometheus en
+    `/actuator/prometheus`.
+  - Excepción acotada: se admiten endpoints REST administrativos de solo lectura
+    bajo `/api/admin/observabilidad/**` para el panel de administración. Esos
+    endpoints MUST:
+    - requerir `ROLE_ADMIN` en `SecurityConfig`;
+    - limitarse a resumir datos que ya publican Actuator o Micrometer, y
+      agregados de datos de negocio persistidos;
+    - MUST NOT incluir detalles de componentes de salud.
+
+    Esta excepción MUST NOT usarse para exponer información que Actuator no
+    publica, ni endpoints de monitoreo de propósito general.
+  - Ningún endpoint de monitoreo ni métrica MUST exponer credenciales, tokens,
+    secretos, valores de propiedades de configuración ni datos personales.
+  - Se mantienen vigentes los requisitos de logs estructurados, Correlation ID
+    por request y métricas de latencia y tasa de error.
 - **Auditoría:** registro inmutable de toda transacción financiera (autor,
   detalle del cambio, timestamp, estado anterior y posterior).
 - **Seguridad:** validación estricta de inputs, manejo seguro de tokens de
