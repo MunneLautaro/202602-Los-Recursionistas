@@ -19,6 +19,9 @@ import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.interfaces.*;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
+import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -43,6 +46,7 @@ public class CotizacionServiceImpl implements CotizacionService {
     private final BigDecimal valorBase;
     private final BigDecimal factorEscala;
     private final AtomicBoolean recalculoActivo = new AtomicBoolean();
+    private final MetricasNegocio metricas;
 
     @Autowired
     public CotizacionServiceImpl(RepositorioJugador jugadores,
@@ -53,7 +57,8 @@ public class CotizacionServiceImpl implements CotizacionService {
                                  @Value("${cotizacion.estrategia.activa:PERFORMANCE_GENERAL}") String estrategiaActiva,
                                  @Value("${cotizacion.ventana-dias:7}") int ventanaDias,
                                  @Value("${cotizacion.valor-base:100}") BigDecimal valorBase,
-                                 @Value("${cotizacion.factor-escala:900}") BigDecimal factorEscala) {
+                                 @Value("${cotizacion.factor-escala:900}") BigDecimal factorEscala,
+                                 MetricasNegocio metricas) {
         this.jugadores = jugadores;
         this.estadisticas = estadisticas;
         this.cotizaciones = cotizaciones;
@@ -63,6 +68,20 @@ public class CotizacionServiceImpl implements CotizacionService {
         this.ventanaDias = ventanaDias;
         this.valorBase = valorBase;
         this.factorEscala = factorEscala;
+        this.metricas = metricas;
+    }
+
+    public CotizacionServiceImpl(RepositorioJugador jugadores,
+                                 RepositorioEstadisticaPartido estadisticas,
+                                 RepositorioCotizacion cotizaciones,
+                                 Map<String, EstrategiaCotizacion> estrategias,
+                                 RepositorioConfiguracionEstrategia configuracionEstrategia,
+                                 String estrategiaActiva,
+                                 int ventanaDias,
+                                 BigDecimal valorBase,
+                                 BigDecimal factorEscala) {
+        this(jugadores, estadisticas, cotizaciones, estrategias, configuracionEstrategia, estrategiaActiva,
+                ventanaDias, valorBase, factorEscala, MetricasNegocio.SIN_REGISTRO);
     }
 
     public CotizacionServiceImpl(RepositorioJugador jugadores,
@@ -82,6 +101,7 @@ public class CotizacionServiceImpl implements CotizacionService {
         this.ventanaDias = ventanaDias;
         this.valorBase = valorBase;
         this.factorEscala = factorEscala;
+        this.metricas = MetricasNegocio.SIN_REGISTRO;
     }
 
     @Override
@@ -97,6 +117,20 @@ public class CotizacionServiceImpl implements CotizacionService {
 
     @Override
     public void recalcular(List<Jugador> jugadoresElegibles, LocalDate inicio, LocalDate fin) {
+        long comienzo = System.nanoTime();
+        try {
+            ResultadoParcial resultado = ejecutarRecalculo(jugadoresElegibles, inicio, fin);
+            metricas.registrarRecalculo(new MetricasNegocio.ResultadoRecalculo(true,
+                    Duration.ofNanos(System.nanoTime() - comienzo), resultado.guardadas(),
+                    resultado.variacionPromedio()));
+        } catch (RuntimeException excepcion) {
+            metricas.registrarRecalculo(new MetricasNegocio.ResultadoRecalculo(false,
+                    Duration.ofNanos(System.nanoTime() - comienzo), 0, null));
+            throw excepcion;
+        }
+    }
+
+    private ResultadoParcial ejecutarRecalculo(List<Jugador> jugadoresElegibles, LocalDate inicio, LocalDate fin) {
         String codigoEstrategia = resolverCodigoEstrategia();
         EstrategiaCotizacion estrategia = obtenerEstrategiaActiva(codigoEstrategia);
         if (estrategia == null || valorBase == null || factorEscala == null || inicio == null
@@ -116,18 +150,35 @@ public class CotizacionServiceImpl implements CotizacionService {
         }
         Map<String, Integer> maximos = maximos(resumenes);
         ParametrosCotizacion parametros = new ParametrosCotizacion(valorBase, factorEscala, Map.of());
+        int guardadas = 0;
+        int conPrevio = 0;
+        BigDecimal sumaVariaciones = BigDecimal.ZERO;
         for (ResumenJugador item : resumenes) {
             try {
                 BigDecimal valor = estrategia.calcular(item.resumen, item.jugador.getPosicion(), maximos, parametros);
+                Cotizacion previa = cotizaciones.vigente(item.jugador.getId());
                 cotizaciones.guardar(Cotizacion.crear(item.jugador, valor, LocalDateTime.now(ZONA_ARGENTINA),
                         codigoEstrategia, inicio, fin));
+                guardadas++;
+                if (previa != null && previa.getValor() != null && previa.getValor().signum() > 0) {
+                    sumaVariaciones = sumaVariaciones.add(valor.subtract(previa.getValor())
+                            .divide(previa.getValor(), MathContext.DECIMAL64));
+                    conPrevio++;
+                }
                 log.info("Cotización recalculada para jugador '{}' (ID: {}): ${}",
                         item.jugador.getNombre(), item.jugador.getId(), valor);
             } catch (RuntimeException ex) {
                 log.error("No se pudo calcular la cotizacion del jugador {}", item.jugador.getId(), ex);
             }
         }
+        BigDecimal variacionPromedio = conPrevio == 0 ? null
+                : sumaVariaciones.divide(BigDecimal.valueOf(conPrevio), MathContext.DECIMAL64)
+                .setScale(6, RoundingMode.HALF_UP);
+        return new ResultadoParcial(guardadas, variacionPromedio);
+    }
 
+    /** Cotizaciones guardadas en un recalculo y variacion promedio respecto del valor previo. */
+    private record ResultadoParcial(int guardadas, BigDecimal variacionPromedio) {
     }
 
     private String resolverCodigoEstrategia() {

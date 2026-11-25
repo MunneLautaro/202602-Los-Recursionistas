@@ -9,4 +9,6 @@ public interface RepositorioTenenciaToken {
     TenenciaToken buscar(Long usuarioId, Long jugadorId);
     TenenciaToken guardar(TenenciaToken tenencia);
     Page<TenenciaToken> buscarPorUsuario(Long usuarioId, Pageable pageable);
+    /** Suma de tokens en poder de todos los usuarios salvo el indicado (la cuenta custodio). */
+    long sumarTokensExcluyendoUsuario(Long usuarioId);
 }

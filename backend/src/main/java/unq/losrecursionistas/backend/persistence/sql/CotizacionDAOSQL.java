@@ -80,6 +80,35 @@ public interface CotizacionDAOSQL extends JpaRepository<Cotizacion, Long> {
                                           @Param("posicion") String posicion,
                                           Pageable pageable);
 
+    /**
+     * Cotizaciones por dia con su variacion promedio respecto del valor previo de cada jugador.
+     * El LAG recorre toda la historia del jugador, asi la primera cotizacion del rango tambien
+     * tiene previo. timestamp_calculo se persiste en hora local argentina.
+     */
+    @Query(value = """
+            WITH con_previo AS (
+                SELECT c.jugador_id, c.timestamp_calculo, c.valor,
+                       LAG(c.valor) OVER (PARTITION BY c.jugador_id ORDER BY c.timestamp_calculo, c.id) AS previo
+                FROM cotizaciones c
+            )
+            SELECT CAST(timestamp_calculo AS DATE) AS dia,
+                   COUNT(DISTINCT jugador_id) AS jugadores,
+                   AVG(CASE WHEN previo IS NOT NULL AND previo > 0 THEN (valor - previo) / previo END) AS variacionPromedio,
+                   COUNT(CASE WHEN previo IS NOT NULL AND previo > 0 THEN 1 END) AS conPrevio
+            FROM con_previo
+            WHERE CAST(timestamp_calculo AS DATE) BETWEEN :desde AND :hasta
+            GROUP BY 1
+            """, nativeQuery = true)
+    java.util.List<CotizacionesPorDiaProyeccion> resumirPorDia(@Param("desde") java.time.LocalDate desde,
+                                                               @Param("hasta") java.time.LocalDate hasta);
+
+    interface CotizacionesPorDiaProyeccion {
+        Object getDia();
+        Number getJugadores();
+        Number getVariacionPromedio();
+        Number getConPrevio();
+    }
+
     interface RankingProyeccion {
         Long getJugadorId();
         String getNombre();

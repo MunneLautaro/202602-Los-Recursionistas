@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import {
   adminApi,
   type IngestaAlcance,
@@ -129,6 +130,9 @@ export function AdminPage() {
           Gestioná cotizaciones, sincronización e ingestas de datos desde un
           único lugar.
         </p>
+        <Link to="/admin/observabilidad" className="ui-btn-ghost mt-6 inline-flex px-5 py-2.5 text-sm">
+          Ver observabilidad
+        </Link>
       </header>
 
       <section

@@ -57,4 +57,23 @@ public interface OrdenDAOSQL extends JpaRepository<Orden, Long> {
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Orden> findFirstByUsuarioIdAndJugadorIdAndEsLiquidezInicialTrue(
             Long usuarioId, Long jugadorId);
+
+    /** Ordenes creadas por usuarios (sin liquidez inicial) agrupadas por dia argentino y tipo. */
+    @Query(value = """
+            SELECT CAST(o.fecha_creacion AT TIME ZONE 'America/Argentina/Buenos_Aires' AS DATE) AS dia,
+                   o.tipo AS tipo, COUNT(*) AS cantidad
+            FROM ordenes o
+            WHERE o.es_liquidez_inicial = false
+              AND CAST(o.fecha_creacion AT TIME ZONE 'America/Argentina/Buenos_Aires' AS DATE)
+                  BETWEEN :desde AND :hasta
+            GROUP BY 1, 2
+            """, nativeQuery = true)
+    List<OrdenesPorDiaProyeccion> contarCreadasPorDia(@Param("desde") java.time.LocalDate desde,
+                                                      @Param("hasta") java.time.LocalDate hasta);
+
+    interface OrdenesPorDiaProyeccion {
+        Object getDia();
+        String getTipo();
+        Number getCantidad();
+    }
 }

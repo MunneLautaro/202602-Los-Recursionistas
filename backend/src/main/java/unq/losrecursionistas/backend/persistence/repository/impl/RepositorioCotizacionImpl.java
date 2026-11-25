@@ -3,6 +3,7 @@ package unq.losrecursionistas.backend.persistence.repository.impl;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
+import unq.losrecursionistas.backend.model.ActividadDiariaCotizacion;
 import unq.losrecursionistas.backend.model.Cotizacion;
 import unq.losrecursionistas.backend.model.RankingCotizacion;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.RepositorioCotizacion;
@@ -61,5 +62,17 @@ public class RepositorioCotizacionImpl implements RepositorioCotizacion {
                 .map(r -> new RankingCotizacion(r.getJugadorId(), r.getNombre(), r.getPosicion(),
                         r.getEquipo(), r.getLiga(), r.getValorActual(), r.getValorAnterior(),
                         r.getVariacion()));
+    }
+
+    @Override
+    public List<ActividadDiariaCotizacion> resumirPorDia(java.time.LocalDate desde, java.time.LocalDate hasta) {
+        AgregadosDiarios.validarRango(desde, hasta);
+        return dao.resumirPorDia(desde, hasta).stream()
+                .map(fila -> new ActividadDiariaCotizacion(AgregadosDiarios.dia(fila.getDia()),
+                        AgregadosDiarios.entero(fila.getJugadores()),
+                        AgregadosDiarios.decimal(fila.getVariacionPromedio(), 6),
+                        AgregadosDiarios.entero(fila.getConPrevio())))
+                .sorted(java.util.Comparator.comparing(ActividadDiariaCotizacion::dia))
+                .toList();
     }
 }

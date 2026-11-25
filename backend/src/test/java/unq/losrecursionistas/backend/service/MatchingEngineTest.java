@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Test;
 import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.MatchingEngineImpl;
+import unq.losrecursionistas.backend.service.interfaces.MetricasNegocio;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -19,7 +20,8 @@ class MatchingEngineTest {
         RepositorioTenenciaToken tenencias = mock(RepositorioTenenciaToken.class);
         RepositorioTransaccionMercado transacciones = mock(RepositorioTransaccionMercado.class);
         RepositorioAuditoriaTransaccional auditorias = mock(RepositorioAuditoriaTransaccional.class);
-        MatchingEngineImpl engine = new MatchingEngineImpl(ordenes, tenencias, transacciones, auditorias);
+        MetricasNegocio metricas = mock(MetricasNegocio.class);
+        MatchingEngineImpl engine = new MatchingEngineImpl(ordenes, tenencias, transacciones, auditorias, metricas);
         when(transacciones.crear(any(TransaccionMercado.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -47,13 +49,15 @@ class MatchingEngineTest {
         assertThat(comprador.getSaldo()).isEqualTo(950.0);
         assertThat(vendedor.getSaldo()).isEqualTo(50.0);
         verify(transacciones).crear(any(TransaccionMercado.class));
+        verify(metricas).registrarEmparejamiento(new BigDecimal("50.00"));
     }
 
     @Test
     void solicitaAlRepositorioSoloElJugadorPrecioYUsuarioCompatibles() {
         RepositorioOrden ordenes = mock(RepositorioOrden.class);
+        MetricasNegocio metricas = mock(MetricasNegocio.class);
         MatchingEngineImpl engine = new MatchingEngineImpl(ordenes, mock(RepositorioTenenciaToken.class),
-                mock(RepositorioTransaccionMercado.class), mock(RepositorioAuditoriaTransaccional.class));
+                mock(RepositorioTransaccionMercado.class), mock(RepositorioAuditoriaTransaccional.class), metricas);
         Usuario comprador = usuario("comprador", 100, 1L);
         Jugador jugador = jugador(10L);
         Orden compra = Orden.crear(comprador, jugador, TipoOrden.COMPRA, 1,
@@ -65,6 +69,7 @@ class MatchingEngineTest {
 
         verify(ordenes).buscarCompatiblesBloqueadas(10L, TipoOrden.VENTA,
                 new BigDecimal("8.00"), 1L);
+        verify(metricas, never()).registrarEmparejamiento(any());
     }
 
     private static Usuario usuario(String nombre, double saldo, long id) {

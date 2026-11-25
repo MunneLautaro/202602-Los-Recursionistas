@@ -11,6 +11,7 @@ import unq.losrecursionistas.backend.model.*;
 import unq.losrecursionistas.backend.persistence.repository.interfaces.*;
 import unq.losrecursionistas.backend.service.impl.MercadoServiceImpl;
 import unq.losrecursionistas.backend.service.interfaces.MatchingEngine;
+import unq.losrecursionistas.backend.service.interfaces.MetricasNegocio;
 
 import java.math.BigDecimal;
 
@@ -28,6 +29,7 @@ class MercadoServiceCompraTest {
     @Mock RepositorioOrden ordenes;
     @Mock RepositorioTransaccionMercado transacciones;
     @Mock MatchingEngine matching;
+    @Mock MetricasNegocio metricas;
     private MercadoServiceImpl service;
     private Usuario comprador;
     private Jugador jugador;
@@ -35,7 +37,7 @@ class MercadoServiceCompraTest {
     @BeforeEach
     void setUp() {
         service = new MercadoServiceImpl(usuarios, jugadores, cotizaciones, tenencias,
-                ordenes, transacciones, matching);
+                ordenes, transacciones, matching, null, metricas);
         comprador = new Usuario("comprador", "clave", 1000.0);
         comprador.setId(1L);
         jugador = new Jugador("Jugador", "DEL", null, true);
@@ -60,6 +62,8 @@ class MercadoServiceCompraTest {
         assertThat(orden.getPrecioUnitario()).isEqualByComparingTo("12.50");
         assertThat(comprador.getSaldoReservado()).isEqualTo(62.50);
         verify(matching).ejecutar(orden);
+        verify(metricas).registrarOrdenCreada(TipoOrden.COMPRA);
+        verify(metricas, never()).registrarRechazoSaldoInsuficiente();
     }
 
     @Test
@@ -72,6 +76,18 @@ class MercadoServiceCompraTest {
         verify(ordenes, never()).guardar(any());
         assertThat(comprador.getSaldo()).isEqualTo(10.0);
         assertThat(comprador.getSaldoReservado()).isZero();
+    }
+
+    @Test
+    void testCompraSinSaldoRegistraRechazoYRelanzaLaMismaExcepcion() {
+        comprador.setSaldo(10.0);
+
+        assertThatThrownBy(() -> service.crearOrden(comprador, 10L, 1, TipoOrden.COMPRA))
+                .isExactlyInstanceOf(unq.losrecursionistas.backend.exceptions.ExcepcionDominio.class)
+                .hasMessage("Saldo disponible insuficiente");
+
+        verify(metricas).registrarRechazoSaldoInsuficiente();
+        verify(metricas, never()).registrarOrdenCreada(any());
     }
 
     @Test

@@ -7,6 +7,7 @@ import { JugadoresPage } from "../pages/JugadoresPage"
 import { Layout } from "../components/Layout/Layout"
 import { AdminRoute, ProtectedRoute } from "../components/ProtectedRoute"
 import { AdminPage } from "../pages/AdminPage"
+import { ObservabilidadPage } from "../pages/ObservabilidadPage"
 import { RankingPage } from "../pages/RankingPage"
 import { MercadoPage } from "../pages/MercadoPage"
 import { CuentaPage } from "../pages/CuentaPage"
@@ -30,6 +31,7 @@ export const AppRouter: React.FC = () => {
         <Route path="/cuenta/tokens" element={<ProtectedRoute><CuentaTokensPage /></ProtectedRoute>} />
         <Route path="/cuenta/transacciones" element={<ProtectedRoute><CuentaTransaccionesPage /></ProtectedRoute>} />
         <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+        <Route path="/admin/observabilidad" element={<AdminRoute><ObservabilidadPage /></AdminRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

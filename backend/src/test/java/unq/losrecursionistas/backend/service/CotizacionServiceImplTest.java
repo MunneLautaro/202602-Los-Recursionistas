@@ -48,6 +48,90 @@ class CotizacionServiceImplTest {
     }
 
     @Test
+    void testRecalculoExitosoRegistraCotizadasYVariacionPromedioSinContarJugadoresSinPrevio() {
+        MetricasNegocio metricas = mock(MetricasNegocio.class);
+        var j1 = jugadorConPosicion(1L, "Delantero");
+        var j2 = jugadorConPosicion(2L, "Defensor");
+        var j3 = jugadorConPosicion(3L, "Mediocampista");
+        prepararEstadisticas(List.of(j1, j2, j3));
+        when(estrategia.calcular(any(), eq("Delantero"), anyMap(), any())).thenReturn(new BigDecimal("110.00"));
+        when(estrategia.calcular(any(), eq("Defensor"), anyMap(), any())).thenReturn(new BigDecimal("130.00"));
+        when(estrategia.calcular(any(), eq("Mediocampista"), anyMap(), any())).thenReturn(new BigDecimal("50.00"));
+        when(cotizaciones.vigente(1L)).thenReturn(cotizacionPrevia(j1, "100.00"));
+        when(cotizaciones.vigente(2L)).thenReturn(cotizacionPrevia(j2, "100.00"));
+        when(cotizaciones.vigente(3L)).thenReturn(null);
+
+        servicioConMetricas(metricas, "PERFORMANCE_GENERAL").recalcular();
+
+        var resultado = capturarRecalculo(metricas);
+        assertTrue(resultado.exitoso());
+        assertEquals(3, resultado.jugadoresCotizados());
+        assertEquals(0, new BigDecimal("0.20").compareTo(resultado.variacionPromedio()));
+        assertNotNull(resultado.duracion());
+    }
+
+    @Test
+    void testEstrategiaInexistenteRegistraRecalculoFallidoYRelanza() {
+        MetricasNegocio metricas = mock(MetricasNegocio.class);
+        var service = servicioConMetricas(metricas, "INEXISTENTE");
+
+        assertThrows(ExcepcionValidacion.class, () -> service.recalcular(List.of(), LocalDate.now(), LocalDate.now()));
+
+        var resultado = capturarRecalculo(metricas);
+        assertFalse(resultado.exitoso());
+        assertEquals(0, resultado.jugadoresCotizados());
+        assertNull(resultado.variacionPromedio());
+    }
+
+    @Test
+    void testJugadorConCalculoFallidoNoCuentaComoCotizado() {
+        MetricasNegocio metricas = mock(MetricasNegocio.class);
+        var j1 = jugadorConPosicion(1L, "Delantero");
+        var j2 = jugadorConPosicion(2L, "Arquero");
+        prepararEstadisticas(List.of(j1, j2));
+        when(estrategia.calcular(any(), eq("Delantero"), anyMap(), any())).thenReturn(new BigDecimal("90.00"));
+        when(estrategia.calcular(any(), eq("Arquero"), anyMap(), any())).thenThrow(new IllegalStateException("sin datos"));
+
+        servicioConMetricas(metricas, "PERFORMANCE_GENERAL").recalcular();
+
+        var resultado = capturarRecalculo(metricas);
+        assertTrue(resultado.exitoso());
+        assertEquals(1, resultado.jugadoresCotizados());
+        assertNull(resultado.variacionPromedio());
+    }
+
+    private CotizacionServiceImpl servicioConMetricas(MetricasNegocio metricas, String estrategiaActiva) {
+        return new CotizacionServiceImpl(jugadores, estadisticas, cotizaciones,
+                Map.of("PERFORMANCE_GENERAL", estrategia), null, estrategiaActiva, 7,
+                BigDecimal.TEN, BigDecimal.ONE, metricas);
+    }
+
+    private static Jugador jugadorConPosicion(long id, String posicion) {
+        return Jugador.builder().id(id).idWhoscored(100 + id).activo(true).posicion(posicion).build();
+    }
+
+    private void prepararEstadisticas(List<Jugador> lista) {
+        when(jugadores.obtenerJugadoresActivos()).thenReturn(lista);
+        for (Jugador jugador : lista) {
+            var stat = EstadisticaPartido.builder().jugador(jugador).fechaPartido(LocalDate.of(2026, 10, 20))
+                    .goles(1).minutos(90).build();
+            when(estadisticas.buscarPorJugadorYRango(eq(jugador.getId()), any(), any())).thenReturn(List.of(stat));
+        }
+    }
+
+    private static Cotizacion cotizacionPrevia(Jugador jugador, String valor) {
+        return Cotizacion.crear(jugador, new BigDecimal(valor), LocalDateTime.of(2026, 11, 1, 10, 0),
+                "PERFORMANCE_GENERAL", LocalDate.of(2026, 10, 25), LocalDate.of(2026, 11, 1));
+    }
+
+    private static MetricasNegocio.ResultadoRecalculo capturarRecalculo(MetricasNegocio metricas) {
+        ArgumentCaptor<MetricasNegocio.ResultadoRecalculo> captor =
+                ArgumentCaptor.forClass(MetricasNegocio.ResultadoRecalculo.class);
+        verify(metricas).registrarRecalculo(captor.capture());
+        return captor.getValue();
+    }
+
+    @Test
     void omiteJugadorSinIdWhoscored() {
         var jugador = Jugador.builder().id(1L).activo(true).build();
         when(jugadores.obtenerJugadoresActivos()).thenReturn(List.of(jugador));
