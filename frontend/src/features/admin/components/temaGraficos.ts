@@ -7,7 +7,7 @@ export const COLOR_LAVANDA = "#a98bff";
 export const COLOR_AMBAR = "#ffb36b";
 export const COLOR_CORAL = "#ff7f7a";
 export const COLOR_GRILLA = "rgba(255, 255, 255, 0.06)";
-export const COLOR_EJES = "rgba(235, 238, 248, 0.45)";
+export const COLOR_EJES = "rgba(235, 238, 248, 0.7)";
 export const COLOR_CURSOR = "rgba(255, 255, 255, 0.06)";
 
 export const ESTILO_TOOLTIP = {

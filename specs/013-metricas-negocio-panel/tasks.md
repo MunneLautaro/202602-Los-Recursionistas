@@ -302,7 +302,7 @@ activa, y mostrar la serie diaria de cotización (FR-006 a FR-011).
 **Independent Test**: [quickstart.md §2 y §6.4](quickstart.md).
 
 - [X] T036 [US5] Verificar a mano con el backend levantado (quickstart §2) que `/api/admin/observabilidad/negocio` y `/tecnico` responden 401 a un anónimo, 403 a `ROLE_USUARIO` (con cuerpo `RespuestaError`) y 200 a un admin, y que `?dias=15` responde 400. Si `/tecnico` todavía no existe (US3 pendiente), repetir la verificación después de T038.
-- [ ] T037 [US5] Verificar en el navegador que `/admin/observabilidad` con un usuario común o sin sesión no muestra el panel y aplica el comportamiento vigente de `AdminRoute` (redirección), y que el enlace de `AdminPage` solo es visible para el admin.
+- [X] T037 [US5] Verificar en el navegador que `/admin/observabilidad` con un usuario común o sin sesión no muestra el panel y aplica el comportamiento vigente de `AdminRoute` (redirección), y que el enlace de `AdminPage` solo es visible para el admin.
 
 ---
 
@@ -374,9 +374,11 @@ activa, y mostrar la serie diaria de cotización (FR-006 a FR-011).
 ## Phase 8: Polish & Cross-Cutting Concerns
 
 - [X] T046 Revisar el código nuevo y modificado contra `.agents/skills/sonarcloud-quality/SKILL.md`: literales duplicados (constantes para los nombres de meters y tags), complejidad de `resumenTecnico`, imports sin usar, `catch` que relanza sin perder la causa y nombres de tests en español ASCII.
-- [ ] T047 [P] Revisar los componentes del panel contra `.agents/skills/pantone-color-palette/SKILL.md` y los tokens del tema (`mint`, `coral`, `lavender`, `ui-card` y `ui-tile`): contraste y accesibilidad de badges y gráficos, y layout responsive en mobile (grillas `sm:` y `md:`).
+- [X] T047 [P] Revisar los componentes del panel contra `.agents/skills/pantone-color-palette/SKILL.md` y los tokens del tema (`mint`, `coral`, `lavender`, `ui-card` y `ui-tile`): contraste y accesibilidad de badges y gráficos, y layout responsive en mobile (grillas `sm:` y `md:`).
 - [X] T048 Ejecutar `cd backend; .\gradlew.bat clean test`, que debe quedar en verde e incluir `ArquitecturaCapasTest`, `ObservabilidadSeguridadTest` y los tests nuevos y ampliados. Ejecutar `cd frontend; yarn lint; yarn build`, que no debe tener errores nuevos respecto de T001.
 - [ ] T049 Recorrer [quickstart.md](quickstart.md) §1–§7 contra PostgreSQL. Incluye la comparación SQL de §4 (SC-002), la medición de carga de menos de 3 s con `dias=90` de §6 (SC-006, G1) y la caída de la base de §7, que debe mostrar "Servicio no disponible" sin cerrar la sesión (I1). Informar cualquier paso no ejecutado y su motivo.
+  - Verificado: `clean test`, `npm run lint` y `npm run build`; acceso 401/403/200 y `dias=15` 400; `dias=90` en 38 ms; la comparación de totales del API con SQL coincidió (compras 7, ventas 3, emparejamientos 8, volumen 62839.44); panel, salud y selector de 90 días.
+  - Pendiente: `/actuator/prometheus` devuelve 404 porque `backend/.env` expone solo `health`; requiere `health,info,metrics,prometheus` y reiniciar el backend. La prueba real de caída de PostgreSQL no se pudo ejecutar: `Stop-Service` fue denegado por permisos. Con una respuesta 503 simulada, el panel mostró DOWN, conservó la sesión y no consultó endpoints admin; esto no sustituye la prueba con PostgreSQL detenido.
 - [X] T050 [P] Si hubo desvíos del diseño (fallback de salud, forma de exponer `conPrevio`, nombres de campos), actualizar [research.md](research.md), [plan.md](plan.md) y los contratos.
 
 ---

@@ -21,7 +21,7 @@ const estilos = {
     "ui-card overflow-hidden bg-[radial-gradient(60%_120%_at_0%_0%,rgba(98,56,222,0.42),transparent_70%),radial-gradient(50%_120%_at_100%_100%,rgba(92,255,210,0.16),transparent_70%)] p-8 sm:p-10",
   cabeceraFila: "mt-6 flex flex-wrap items-center justify-between gap-4",
   descripcion: "mt-4 max-w-2xl text-base font-light text-white/60",
-  actualizado: "text-xs text-white/40",
+  actualizado: "text-xs text-white/60",
   aviso: "ui-card border-coral/40 p-5 text-sm text-coral",
   seccion: "ui-card grid gap-5 p-6 sm:p-8",
   tituloSeccion: "text-2xl font-semibold tracking-tight text-white",
